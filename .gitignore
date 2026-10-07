@@ -1,0 +1,25 @@
+# ========================================================
+# Git Ignore - Asisten Belajar AI & AI Agent Auto-Pilot
+# ========================================================
+
+# 1. KUNCI API & KONFIGURASI SENSITIF
+# Jangan pernah unggah kunci API rahasia ke repositori publik!
+config.js
+.env
+.env.*
+
+# 2. FILE SIMULASI & PENGUJIAN LOKAL
+server.js
+simulasi-esai.html
+simulasi-kuis.html
+test_*.js
+test_*.cjs
+*.log
+
+# 3. SISTEM, RUNTIME & EDITOR
+node_modules/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.system_generated/

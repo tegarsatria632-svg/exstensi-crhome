@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { width: 360px; margin: 0; padding: 14px; font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; box-sizing: border-box; }
+  h1 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: center; gap: 6px; }
+
+  .btn-group { display: flex; flex-direction: column; gap: 7px; }
+  .btn-action { width: 100%; padding: 8.5px 12px; border: 0; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity .15s, transform .05s; text-align: left; display: flex; align-items: center; gap: 8px; }
+  .btn-action:hover { opacity: 0.92; }
+  .btn-action:active { transform: scale(0.99); }
+  .btn-action:disabled { opacity: 0.55; cursor: wait; }
+  
+  .btn-groq { background: #4f46e5; color: #fff; }
+  .btn-openrouter { background: #059669; color: #fff; }
+  .btn-hf { background: #d97706; color: #fff; }
+  .btn-gemini { background: #0284c7; color: #fff; }
+  .result-actions { display: none; gap: 8px; margin-top: 10px; }
+  .result-actions.show { display: flex; }
+  .btn-sub { flex: 1; padding: 7.5px 10px; font-size: 11.5px; border: 0; border-radius: 8px; font-weight: 600; cursor: pointer; text-align: center; transition: all .15s; }
+  .btn-copy { background: #e2e8f0; color: #334155; }
+  .btn-copy:hover { background: #cbd5e1; }
+  .btn-clear { background: #fee2e2; color: #991b1b; }
+  .btn-clear:hover { background: #fecaca; }
+  
+  #status { display: none; margin-top: 10px; font-size: 12px; color: #475569; align-items: center; gap: 8px; }
+  #status.show { display: flex; }
+  .spinner { width: 14px; height: 14px; border: 2px solid #cbd5e1; border-top-color: #4f46e5; border-radius: 50%; animation: spin .8s linear infinite; flex-shrink: 0; }
+  .spinner.hide { display: none; }
+  
+  #result { margin-top: 10px; max-height: 320px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.65; color: #1e293b; display: none; white-space: pre-wrap; }
+  #result.error { color: #b91c1c; }
+</style>
+</head>
+<body>
+  <h1>📚 Asisten Belajar AI & Agent</h1>
+
+  <!-- Mode AI Agent Auto-Pilot (Kerjakan Terus Menerus Sampai Selesai) -->
+  <div style="margin-bottom: 10px; background: linear-gradient(135deg, #3730a3, #4f46e5); padding: 10px; border-radius: 9px; color: #fff; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.28);">
+    <div style="font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: space-between;">
+      <span>🤖 Mode Agen Otomatis (Auto-Pilot)</span>
+      <span id="agentBadge" style="background: rgba(255,255,255,0.22); padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 600;">Standby</span>
+    </div>
+    <div style="font-size: 10.5px; opacity: 0.92; margin: 4px 0 8px; line-height: 1.35;">
+      Membaca soal, menjawab to-the-point, klik opsi, dan otomatis next berurutan tanpa berhenti sampai kuis selesai.
+    </div>
+    <div style="display: flex; gap: 6px;">
+      <button id="toggleAgentBtn" style="flex: 1; padding: 7px 10px; background: #fff; color: #3730a3; border: 0; border-radius: 6px; font-weight: 700; font-size: 11.5px; cursor: pointer; transition: all .15s;">
+        ▶️ Mulai Agen Otomatis
+      </button>
+      <button id="toggleHudBtn" style="padding: 7px 9px; background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; font-size: 11px; cursor: pointer;" title="Buka panel agen mengambang langsung di halaman web">
+        📌 Panel Web
+      </button>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <button id="run" class="btn-action btn-groq">⚡ Jawab Cepat 1 Soal di Layar (Groq)</button>
+    <button id="runVision" class="btn-action btn-gemini">📸 Jawab Soal Bergambar / Diagram (Gemini)</button>
+    <button id="runOpenRouter" class="btn-action btn-openrouter">📑 Rangkum Halaman Web & Teks (DeepSeek)</button>
+    <button id="runHF" class="btn-action btn-hf">🎓 Bedah Materi & Tutor Konsep (Qwen 72B)</button>
+  </div>  <div style="margin: 8px 0; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 11px; color: #334155; display: flex; flex-direction: column; gap: 6px;">
+    <label style="display: flex; align-items: center; gap: 7px; cursor: pointer;">
+      <input type="checkbox" id="autoClickToggle" checked style="accent-color: #4f46e5; cursor: pointer;">
+      <span>🎯 <b>Auto-Click & Auto-Fill</b> (Otomatis klik/isi ke layar web)</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 7px; cursor: pointer;">
+      <input type="checkbox" id="autoNextToggle" style="accent-color: #4f46e5; cursor: pointer;">
+      <span>⏩ <b>Auto-Next</b> (Otomatis lanjut nomor berikutnya)</span>
+    </label>
+  </div>
+  <div id="status"><div id="statusSpinner" class="spinner"></div><span id="statusText"></span></div>
+  <div id="result"></div>
+  <div id="resultActions" class="result-actions">
+    <button id="copyBtn" class="btn-sub btn-copy">📋 Salin Hasil</button>
+    <button id="clearBtn" class="btn-sub btn-clear" title="Hapus jawaban yang tersimpan">🗑️ Bersihkan</button>
+  </div>
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
