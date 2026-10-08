@@ -438,48 +438,57 @@
     const questions = [
       {
         num: 1,
-        topic: "Struktur Data (LIFO)",
+        topic: "Keamanan Jaringan & Protokol Remote",
         type: "input",
         badge: "Isian Singkat (<input type='text'>)",
-        text: "Sebutkan struktur data linier yang beroperasi dengan prinsip Last In First Out (LIFO), di mana elemen terakhir yang dimasukkan adalah elemen pertama yang dikeluarkan!",
-        placeholder: "Tuliskan nama struktur data di sini...",
+        text: "Sebutkan nama protokol kriptografi standar yang digunakan untuk mengamankan koneksi remote shell / login terenkripsi ke server melalui port default 22!",
+        placeholder: "Tuliskan nama protokol di sini...",
         points: 20,
         evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
           const low = answer.toLowerCase().trim();
-          if (low.includes("stack") || low.includes("tumpukan")) {
-            return { score: 20, feedback: "Tepat (Stack / Tumpukan)" };
+          if (low.includes("ssh") || low.includes("secure shell")) {
+            return { score: 20, feedback: "Tepat (SSH / Secure Shell)" };
           }
-          return { score: 0, feedback: "Kurang tepat (Jawaban benar: Stack)" };
+          return { score: 0, feedback: "Kurang tepat (Jawaban benar: SSH / Secure Shell)" };
         }
       },
       {
         num: 2,
-        topic: "Jaringan & Protokol Web",
+        topic: "Basis Data Relasional (RDBMS)",
         type: "input",
         badge: "Isian Singkat (<input type='text'>)",
-        text: "Apa kepanjangan dari protokol komunikasi web terenkripsi HTTPS yang menggunakan sertifikat SSL/TLS pada port default 443?",
-        placeholder: "Tuliskan kepanjangan HTTPS...",
+        text: "Sebutkan 3 contoh sistem manajemen basis data relasional (RDBMS) yang populer digunakan di industri perangkat lunak!",
+        placeholder: "Tuliskan 3 contoh RDBMS di sini...",
         points: 20,
         evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
-          const low = answer.toLowerCase().trim();
-          if (low.includes("hypertext") && low.includes("transfer") && low.includes("protocol") && low.includes("secure")) {
-            return { score: 20, feedback: "Tepat (Hypertext Transfer Protocol Secure)" };
-          }
-          if (low.includes("hypertext transfer protocol")) {
-            return { score: 10, feedback: "Kurang kata 'Secure' di akhir" };
+          const low = answer.toLowerCase();
+          const rdbmsList = ["mysql", "postgresql", "postgres", "oracle", "sqlite", "sql server", "mariadb"];
+          let found = [];
+          rdbmsList.forEach(r => {
+            if (low.includes(r) && !found.some(f => f.includes(r) || r.includes(f))) {
+              found.push(r);
+            }
+          });
+          const count = found.length;
+          if (count >= 3) {
+            return { score: 20, feedback: `Sempurna (${count} contoh RDBMS disebutkan)` };
+          } else if (count === 2) {
+            return { score: 14, feedback: `Hanya menyebutkan 2 contoh RDBMS (${found.join(", ")})` };
+          } else if (count === 1) {
+            return { score: 7, feedback: `Hanya menyebutkan 1 contoh RDBMS (${found.join(", ")})` };
           }
           return { score: 0, feedback: "Kurang tepat" };
         }
       },
       {
         num: 3,
-        topic: "Basis Data (SQL vs NoSQL)",
+        topic: "Arsitektur Cloud Computing",
         type: "textarea",
         badge: "Kotak Uraian (<textarea>)",
-        text: "Jelaskan perbedaan mendasar antara database relasional (SQL) dan database non-relasional (NoSQL) dari segi struktur data dan skemanya, serta sebutkan minimal satu contoh DBMS untuk masing-masing jenis database tersebut!",
-        placeholder: "Ketikkan penjelasan perbandingan SQL vs NoSQL dan contoh DBMS-nya...",
+        text: "Jelaskan kelebihan dan kekurangan dari adopsi arsitektur komputasi awan (Cloud Computing) dibandingkan dengan mengelola server on-premise sendiri!",
+        placeholder: "Ketikkan analisis kelebihan dan kekurangan Cloud Computing...",
         points: 20,
         evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
@@ -487,25 +496,15 @@
           let score = 0;
           let notes = [];
 
-          // Kriteria 1: Struktur data SQL (tabel, baris/kolom, skema terstruktur)
-          if (low.includes("tabel") || low.includes("skema") || low.includes("terstruktur") || low.includes("relasi")) {
-            score += 6;
-            notes.push("Konsep SQL tepat");
+          // Kriteria 1: Kelebihan (skalabilitas, fleksibilitas, efisiensi biaya/pay-as-you-go, pemeliharaan otomatis, ketersediaan tinggi)
+          if (low.includes("skalabilitas") || low.includes("fleksib") || low.includes("biaya") || low.includes("capex") || low.includes("opex") || low.includes("otomatis") || low.includes("redundansi") || low.includes("modal")) {
+            score += 10;
+            notes.push("Kelebihan dianalisis dengan baik");
           }
-          // Kriteria 2: Struktur data NoSQL (dokumen, json, key-value, fleksibel, tanpa skema)
-          if (low.includes("dokumen") || low.includes("json") || low.includes("key-value") || low.includes("fleksibel") || low.includes("dinamis") || low.includes("grafik") || low.includes("kolom")) {
-            score += 6;
-            notes.push("Konsep NoSQL tepat");
-          }
-          // Kriteria 3: Contoh DBMS SQL (MySQL, PostgreSQL, Oracle, SQLite, SQL Server)
-          if (low.includes("mysql") || low.includes("postgresql") || low.includes("postgres") || low.includes("oracle") || low.includes("sqlite") || low.includes("sql server")) {
-            score += 4;
-            notes.push("Contoh SQL benar");
-          }
-          // Kriteria 4: Contoh DBMS NoSQL (MongoDB, Redis, Cassandra, Firebase, CouchDB, DynamoDB)
-          if (low.includes("mongodb") || low.includes("redis") || low.includes("cassandra") || low.includes("firebase") || low.includes("dynamodb")) {
-            score += 4;
-            notes.push("Contoh NoSQL benar");
+          // Kriteria 2: Kekurangan (ketergantungan internet/jaringan, vendor lock-in, kontrol terbatas, latensi, kepatuhan/privasi)
+          if (low.includes("internet") || low.includes("jaringan") || low.includes("lock-in") || low.includes("kontrol") || low.includes("kepatuhan") || low.includes("latensi") || low.includes("privasi") || low.includes("biaya jangka panjang")) {
+            score += 10;
+            notes.push("Kekurangan dianalisis dengan baik");
           }
 
           if (score === 0) return { score: 5, feedback: "Penjelasan umum singkat" };
@@ -514,32 +513,31 @@
       },
       {
         num: 4,
-        topic: "Pemrograman OOP",
+        topic: "Prinsip Keamanan Informasi (CIA Triad)",
         type: "contenteditable",
         badge: "Rich Text Editor (contenteditable)",
-        text: "Jelaskan secara ringkas pengertian dari 4 pilar utama dalam Pemrograman Berorientasi Objek (OOP): Encapsulation, Inheritance, Polymorphism, dan Abstraction!",
-        placeholder: "Tuliskan penjelasan 4 pilar OOP di sini...",
+        text: "Jelaskan secara ringkas 3 prinsip dasar keamanan informasi dalam model CIA Triad: Confidentiality (Kerahasiaan), Integrity (Integritas), dan Availability (Ketersediaan)!",
+        placeholder: "Tuliskan penjelasan prinsip CIA Triad di sini...",
         points: 20,
         evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
           const low = answer.toLowerCase();
           let count = 0;
-          if (low.includes("encapsulation") || low.includes("enkapsulasi") || low.includes("bungkus") || low.includes("private")) count++;
-          if (low.includes("inheritance") || low.includes("pewarisan") || low.includes("turunan") || low.includes("induk")) count++;
-          if (low.includes("polymorphism") || low.includes("polimorfisme") || low.includes("banyak bentuk") || low.includes("overrid")) count++;
-          if (low.includes("abstraction") || low.includes("abstraksi") || low.includes("sembunyi") || low.includes("detail")) count++;
+          if (low.includes("confidentiality") || low.includes("kerahasiaan") || low.includes("akses tidak sah") || low.includes("enkripsi")) count++;
+          if (low.includes("integrity") || low.includes("integritas") || low.includes("perubahan") || low.includes("keaslian") || low.includes("modifikasi") || low.includes("validitas")) count++;
+          if (low.includes("availability") || low.includes("ketersediaan") || low.includes("dapat diakses") || low.includes("downtime") || low.includes("redundansi")) count++;
 
-          const score = count * 5;
-          return { score: score, feedback: `${count} dari 4 pilar dijelaskan dengan baik` };
+          const score = count === 3 ? 20 : (count === 2 ? 14 : (count === 1 ? 7 : 0));
+          return { score: score, feedback: `${count} dari 3 pilar CIA Triad dijelaskan dengan tepat` };
         }
       },
       {
         num: 5,
-        topic: "Keamanan Siber (SQL Injection)",
+        topic: "Keamanan Siber & Social Engineering",
         type: "textarea",
         badge: "Kotak Uraian (<textarea>)",
-        text: "Jelaskan prinsip dasar serangan SQL Injection (SQLi) dan bagaimana teknik terbaik yang direkomendasikan untuk mencegah kerentanan tersebut pada kode aplikasi web!",
-        placeholder: "Ketikkan penjelasan SQL Injection dan pencegahannya...",
+        text: "Berikan analisis dan pendapat Anda mengenai ancaman serangan phishing dalam organisasi: bagaimana modus operandi umumnya dan apa langkah mitigasi terbaik yang harus diterapkan?",
+        placeholder: "Ketikkan analisis ancaman phishing dan strategi mitigasinya...",
         points: 20,
         evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
@@ -547,15 +545,15 @@
           let score = 0;
           let notes = [];
 
-          // Prinsip serangan: menyisipkan kode/query SQL berbahaya melalui input form
-          if (low.includes("injeksi") || low.includes("sisip") || low.includes("manipulasi") || low.includes("input") || low.includes("query") || low.includes("perintah")) {
+          // Kriteria 1: Modus operandi phishing (email palsu/spoofing, manipulasi psikologis, tautan/lampiran berbahaya, meniru identitas/domain)
+          if (low.includes("email") || low.includes("spoof") || low.includes("tautan") || low.includes("meniru") || low.includes("sosial") || low.includes("social") || low.includes("lampiran") || low.includes("palsu") || low.includes("kredensial")) {
             score += 10;
-            notes.push("Prinsip serangan dipahami");
+            notes.push("Modus operandi phishing dipahami");
           }
-          // Teknik pencegahan: prepared statements, parameterized queries, ORM, validasi input
-          if (low.includes("prepared") || low.includes("parameter") || low.includes("orm") || low.includes("validasi") || low.includes("sanitasi") || low.includes("escape")) {
+          // Kriteria 2: Langkah mitigasi (MFA/2FA, pelatihan/kesadaran karyawan, filter email DMARC/SPF, pelaporan/prosedur verifikasi)
+          if (low.includes("mfa") || low.includes("2fa") || low.includes("pelatihan") || low.includes("edukasi") || low.includes("kesadaran") || low.includes("dmarc") || low.includes("filter") || low.includes("verifikasi") || low.includes("autentikasi")) {
             score += 10;
-            notes.push("Teknik pencegahan tepat");
+            notes.push("Langkah mitigasi tepat & aplikatif");
           }
 
           if (score === 0) return { score: 5, feedback: "Penjelasan umum singkat" };
