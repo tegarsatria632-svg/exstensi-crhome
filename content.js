@@ -1026,44 +1026,42 @@
     return false;
   }
 
-  // EKSEKUSI KLIK TOMBOL NEXT (DENGAN DUKUNGAN SIMPAN & AUTO-NEXT LENGKAP)
+  // EKSEKUSI KLIK TOMBOL NEXT (TUNGGAL, AMAN, DAN ANTI-DOBEL LOMPAT)
   function findAndClickNextButton(isForce) {
-    // 1. Jika ada tombol "Simpan" terpisah di samping tombol "Selanjutnya", klik Simpan dulu agar tersimpan aman
-    try {
-      var saveButtons = Array.from(document.querySelectorAll("button, a, [role='button']")).filter(function(b) {
-        if (isHudElement(b) || !isElementVisible(b) || isHeaderNavElement(b) || isInsideOptionCard(b)) return false;
-        var t = (b.textContent || b.innerText || "").trim().toLowerCase();
-        return t === "simpan" || t === "simpan jawaban";
-      });
-      if (saveButtons.length > 0) {
-        clickNextButton(saveButtons[0]);
-      }
-    } catch (_) {}
-
     var detected = detectNextButtonState();
     if (detected.isFinalSubmit) {
       return { success: false, isFinalSubmit: true, forbiddenText: detected.buttonText };
     }
 
+    // 1. Prioritas Utama: Jika tombol "Selanjutnya" / navigasi maju ditemukan
+    // HANYA KLIK TOMBOL INI! Jangan pernah mengklik tombol simpan terpisah sekaligus agar tidak terjadi dobel lompatan soal!
     if (detected.hasNext && detected.nextElement) {
-      clickNextButton(detected.nextElement);
-      return { success: true, buttonText: detected.buttonText };
+      var clicked = clickNextButton(detected.nextElement);
+      if (clicked) {
+        return { success: true, buttonText: detected.buttonText };
+      }
     }
 
-    // 2. Coba lompat nomor soal berikutnya langsung di grid palet kuis
+    // 2. Jika TIDAK ADA tombol navigasi maju, tapi ada tombol "Simpan / Simpan Jawaban" mandiri
+    try {
+      var saveButtons = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function(b) {
+        if (isHudElement(b) || !isElementVisible(b) || isHeaderNavElement(b) || isInsideOptionCard(b)) return false;
+        var t = (b.textContent || b.innerText || "").trim().toLowerCase();
+        return t === "simpan" || t === "simpan jawaban";
+      });
+      if (saveButtons.length > 0) {
+        var clickedSave = clickNextButton(saveButtons[0]);
+        if (clickedSave) {
+          return { success: true, buttonText: "Simpan" };
+        }
+      }
+    } catch (_) {}
+
+    // 3. Jika tombol teks tidak ditemukan, coba lompat ke nomor soal berikutnya via nomor grid palet
     var jumped = clickNextQuestionNumberDirectly();
     if (jumped) {
       return { success: true, buttonText: "Nomor Soal Grid" };
     }
-
-    // 3. Fallback: Dispatch shortcut navigasi tombol keyboard (ArrowRight) yang didukung banyak sistem ujian
-    try {
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", code: "ArrowRight", keyCode: 39, which: 39, bubbles: true }));
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", code: "ArrowRight", keyCode: 39, which: 39, bubbles: true }));
-      window.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight", code: "ArrowRight", keyCode: 39, which: 39, bubbles: true }));
-      document.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight", code: "ArrowRight", keyCode: 39, which: 39, bubbles: true }));
-      return { success: true, buttonText: "ArrowRight (Keyboard)" };
-    } catch (_) {}
 
     return { success: false, notFound: true };
   }
@@ -1234,9 +1232,17 @@
     return true;
   }
 
-  // B. Eksekusi tombol Next: Realistis dengan pointer, mouse, focus, dan keyboard trigger
+  // B. Eksekusi tombol Next: Tepat 1 kali klik, ter-debounce, tidak memicu double event/skip soal
   function clickNextButton(btn) {
-    if (!btn || isHudElement(btn)) return;
+    if (!btn || isHudElement(btn)) return false;
+
+    var now = Date.now();
+    // DEBOUNCE KETAT: Dilarang keras mengklik tombol Next dua kali dalam jeda kurang dari 2000ms!
+    if (now - lastNextClickTime < 2000) {
+      return false;
+    }
+    lastNextClickTime = now;
+
     highlightElement(btn);
 
     try {
@@ -1260,32 +1266,22 @@
       }
       btn.dispatchEvent(new MouseEvent("mousedown", mouseOpts));
       btn.dispatchEvent(new MouseEvent("mouseup", releaseOpts));
+
+      // HANYA KLIK TEPAT 1 KALI LANGSUNG PADA TARGET!
+      // DILARANG klik innerClickable dan parentBtn sekaligus karena bubbling memicu eksekusi multi-kali (skip soal)
       if (typeof btn.click === "function") {
         btn.click();
+      } else {
+        btn.dispatchEvent(new MouseEvent("click", releaseOpts));
       }
-      btn.dispatchEvent(new MouseEvent("click", releaseOpts));
-
-      // Jika tombol memiliki elemen teks anak (span/p/svg), klik juga langsung
-      var innerClickable = btn.querySelector("span, p, b, svg, div");
-      if (innerClickable) {
-        if (typeof innerClickable.click === "function") innerClickable.click();
-        innerClickable.dispatchEvent(new MouseEvent("click", releaseOpts));
-      }
-
-      // Jika btn adalah child element (misal span atau icon), klik juga tombol parentnya
-      var parentBtn = btn.closest("button, a, [role='button']");
-      if (parentBtn && parentBtn !== btn) {
-        if (typeof parentBtn.click === "function") parentBtn.click();
-        parentBtn.dispatchEvent(new MouseEvent("click", releaseOpts));
-      }
-
-      // Trigger Enter pada tombol yang aktif difokuskan
-      btn.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
-      btn.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
+      return true;
     } catch (_) {
       try {
         btn.click();
-      } catch (_) {}
+        return true;
+      } catch (_) {
+        return false;
+      }
     }
   }
 
@@ -1553,8 +1549,8 @@
       return { success: false, notSelected: true, answer: displayAnswer };
     }
 
-    // Jeda 800ms agar pemilihan opsi / ketikan stabil & terlihat jelas oleh pengguna
-    await new Promise(function(r) { setTimeout(r, 800); });
+    // Jeda 1000ms agar pemilihan opsi stabil & terlihat jelas oleh pengguna
+    await new Promise(function(r) { setTimeout(r, 1000); });
 
     // === TAHAP 2: HANYA SETELAH JAWABAN 100% TERPILIH/TERISI, BARU PERIKSA NEXT ===
     // JIKA INI NOMOR TERAKHIR (TOMBOL = KUMPULKAN / SUBMIT / SELESAI):
@@ -1605,38 +1601,26 @@
     var prevClean = cleanQuestionForComparison(prevText);
     var curClean = cleanQuestionForComparison(currentText);
     if (!prevClean || !curClean) return false;
-    return prevClean.slice(0, 250) !== curClean.slice(0, 250);
+    // Bandingkan seluruh teks bersih tanpa potongan slice agar perubahan soal selalu terdeteksi
+    return prevClean !== curClean;
   }
 
   async function waitForQuestionTransition(prevText) {
     var start = Date.now();
-    var retryPhase = 0;
-    while (Date.now() - start < 5000) {
-      await new Promise(function(r) { setTimeout(r, 350); });
+    // Tunggu transisi DOM secara pasif hingga 4.5 detik. Dilarang memicu klik di sini agar tidak dobel lompat!
+    while (Date.now() - start < 4500) {
+      await new Promise(function(r) { setTimeout(r, 250); });
       var currentText = extractPageInfo().text;
       if (hasQuestionChanged(prevText, currentText) && currentText.length > 20) {
-        await new Promise(function(r) { setTimeout(r, 600); });
+        // Beri waktu sejenak agar render soal baru stabil sebelum mulai dianalisis
+        await new Promise(function(r) { setTimeout(r, 450); });
         return true;
-      }
-      // Retry 1: Setelah 1.5 detik halaman belum berganti, klik ulang tombol Next
-      if (retryPhase === 0 && Date.now() - start > 1500) {
-        retryPhase = 1;
-        try {
-          findAndClickNextButton(true);
-        } catch (_) {}
-      }
-      // Retry 2: Setelah 3 detik belum berganti, lompat ke nomor berikutnya via palet nomor
-      if (retryPhase === 1 && Date.now() - start > 3000) {
-        retryPhase = 2;
-        try {
-          clickNextQuestionNumberDirectly();
-        } catch (_) {}
       }
     }
     return false;
   }
 
-  // === 10. LOOP AGEN AUTO-PILOT (BERJALAN SAMPAI SELESAI + ANTI-STUCK WATCHDOG) ===
+  // === 10. LOOP AGEN AUTO-PILOT (BERJALAN SAMPAI SELESAI + ANTI-SKIP & ANTI-STUCK) ===
   async function startAutoPilotLoop() {
     var isTop = false;
     try {
@@ -1656,39 +1640,39 @@
 
     setHudStatus("🚀 Agen Otomatis aktif! Memulai pengerjaan kuis...", true);
 
-    var lastAnsweredSnippet = "";
-    var stuckCount = 0;
+    var lastAnsweredQuestion = "";
+    var sameQuestionStall = 0;
 
     while (isAgentRunning) {
       try {
         var currentText = extractPageInfo().text;
-        var currentSnippet = cleanQuestionForComparison(currentText).slice(0, 180);
+        var currentClean = cleanQuestionForComparison(currentText);
 
-        // ANTI-STUCK WATCHDOG: Jika soal saat ini sama persis dengan yang baru saja dijawab
-        // Jangan jawab ulang! Fokuskan navigasi maju ke nomor berikutnya!
-        if (lastAnsweredSnippet && currentSnippet === lastAnsweredSnippet) {
-          stuckCount++;
-          if (stuckCount === 1) {
-            setHudStatus("⚠️ Soal belum berpindah. Menekan ulang tombol Selanjutnya...", true);
+        // Jika soal saat ini terdeteksi sama persis dengan yang baru saja dijawab
+        if (lastAnsweredQuestion && currentClean === lastAnsweredQuestion) {
+          sameQuestionStall++;
+          if (sameQuestionStall === 1) {
+            setHudStatus("⏳ Menunggu transisi ke nomor berikutnya...", true);
+            var transitionedWait = await waitForQuestionTransition(currentText);
+            if (transitionedWait) {
+              sameQuestionStall = 0;
+              continue;
+            }
+          }
+          if (sameQuestionStall === 2) {
+            setHudStatus("⚠️ Menekan tombol Selanjutnya untuk melanjutkan...", true);
             findAndClickNextButton(true);
-            var recheck1 = await waitForQuestionTransition(currentText);
-            if (recheck1) {
-              stuckCount = 0;
+            var transitionedClick = await waitForQuestionTransition(currentText);
+            if (transitionedClick) {
+              sameQuestionStall = 0;
               continue;
             }
-          } else if (stuckCount === 2) {
-            setHudStatus("⚠️ Melompat ke nomor berikutnya via palet grid nomor...", true);
-            clickNextQuestionNumberDirectly();
-            var recheck2 = await waitForQuestionTransition(currentText);
-            if (recheck2) {
-              stuckCount = 0;
-              continue;
-            }
-          } else if (stuckCount >= 3) {
-            setHudStatus("⚠️ Silakan klik tombol 'Selanjutnya' atau nomor soal di web untuk lanjut.", false);
-            var userNavigated = await waitForQuestionTransition(currentText);
-            if (userNavigated) {
-              stuckCount = 0;
+          }
+          if (sameQuestionStall >= 3) {
+            setHudStatus("⚠️ Silakan klik tombol 'Selanjutnya' atau nomor soal di layar web.", false);
+            var transitionedManual = await waitForQuestionTransition(currentText);
+            if (transitionedManual) {
+              sameQuestionStall = 0;
               continue;
             } else {
               await new Promise(function(r) { setTimeout(r, 2000); });
@@ -1696,11 +1680,11 @@
             }
           }
         } else {
-          stuckCount = 0;
+          sameQuestionStall = 0;
         }
 
         var step = await executeSingleQuestionCycle();
-        lastAnsweredSnippet = currentSnippet;
+        lastAnsweredQuestion = currentClean;
 
         chrome.storage?.local?.set({ 
           lastActiveTime: Date.now()
@@ -1714,10 +1698,9 @@
         }
 
         if (step.notSelected) {
-          // Opsi belum berhasil diklik: HENTIKAN AUTO-NEXT SEMENTARA AGAR TIDAK KE-SKIP!
           setHudStatus("⚠️ Pilihan belum dapat diklik otomatis. Silakan klik pilihan di web untuk melanjutkan.", false);
-          var transitioned = await waitForQuestionTransition(currentText);
-          if (!transitioned) {
+          var transitionedManual = await waitForQuestionTransition(currentText);
+          if (!transitionedManual) {
             await new Promise(function(r) { setTimeout(r, 2000); });
           }
           continue;
@@ -1726,11 +1709,10 @@
         if (!isAgentRunning) break;
 
         // JIKA USER MEMATIKAN AUTO-NEXT: JANGAN PINDAH OTOMATIS!
-        // TUNGGU SAMPAI PENGGUNA SENDIRI YANG MENGKLIK SOAL SELANJUTNYA SECARA MANUAL
         if (!autoNextEnabled) {
           setHudStatus("✅ Soal dijawab & tersimpan. Klik nomor berikutnya di web jika sudah siap.", false);
-          var transitionedManual = await waitForQuestionTransition(currentText);
-          if (!transitionedManual) {
+          var transitionedManualNext = await waitForQuestionTransition(currentText);
+          if (!transitionedManualNext) {
             await new Promise(function(r) { setTimeout(r, 1500); });
           }
           continue;
@@ -1738,7 +1720,7 @@
 
         setHudStatus("⏳ Menunggu soal berikutnya muncul...", true);
         await waitForQuestionTransition(currentText);
-        await new Promise(function(r) { setTimeout(r, 800); });
+        await new Promise(function(r) { setTimeout(r, 600); });
       } catch (err) {
         setHudStatus('⚠️ Terjadi kendala: ' + err.message + '. Mencoba lagi dalam 3 detik...', false);
         await new Promise(function(r) { setTimeout(r, 3000); });
