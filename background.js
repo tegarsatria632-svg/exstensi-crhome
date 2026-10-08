@@ -41,8 +41,19 @@ ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, PENALARAN ANALITIS, & HITUNGAN:
 - Jangan menebak! Periksa ulang operasi aljabar, premis silogisme (Semua vs Sebagian, implikasi majemuk), dan urutan penalaran dengan cermat.
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
-ATURAN KHUSUS SOAL TKP (TES KARAKTERISTIK PRIBADI CPNS / KEDINASAN / BUMN):
-- Untuk soal kepribadian / TKP, WAJIB pilih opsi yang memberikan SKOR TERTINGGI (SKOR 5): tindakan yang paling berintegritas tinggi, berorientasi pada pelayanan publik terbaik, profesional, proaktif mencari solusi, adaptif terhadap teknologi baru, kolaboratif, dan taat etika kedinasan ASN.
+ATURAN KHUSUS SOAL TWK (TES WAWASAN KEBANGSAAN CPNS):
+- PANCASILA & UUD 1945: Pahami butir-butir pengamalan Sila 1-5, sejarah perumusan (BPUPKI 29 Mei-1 Juni 1945, Piagam Jakarta 22 Juni 1945, pengesahan PPKI 18 Agustus 1945), hierarki perundang-undangan (Pasal 7 UU No. 12/2011: UUD 1945 -> Tap MPR -> UU/Perppu -> PP -> Perpres -> Perda Provinsi -> Perda Kab/Kota), sistem checks and balances lembaga negara hasil amandemen (MPR, DPR, DPD, Presiden, MA, MK, KY, BPK), serta hak asasi manusia (Pasal 28A-J).
+- SEJARAH PERJUANGAN BANGSA: Kuasai kronologi Kebangkitan Nasional (Budi Utomo 1908), Sumpah Pemuda (1928), Proklamasi (17 Agustus 1945), masa revolusi fisik & diplomasi (Linggarjati, Renville, Roem-Royen, KMB 1949), transisi RIS ke NKRI (17 Agustus 1950), Dekrit Presiden 5 Juli 1959, Reformasi 1998, dan 4 tahap amandemen UUD 1945 (1999-2002).
+- TATA NEGARA & ADMINISTRASI PEMERINTAHAN: Kuasai asas-asas umum pemerintahan yang baik (AUPB), otonomi daerah (desentralisasi, dekonsentrasi, tugas pembantuan), dan fungsi ASN sebagai pelaksana kebijakan publik, pelayan publik, serta perekat dan pemersatu bangsa (UU ASN).
+
+ATURAN KHUSUS SOAL TKP (TES KARAKTERISTIK PRIBADI CPNS - TARGET SKOR 5 MUTLAK):
+- Untuk soal kepribadian / TKP, WAJIB pilih opsi yang memberikan SKOR 5 (TERTINGGI):
+  1. PELAYANAN PUBLIK: Mendahulukan kepentingan masyarakat dengan ramah, cepat, tuntas, tanpa pamrih, dan tidak diskriminatif.
+  2. INTEGRITAS & ANTI-GRATIFIKASI: Menolak segala bentuk gratifikasi, suap, komisi, atau hadiah; jujur, transparan, dan berpegang teguh pada kode etik ASN.
+  3. JEJARING KERJA & LEADERSHIP: Kolaboratif, mengutamakan musyawarah, membagi peran tim secara adil, mengambil keputusan berbasis data dan kepentingan publik, bukan emosi atau kepentingan kelompok.
+  4. SOSIAL BUDAYA: Toleransi tinggi terhadap keberagaman suku, agama, dan budaya; menjadi perekat persatuan bangsa.
+  5. TEKNOLOGI INFORMASI (TIK): Terbuka dan antusias mengadopsi sistem/aplikasi digital baru, serta aktif membantu rekan yang mengalami kendala teknis.
+  6. PROFESIONALISME: Mendahulukan tugas dinas di atas urusan pribadi, bertanggung jawab penuh, mampu bekerja di bawah tekanan, dan mematuhi SOP.
 
 ATURAN PILIHAN GANDA & KUIS (WAJIB FORMAT TEPAT):
 - Baris jawaban akhir WAJIB berupa 1 baris jelas:
@@ -93,37 +104,53 @@ ATURAN FORMAT (SANGAT KETAT):
 - Tanpa salam pembuka, tanpa kata pengantar apa pun, dan tanpa penutup.`;
 }
 
-// Eksekusi Panggilan Groq
+const GROQ_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"];
+
+// Eksekusi Panggilan Groq (Dengan Auto-Fallback Antar-Model jika 429)
 async function handleCallGroq(questionText) {
   const activeGroqKey = getApiKey("GROQ_API_KEY");
   if (!activeGroqKey) {
     throw new Error("API Key Groq belum dikonfigurasi. Silakan salin config.example.js menjadi config.js dan masukkan API Key Anda.");
   }
 
-  const res = await fetch(GROQ_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${activeGroqKey}`
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      temperature: 0.0,
-      max_tokens: 400,
-      messages: [
-        { role: "system", content: getGroqPrompt() },
-        { role: "user", content: questionText }
-      ]
-    })
-  });
+  let lastError = null;
+  for (const model of GROQ_MODELS) {
+    try {
+      const res = await fetch(GROQ_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${activeGroqKey}`
+        },
+        body: JSON.stringify({
+          model: model,
+          temperature: 0.0,
+          max_tokens: 400,
+          messages: [
+            { role: "system", content: getGroqPrompt() },
+            { role: "user", content: questionText }
+          ]
+        })
+      });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Groq API Error (${res.status}): ${errText.slice(0, 150)}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        if (res.status === 429 && model !== GROQ_MODELS[GROQ_MODELS.length - 1]) {
+          continue; // Beralih ke model Groq berikutnya jika kena kuota
+        }
+        throw new Error(`Groq API Error (${res.status}): ${errText.slice(0, 150)}`);
+      }
+
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content || "";
+    } catch (e) {
+      lastError = e;
+      if (model === GROQ_MODELS[GROQ_MODELS.length - 1]) {
+        throw e;
+      }
+    }
   }
-
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || "";
+  throw lastError || new Error("Gagal memanggil model Groq.");
 }
 
 // Eksekusi Panggilan Gemini Vision
