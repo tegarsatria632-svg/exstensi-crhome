@@ -3,7 +3,7 @@
 // Impor konfigurasi API key lokal jika tersedia (file config.js diabaikan oleh git)
 try {
   importScripts("config.js");
-} catch (_) {}
+} catch (_) { }
 
 function getApiKey(name, fallback = "") {
   if (typeof CONFIG !== "undefined" && CONFIG && CONFIG[name] && !CONFIG[name].startsWith("YOUR_")) {
