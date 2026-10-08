@@ -10,6 +10,7 @@ function getApiKey(name, fallback = "") {
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "qwen/qwen3.8-27b";
+const GROQ_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"];
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_MODEL = "deepseek/deepseek-chat";
@@ -41,8 +42,19 @@ ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, PENALARAN ANALITIS, & HITUNGAN:
 - Jangan menebak! Periksa ulang operasi aljabar, premis silogisme (Semua vs Sebagian, implikasi majemuk), dan urutan penalaran dengan cermat.
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
-ATURAN KHUSUS SOAL TKP (TES KARAKTERISTIK PRIBADI CPNS / KEDINASAN / BUMN):
-- Untuk soal kepribadian / TKP, WAJIB pilih opsi yang memberikan SKOR TERTINGGI (SKOR 5): tindakan yang paling berintegritas tinggi, berorientasi pada pelayanan publik terbaik, profesional, proaktif mencari solusi, adaptif terhadap teknologi baru, kolaboratif, dan taat etika kedinasan ASN.
+ATURAN KHUSUS SOAL TWK (TES WAWASAN KEBANGSAAN CPNS):
+- PANCASILA & UUD 1945: Pahami butir-butir pengamalan Sila 1-5, sejarah perumusan (BPUPKI 29 Mei-1 Juni 1945, Piagam Jakarta 22 Juni 1945, pengesahan PPKI 18 Agustus 1945), hierarki perundang-undangan (Pasal 7 UU No. 12/2011: UUD 1945 -> Tap MPR -> UU/Perppu -> PP -> Perpres -> Perda Provinsi -> Perda Kab/Kota), sistem checks and balances lembaga negara hasil amandemen (MPR, DPR, DPD, Presiden, MA, MK, KY, BPK), serta hak asasi manusia (Pasal 28A-J).
+- SEJARAH PERJUANGAN BANGSA: Kuasai kronologi Kebangkitan Nasional (Budi Utomo 1908), Sumpah Pemuda (1928), Proklamasi (17 Agustus 1945), masa revolusi fisik & diplomasi (Linggarjati, Renville, Roem-Royen, KMB 1949), transisi RIS ke NKRI (17 Agustus 1950), Dekrit Presiden 5 Juli 1959, Reformasi 1998, dan 4 tahap amandemen UUD 1945 (1999-2002).
+- TATA NEGARA & ADMINISTRASI PEMERINTAHAN: Kuasai asas-asas umum pemerintahan yang baik (AUPB), otonomi daerah (desentralisasi, dekonsentrasi, tugas pembantuan), dan fungsi ASN sebagai pelaksana kebijakan publik, pelayan publik, serta perekat dan pemersatu bangsa (UU ASN).
+
+ATURAN KHUSUS SOAL TKP (TES KARAKTERISTIK PRIBADI CPNS - TARGET SKOR 5 MUTLAK):
+- Untuk soal kepribadian / TKP, WAJIB pilih opsi yang memberikan SKOR 5 (TERTINGGI):
+  1. PELAYANAN PUBLIK: Mendahulukan kepentingan masyarakat dengan ramah, cepat, tuntas, tanpa pamrih, dan tidak diskriminatif.
+  2. INTEGRITAS & ANTI-GRATIFIKASI: Menolak segala bentuk gratifikasi, suap, komisi, atau hadiah; jujur, transparan, dan berpegang teguh pada kode etik ASN.
+  3. JEJARING KERJA & LEADERSHIP: Kolaboratif, mengutamakan musyawarah, membagi peran tim secara adil, mengambil keputusan berbasis data dan kepentingan publik, bukan emosi atau kepentingan kelompok.
+  4. SOSIAL BUDAYA: Toleransi tinggi terhadap keberagaman suku, agama, dan budaya; menjadi perekat persatuan bangsa.
+  5. TEKNOLOGI INFORMASI (TIK): Terbuka dan antusias mengadopsi sistem/aplikasi digital baru, serta aktif membantu rekan yang mengalami kendala teknis.
+  6. PROFESIONALISME: Mendahulukan tugas dinas di atas urusan pribadi, bertanggung jawab penuh, mampu bekerja di bawah tekanan, dan mematuhi SOP.
 
 ATURAN PILIHAN GANDA & KUIS (WAJIB FORMAT TEPAT):
 - Baris jawaban akhir WAJIB berupa 1 baris jelas:
@@ -979,28 +991,63 @@ btnGroq.addEventListener("click", async () => {
     }
 
     setStatus("Mengerjakan soal dengan Groq...");
-    const res = await fetch(GROQ_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${activeGroqKey}`
-      },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        temperature: 0.0,
-        max_tokens: 400,
-        messages: [
-          { role: "system", content: getGroqPrompt() },
-          { role: "user", content: content }
-        ]
-      })
-    });
+    let groqAnswer = "";
+    let lastGroqError = null;
 
-    if (res.status === 429) throw new Error("Rate limit Groq tercapai. Tunggu beberapa detik.");
-    if (!res.ok) throw new Error(`Groq error ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    for (let i = 0; i < GROQ_MODELS.length; i++) {
+      const model = GROQ_MODELS[i];
+      try {
+        const res = await fetch(GROQ_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${activeGroqKey}`
+          },
+          body: JSON.stringify({
+            model: model,
+            temperature: 0.0,
+            max_tokens: 400,
+            messages: [
+              { role: "system", content: getGroqPrompt() },
+              { role: "user", content: content }
+            ]
+          })
+        });
 
-    const data = await res.json();
-    const groqAnswer = data.choices?.[0]?.message?.content || "";
+        if (res.status === 429) {
+          if (i < GROQ_MODELS.length - 1) {
+            setStatus(`Model Groq ${model} limit (429). Mengalihkan ke cadangan (${GROQ_MODELS[i + 1]})...`);
+            continue;
+          } else {
+            lastGroqError = new Error("Rate limit Groq tercapai pada seluruh model.");
+            break;
+          }
+        }
+
+        if (!res.ok) {
+          throw new Error(`Groq error ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        }
+
+        const data = await res.json();
+        groqAnswer = data.choices?.[0]?.message?.content || "";
+        if (groqAnswer) break;
+      } catch (err) {
+        lastGroqError = err;
+        if (i < GROQ_MODELS.length - 1) continue;
+      }
+    }
+
+    // Jika seluruh model Groq terkena rate limit (429) atau gagal, otomatis alihkan ke Gemini!
+    if (!groqAnswer) {
+      const activeGeminiKey = getApiKey("GEMINI_API_KEY");
+      if (activeGeminiKey) {
+        setStatus("Groq sedang mencapai batas limit (429). Mengalihkan otomatis ke Gemini...");
+        const visionAnswer = await executeGeminiVision();
+        await presentAnswerAndAutoProcess(visionAnswer);
+        return;
+      }
+      throw lastGroqError || new Error("Rate limit Groq tercapai. Tunggu beberapa detik.");
+    }
 
     if (isVisualProblem(groqAnswer)) {
       setStatus("🖼️ Soal butuh visual! Mengalihkan ke Gemini Vision...");

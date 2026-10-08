@@ -146,11 +146,49 @@ async function handleCallGroq(questionText) {
     } catch (e) {
       lastError = e;
       if (model === GROQ_MODELS[GROQ_MODELS.length - 1]) {
-        throw e;
+        break;
       }
     }
   }
-  throw lastError || new Error("Gagal memanggil model Groq.");
+
+  // Jika seluruh model Groq terkena rate limit (429) atau gagal, otomatis alihkan ke Gemini Flash!
+  const activeGeminiKey = getApiKey("GEMINI_API_KEY");
+  if (activeGeminiKey) {
+    try {
+      const geminiAnswer = await handleCallGeminiText(questionText);
+      if (geminiAnswer) return geminiAnswer;
+    } catch (_) { }
+  }
+
+  throw lastError || new Error("Gagal memanggil model AI (Groq & Gemini).");
+}
+
+// Eksekusi Panggilan Teks Gemini Flash (Cadangan Tangguh jika Groq limit 429)
+async function handleCallGeminiText(questionText) {
+  const activeGeminiKey = getApiKey("GEMINI_API_KEY");
+  if (!activeGeminiKey) return "";
+  for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: `${getGroqPrompt()}\n\nSOAL:\n${questionText}` }]
+          }],
+          generationConfig: {
+            temperature: 0.0,
+            maxOutputTokens: 400
+          }
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      }
+    } catch (_) { }
+  }
+  return "";
 }
 
 // Eksekusi Panggilan Gemini Vision
