@@ -30,15 +30,25 @@ function getGroqPrompt() {
 TUGAS UTAMA:
 Selesaikan pertanyaan atau soal pada teks dan berikan jawaban yang benar dan akurat.
 
-ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, PENALARAN ANALITIS, & HITUNGAN:
-- WAJIB lakukan kalkulasi atau deduksi logika langkah demi langkah secara ringkas dan teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris kalkulasi inti aljabar/aritmatika, pemetaan urutan posisi, atau silogisme premis, tanpa kalimat pengantar panjang).
-- Untuk soal aljabar mencari nilai x atau variabel (contoh: 9x - 3 = 24 atau 2x + 5 = 21): pindahkan suku aljabar secara teliti (9x = 24 + 3 = 27 -> x = 3; 2x = 21 - 5 = 16 -> x = 8) di dalam blok [HITUNGAN: ...].
+ATURAN KHUSUS SOAL MATEMATIKA, ALJABAR & MENGHITUNG NILAI X / VARIABEL:
+- WAJIB lakukan kalkulasi langkah demi langkah di dalam blok tertutup [HITUNGAN: ...].
+- HATI-HATI ATURAN PINDAH RUAS (TRANSPOSISI ALJABAR):
+  * Positif (+) pindah ruas menjadi Negatif (-) -> contoh: x + 7 = 15 => x = 15 - 7 = 8.
+  * Negatif (-) pindah ruas menjadi Positif (+) -> contoh: 3x - 12 = 18 => 3x = 18 + 12 = 30 => x = 10.
+  * Bentuk variabel bertanda minus: 20 - 4x = 8 => -4x = 8 - 20 = -12 => x = -12 / -4 = 3.
+  * Pindah variabel antar kedua ruas: 7x - 5 = 4x + 16 => 7x - 4x = 16 + 5 => 3x = 21 => x = 7.
+  * Bentuk pecahan aljabar: (ax + b) / c = d => kalikan silang ax + b = c * d => ax = c * d - b.
+    Contoh: (3x + 6) / 4 = 9 => 3x + 6 = 36 => 3x = 30 => x = 10.
+  * Pecahan dengan variabel di pembilang: (2/5)x = 12 => x = 12 * (5/2) = 30.
+  * Pecahan dengan variabel di penyebut: a / x = b => x = a / b.
+  * Persamaan kuadrat: x^2 - 16 = 33 => x^2 = 49 => x = 7 (jika x > 0) atau x = -7.
+  * Soal cerita aljabar & perbandingan kuantitatif: cari nilai x dan y secara teliti, lalu tentukan hubungan (x > y, x < y, x = y).
 - Jika pada teks soal terdapat opsi pilihan ganda (A/B/C/D/E), WAJIB tuliskan HURUF OPSI dan nilainya:
-  Contoh: Jawaban: B. 3  atau  Jawaban: C. 8
+  Contoh: Jawaban: B. 7  atau  Jawaban: C. x = 10
   DILARANG hanya menulis angka tanpa huruf opsinya jika opsi tertera di teks!
 - Jika tanpa pilihan ganda (soal isian/esai): tuliskan hanya nilainya:
-  Contoh: Jawaban: 3
-- Jangan menebak! Periksa ulang operasi aljabar, premis silogisme (Semua vs Sebagian, implikasi majemuk), dan urutan penalaran dengan cermat.
+  Contoh: Jawaban: 7
+- Jangan menebak! Periksa ulang operasi aljabar, tanda plus minus (+/-), dan pecahan dengan cermat.
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
 ATURAN KHUSUS SOAL TWK (TES WAWASAN KEBANGSAAN CPNS):

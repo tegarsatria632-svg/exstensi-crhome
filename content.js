@@ -207,6 +207,10 @@
     // Auto-Next
     if (msg.type === "TRIGGER_AUTO_NEXT") {
       try {
+        if (!isAnswerActuallySelectedOnPage()) {
+          sendResponse({ success: false, notAnswered: true, message: "Jawaban belum terisi di halaman web." });
+          return false;
+        }
         var nextRes = findAndClickNextButton();
         sendResponse(nextRes);
       } catch (err) {
@@ -360,9 +364,16 @@
     var rawTarget = (snippet || "").trim();
     var cleanSnippet = cleanText(rawTarget);
 
-    // Ekstraksi nilai angka murni jika target berupa "x = 3", "nilai x = 3", "-4", "3", "8", atau desimal
-    var numMatch = rawTarget.match(/^(?:(?:nilai\s*)?[a-z]\s*=\s*)?(-?\d+(?:[\.,]\d+)?)$/i);
-    var pureNum = numMatch ? numMatch[1].trim() : "";
+    // Ekstraksi nilai variabel atau angka murni:
+    // Mendukung: "x = 7", "nilai x = 7", "x = -4", "x = 1/2", "x = 3.5", "-4", "7", "x = y", "x > y", dsb.
+    var varMatch = rawTarget.match(/^(?:(?:nilai\s*)?[a-z]\s*=\s*)(.+)$/i);
+    var pureNum = "";
+    if (varMatch) {
+      pureNum = varMatch[1].trim();
+    } else {
+      var numMatch = rawTarget.match(/^(-?\d+(?:[\.,\/]\d+)?)/i);
+      if (numMatch) pureNum = numMatch[1].trim();
+    }
 
     // Jika upperLetter ternyata berupa angka murni (misal: "3" dari "Jawaban: 3"), jadikan pureNum jika belum ada
     if (!pureNum && /^-?\d+$/.test(upperLetter)) {
@@ -386,13 +397,26 @@
     });
 
     // --- TIER 1: MATCH LENGKAP: HURUF DAN TEKS/ANGKA OPSI COCOK SEKALIGUS (100% PRESISI) ---
-    // Contoh: "C. 3" saat jawaban C dan nilai x = 3, atau "C. Jakarta"
+    // Contoh: "C. 7" saat jawaban C dan nilai x = 7, atau "C. Jakarta"
     if (isRealLetter && (cleanSnippet || pureNum)) {
       for (var i = 0; i < candidateOptions.length; i++) {
         var el = candidateOptions[i];
         var elText = (el.textContent || el.innerText || el.value || "").trim();
         var elClean = cleanText(elText);
-        var matchText = (cleanSnippet && elClean.includes(cleanSnippet)) || (pureNum && (elClean.includes(pureNum) || new RegExp('\\b' + pureNum + '\\b').test(elClean)));
+        var isNumMatch = false;
+        if (pureNum) {
+          if (elClean === pureNum || elClean.includes(pureNum)) {
+            isNumMatch = true;
+          } else {
+            try {
+              var escaped = pureNum.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+              if (new RegExp('(^|\\s|[=><])' + escaped + '($|\\s|[,.;])').test(elClean)) {
+                isNumMatch = true;
+              }
+            } catch (_) {}
+          }
+        }
+        var matchText = (cleanSnippet && elClean.includes(cleanSnippet)) || isNumMatch;
         if (matchesLetterPrefix(elText, upperLetter) && matchText) {
           var res1 = activateOption(el);
           if (res1) return elText.slice(0, 50);
@@ -401,7 +425,7 @@
     }
 
     // --- TIER 2: MATCH TEKS PERSIS ATAU NILAI ANGKA PERSIS (MENDUKUNG ANGKA 1 DIGIT SEPERTI '3', '8', '7') ---
-    // Contoh: "3" cocok persis dengan opsi "C. 3" atau opsi "3"
+    // Contoh: "7" cocok persis dengan opsi "C. 7" atau opsi "7"
     if (cleanSnippet || pureNum) {
       for (var j = 0; j < candidateOptions.length; j++) {
         var opt = candidateOptions[j];
@@ -409,7 +433,20 @@
         var c = cleanText(raw);
         var stripped = cleanText(stripLetterPrefix(raw));
 
-        if (c === cleanSnippet || stripped === cleanSnippet || (pureNum && (c === pureNum || stripped === pureNum))) {
+        var isTier2NumMatch = false;
+        if (pureNum) {
+          if (c === pureNum || stripped === pureNum) isTier2NumMatch = true;
+          else {
+            try {
+              var esc2 = pureNum.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+              if (new RegExp('(^|\\s|[=><])' + esc2 + '($|\\s|[,.;])').test(c) || new RegExp('(^|\\s|[=><])' + esc2 + '($|\\s|[,.;])').test(stripped)) {
+                isTier2NumMatch = true;
+              }
+            } catch (_) {}
+          }
+        }
+
+        if (c === cleanSnippet || stripped === cleanSnippet || isTier2NumMatch) {
           var res2 = activateOption(opt);
           if (res2) return raw.slice(0, 50);
         }
@@ -1026,8 +1063,63 @@
     return false;
   }
 
+  // === VERIFIKASI RIIL APAKAH JAWABAN SUDAH TERPILIH/TERISI DI HALAMAN ===
+  function isAnswerActuallySelectedOnPage() {
+    try {
+      // 1. Cek input radio atau checkbox HTML standar yang :checked
+      var checkedInputs = Array.from(document.querySelectorAll("input[type='radio']:checked, input[type='checkbox']:checked")).filter(function(el) {
+        return !isHudElement(el) && isElementVisible(el.parentElement || el);
+      });
+      if (checkedInputs.length > 0) return true;
+
+      // 2. Cek atribut aksesibilitas ARIA (aria-checked='true' atau aria-selected='true')
+      var ariaSelected = Array.from(document.querySelectorAll("[aria-checked='true'], [aria-selected='true']")).filter(function(el) {
+        return !isHudElement(el) && isElementVisible(el);
+      });
+      if (ariaSelected.length > 0) return true;
+
+      // 3. Cek data-state / data-checked pada web modern (Radix UI, Headless UI, React, dsb)
+      var dataStateSelected = Array.from(document.querySelectorAll("[data-state='checked'], [data-checked='true'], [data-selected='true']")).filter(function(el) {
+        return !isHudElement(el) && isElementVisible(el);
+      });
+      if (dataStateSelected.length > 0) return true;
+
+      // 4. Cek class seleksi pada elemen yang merepresentasikan opsi / jawaban kuis (bukan tombol navigasi/HUD)
+      var selectedElements = Array.from(document.querySelectorAll(
+        ".selected, [class*='selected' i], [class*='checked' i], [class*='active' i], .pilihan-selected, .opsi-selected, .is-selected, .chosen"
+      )).filter(function(el) {
+        if (!isElementVisible(el) || isHudElement(el) || isHeaderNavElement(el)) return false;
+        var elText = (el.textContent || el.innerText || "").trim().toLowerCase();
+        if (isForbiddenButton(elText) || isNextButtonCandidate(el)) return false;
+        var isOptionLike = el.matches("input, [role='radio'], [role='checkbox'], [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], label, li, tr, td") ||
+          !!el.closest(".option-item, [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], label");
+        return isOptionLike;
+      });
+      if (selectedElements.length > 0) return true;
+
+      // 5. Cek jika soal bertipe isian / esai dan sudah terisi teks (bukan form search/login/token)
+      var textInputs = Array.from(document.querySelectorAll("textarea, input[type='text'], input:not([type]), [contenteditable='true']")).filter(function(el) {
+        if (!isElementVisible(el) || isHudElement(el)) return false;
+        var meta = ((el.name || "") + " " + (el.id || "") + " " + (el.placeholder || "")).toLowerCase();
+        if (meta.includes("search") || meta.includes("cari") || meta.includes("token") || meta.includes("pass") || meta.includes("login")) return false;
+        var val = el.isContentEditable ? (el.innerText || "").trim() : (el.value || "").trim();
+        return val.length > 0;
+      });
+      if (textInputs.length > 0) return true;
+
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // EKSEKUSI KLIK TOMBOL NEXT (TUNGGAL, AMAN, DAN ANTI-DOBEL LOMPAT)
   function findAndClickNextButton(isForce) {
+    // ATURAN MUTLAK AUTO-NEXT: JANGAN DI-NEXT DULU JIKA JAWABAN BELUM TERISI DI HALAMAN!
+    if (!isForce && autoNextEnabled && !isAnswerActuallySelectedOnPage()) {
+      return { success: false, notAnswered: true };
+    }
+
     var detected = detectNextButtonState();
     if (detected.isFinalSubmit) {
       return { success: false, isFinalSubmit: true, forbiddenText: detected.buttonText };
@@ -1520,57 +1612,70 @@
         }
 
         if (clicked) {
-          actionCompleted = true;
-          setHudStatus('✅ Opsi "' + choiceName + '" BERHASIL DIKLIK!', false);
+          setHudStatus('✅ Opsi "' + choiceName + '" diklik di layar...', false);
         } else if (hasEssayField) {
           // Fallback ke isian esai jika opsi tidak terklik tapi ada kolom esai
           var filledFallback = findAndFillEssay(rawAnswer);
           if (filledFallback) {
-            actionCompleted = true;
             setHudStatus('✍️ Jawaban berhasil diketik & tersimpan permanen!', false);
           } else {
-            actionCompleted = false;
             setHudStatus('⚠️ Opsi "' + choiceName + '" belum terklik otomatis.', false);
           }
         } else if (ansInfo.letter) {
-          actionCompleted = false;
           setHudStatus('⚠️ Opsi "' + choiceName + '" belum terklik otomatis. Silakan klik di layar web.', false);
         } else {
-          actionCompleted = false;
           setHudStatus("⚠️ Kolom jawaban belum terisi otomatis. Silakan salin jawaban.", false);
         }
       }
+
+      // Berikan jeda 350ms untuk rendering DOM & event loop web
+      await new Promise(function(r) { setTimeout(r, 350); });
+      var isAnsweredInDom = isAnswerActuallySelectedOnPage();
+
+      if (!isAnsweredInDom && (ansInfo.letter || ansInfo.targetText)) {
+        // Coba klik ulang dengan aktivasi langsung
+        findAndClickOption(ansInfo.letter, ansInfo.targetText);
+        await new Promise(function(r) { setTimeout(r, 400); });
+        isAnsweredInDom = isAnswerActuallySelectedOnPage();
+      }
+
+      actionCompleted = isAnsweredInDom;
     } else {
-      actionCompleted = true; // Jika user mematikan auto-click secara sengaja
+      // Jika auto-click dimatikan, periksa apakah pengguna sudah memilih jawaban sendiri
+      actionCompleted = isAnswerActuallySelectedOnPage();
     }
 
-    // JIKA JAWABAN BELUM TERPILIH/TERISI: DILARANG KERAS AUTO-NEXT!
-    if (!actionCompleted) {
+    // === ATURAN MUTLAK AUTO-NEXT: DETEKSI JAWABAN BELUM TERISI ===
+    // JIKA JAWABAN BELUM TERBACA TERPILIH/TERISI DI WEB: JANGAN DI-NEXT DULU!
+    if (!actionCompleted || !isAnswerActuallySelectedOnPage()) {
+      setHudStatus('⚠️ Jawaban belum terisi di web! Menahan Next sampai jawaban dipilih...', false);
       return { success: false, notSelected: true, answer: displayAnswer };
     }
 
-    // Jeda 1000ms agar pemilihan opsi stabil & terlihat jelas oleh pengguna
-    await new Promise(function(r) { setTimeout(r, 1000); });
+    // Jeda 800ms agar pemilihan opsi stabil & terlihat jelas oleh pengguna
+    await new Promise(function(r) { setTimeout(r, 800); });
 
-    // === TAHAP 2: HANYA SETELAH JAWABAN 100% TERPILIH/TERISI, BARU PERIKSA NEXT ===
-    // JIKA INI NOMOR TERAKHIR (TOMBOL = KUMPULKAN / SUBMIT / SELESAI):
-    // JAWABAN SUDAH TERISI DI TAHAP 1. STOP DI SINI & DILARANG KLIK SUBMIT!
+    // === TAHAP 2: HANYA SETELAH TERBACA SUDAH TERJAWAB, BARU LANJUTKAN LEMBARAN SELANJUTNYA ===
     var detectedNext = detectNextButtonState();
     if (detectedNext.isFinalSubmit) {
       setHudStatus("🛑 Soal terakhir sudah dijawab & tersimpan! Silakan periksa jawaban & kumpulkan secara manual.", false);
       return { finished: true, reason: "final_submit" };
     }
 
-    // PERIKSA PREFERENSI AUTO-NEXT SECARA KETAT:
-    // JIKA USER MEMATIKAN AUTO-NEXT (autoNextEnabled === false), DILARANG KERAS MENGKLIK NEXT!
     var shouldNext = autoNextEnabled === true;
     if (shouldNext) {
-      setHudStatus("⏩ Jawaban tersimpan. Menuju nomor berikutnya dalam 1.2 detik...", true);
+      setHudStatus("✅ Terbaca sudah terjawab! Melanjutkan ke lembar selanjutnya dalam 1.2 detik...", true);
       await new Promise(function(r) { setTimeout(r, 1200); });
+
+      // Verifikasi ulang sekali lagi sesaat sebelum klik tombol Next
+      if (!isAnswerActuallySelectedOnPage()) {
+        setHudStatus("⚠️ Jawaban belum terisi di web! Membatalkan perpindahan lembar...", false);
+        return { success: false, notSelected: true, answer: displayAnswer };
+      }
 
       var nextRes = findAndClickNextButton();
       if (nextRes && nextRes.success) {
-        setHudStatus('⏩ Berpindah ke nomor berikutnya! (' + (nextRes.buttonText || ">") + ')', false);
+        setHudStatus('⏩ Berpindah ke lembar berikutnya! (' + (nextRes.buttonText || ">") + ')', false);
         return { success: true };
       } else if (nextRes && nextRes.isFinalSubmit) {
         setHudStatus("🛑 Soal terakhir sudah dijawab! Kumpulkan kuis secara manual.", false);
@@ -1660,12 +1765,16 @@
             }
           }
           if (sameQuestionStall === 2) {
-            setHudStatus("⚠️ Menekan tombol Selanjutnya untuk melanjutkan...", true);
-            findAndClickNextButton(true);
-            var transitionedClick = await waitForQuestionTransition(currentText);
-            if (transitionedClick) {
-              sameQuestionStall = 0;
-              continue;
+            if (isAnswerActuallySelectedOnPage()) {
+              setHudStatus("⚠️ Menekan tombol Selanjutnya untuk melanjutkan...", true);
+              findAndClickNextButton(true);
+              var transitionedClick = await waitForQuestionTransition(currentText);
+              if (transitionedClick) {
+                sameQuestionStall = 0;
+                continue;
+              }
+            } else {
+              setHudStatus("⚠️ Soal ini belum terisi jawabannya! Silakan pilih jawaban sebelum lanjut.", false);
             }
           }
           if (sameQuestionStall >= 3) {
@@ -1698,10 +1807,21 @@
         }
 
         if (step.notSelected) {
-          setHudStatus("⚠️ Pilihan belum dapat diklik otomatis. Silakan klik pilihan di web untuk melanjutkan.", false);
-          var transitionedManual = await waitForQuestionTransition(currentText);
-          if (!transitionedManual) {
-            await new Promise(function(r) { setTimeout(r, 2000); });
+          setHudStatus("⚠️ Jawaban belum terisi di web! Menunggu jawaban dipilih sebelum lanjut ke lembar berikutnya...", false);
+          // Tunggu dan pantau apakah jawaban terisi (oleh user yang memilih di layar)
+          var waitCount = 0;
+          while (isAgentRunning && waitCount < 8) {
+            await new Promise(function(r) { setTimeout(r, 500); });
+            if (isAnswerActuallySelectedOnPage()) {
+              setHudStatus("✅ Terbaca sudah terjawab! Menyiapkan lembar selanjutnya...", true);
+              break;
+            }
+            waitCount++;
+          }
+          if (isAnswerActuallySelectedOnPage() && autoNextEnabled) {
+            await new Promise(function(r) { setTimeout(r, 1000); });
+            findAndClickNextButton();
+            await waitForQuestionTransition(currentText);
           }
           continue;
         }
