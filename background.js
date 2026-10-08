@@ -26,21 +26,28 @@ const GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-
 
 // Prompt Prompts Terstandarisasi
 function getGroqPrompt() {
-  return `Kamu adalah AI penjawab kuis, ujian, dan tes super cepat, akurat, dan to-the-point.
+  return `Kamu adalah AI penjawab kuis, ujian, matematika, dan tes akademik tingkat ahli dengan akurasi 100% dan super to-the-point.
 TUGAS UTAMA:
-Baca pertanyaan atau soal pada teks dan LANGSUNG berikan jawaban yang benar.
+Selesaikan pertanyaan atau soal pada teks dan berikan jawaban yang benar dan akurat.
 
-ATURAN PILIHAN GANDA & KUIS (SANGAT KETAT - WAJIB HANYA 1 BARIS):
-- TULISKAN HANYA KUNCI JAWABANNYA LANGSUNG PADA 1 BARIS SAJA!
-- DILARANG MENULISKAN ALASAN, DILARANG MENULISKAN PENJELASAN, DILARANG MENULISKAN TEORI APA PUN!
-- Contoh jika opsi memiliki huruf (A/B/C/D/E):
+ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, DAN HITUNGAN:
+- WAJIB lakukan perhitungan langkah demi langkah secara ringkas dan teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris kalkulasi inti aljabar/aritmatika, tanpa kalimat pengantar).
+- Jangan menebak! Periksa ulang operasi aljabar, perkalian, pembagian, dan substitusi variabel dengan cermat.
+- Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
+
+ATURAN PILIHAN GANDA & KUIS (WAJIB FORMAT TEPAT):
+- Baris jawaban akhir WAJIB berupa 1 baris jelas:
+  Contoh jika opsi memiliki huruf (A/B/C/D/E):
   Jawaban: B. [Teks pilihan]
-  (atau Jawaban: B)
+  (atau Jawaban: B jika tanpa teks)
 - Contoh jika opsi berupa teks langsung (seperti Strongly Agree, Agree, Neutral, Disagree, Benar, Salah, angka, dsb):
   Jawaban: [Teks opsi yang benar]
-  (Contoh: Jawaban: Strongly Agree)
-- Contoh jika nomor urut kotak (1-8):
+- Contoh jika nomor urut kotak (1-9):
   Jawaban: 4
+- DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...].
+
+ATURAN SOAL ESAI / ISIAN SINGKAT:
+- Tuliskan perhitungan di [HITUNGAN: ...], lalu di baris paling bawah: Jawaban: [Hasil angka atau jawaban singkat].
 
 ATURAN FORMAT (SANGAT KETAT):
 - DILARANG menggunakan karakter bintang (*) atau cetak tebal (**) sama sekali.
@@ -50,22 +57,24 @@ ATURAN FORMAT (SANGAT KETAT):
 }
 
 function getGeminiVisionPrompt() {
-  return `Kamu adalah AI pemecah soal bergambar, grafik, tabel, dan tes IQ/kuis visual super cepat dan to-the-point.
+  return `Kamu adalah AI pemecah soal bergambar, grafik, tabel, matematika visual, dan tes IQ visual super cepat, akurat 100%, dan to-the-point.
 TUGAS UTAMA:
-Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, kuis skala psikometri/IQ, atau lembar tugas). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN YANG BENAR!
+Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, matematika/geometri, atau kuis visual). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN YANG BENAR!
 
-ATURAN PILIHAN GANDA & TES IQ (SANGAT KETAT - WAJIB HANYA 1 BARIS):
-- TULISKAN HANYA KUNCI JAWABANNYA LANGSUNG PADA 1 BARIS SAJA!
-- DILARANG MENULISKAN ALASAN, DILARANG MENULISKAN PENJELASAN, DILARANG MENULISKAN RANGKUMAN ATAU TEORI!
-- Contoh jika opsi ada huruf (A-H):
+ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, DAN TES IQ VISUAL:
+- WAJIB lakukan analisis/perhitungan pola dan angka secara teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris ringkas inti pola/rumus).
+- Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
+
+ATURAN PILIHAN GANDA & TES IQ:
+- Baris jawaban akhir WAJIB berupa 1 baris jelas:
+  Contoh jika opsi ada huruf (A-H):
   Jawaban: B. [Teks pilihan]
   (atau Jawaban: B)
-- Contoh jika opsi berupa teks langsung (seperti Strongly Agree, Agree, Neutral, Disagree, Benar, Salah, dsb):
-  Jawaban: [Teks opsi yang benar]
-  (Contoh: Jawaban: Strongly Agree)
 - Contoh jika pola tes IQ berupa kotak nomor urut:
-  Jawaban: [Nomor Kotak atau Huruf Opsi]
-  (Contoh: Jawaban: 4 atau Jawaban: D)
+  Jawaban: 4 (atau Jawaban: D)
+- Contoh jika opsi berupa teks langsung:
+  Jawaban: [Teks opsi yang benar]
+- DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...].
 
 ATURAN FORMAT (SANGAT KETAT):
 - DILARANG menggunakan karakter bintang (*) atau tanda tebal ganda (**) sama sekali.
@@ -89,8 +98,8 @@ async function handleCallGroq(questionText) {
     },
     body: JSON.stringify({
       model: GROQ_MODEL,
-      temperature: 0.1,
-      max_tokens: 300,
+      temperature: 0.0,
+      max_tokens: 400,
       messages: [
         { role: "system", content: getGroqPrompt() },
         { role: "user", content: questionText }
@@ -145,7 +154,7 @@ async function handleCallGeminiVision(windowId = null) {
           contents: [{ parts }],
           generationConfig: {
             maxOutputTokens: 512,
-            temperature: 0.1
+            temperature: 0.0
           }
         })
       });

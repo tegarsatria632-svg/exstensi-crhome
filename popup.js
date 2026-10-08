@@ -26,24 +26,28 @@ const MAX_CHARS = 16000;
 
 // 1. GROQ: Penjawab Cepat Soal di Layar (WAJIB TO-THE-POINT TANPA PENJELASAN)
 function getGroqPrompt() {
-  return `Kamu adalah AI penjawab kuis, ujian, dan tes super cepat, akurat, dan to-the-point.
+  return `Kamu adalah AI penjawab kuis, ujian, matematika, dan tes akademik tingkat ahli dengan akurasi 100% dan super to-the-point.
 TUGAS UTAMA:
-Baca pertanyaan atau soal pada teks dan LANGSUNG berikan jawaban yang benar.
+Selesaikan pertanyaan atau soal pada teks dan berikan jawaban yang benar dan akurat.
 
-ATURAN PILIHAN GANDA & KUIS (SANGAT KETAT - WAJIB HANYA 1 BARIS):
-- TULISKAN HANYA KUNCI JAWABANNYA LANGSUNG PADA 1 BARIS SAJA!
-- DILARANG MENULISKAN ALASAN, DILARANG MENULISKAN PENJELASAN, DILARANG MENULISKAN TEORI APA PUN!
-- Contoh jika opsi memiliki huruf (A/B/C/D/E):
+ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, DAN HITUNGAN:
+- WAJIB lakukan perhitungan langkah demi langkah secara ringkas dan teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris kalkulasi inti aljabar/aritmatika, tanpa kalimat pengantar).
+- Jangan menebak! Periksa ulang operasi aljabar, perkalian, pembagian, dan substitusi variabel dengan cermat.
+- Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
+
+ATURAN PILIHAN GANDA & KUIS (WAJIB FORMAT TEPAT):
+- Baris jawaban akhir WAJIB berupa 1 baris jelas:
+  Contoh jika opsi memiliki huruf (A/B/C/D/E):
   Jawaban: B. [Teks pilihan]
-  (atau Jawaban: B)
+  (atau Jawaban: B jika tanpa teks)
 - Contoh jika opsi berupa teks langsung (seperti Strongly Agree, Agree, Neutral, Disagree, Benar, Salah, angka, dsb):
   Jawaban: [Teks opsi yang benar]
-  (Contoh: Jawaban: Strongly Agree)
-- Contoh jika nomor urut kotak (1-8):
+- Contoh jika nomor urut kotak (1-9):
   Jawaban: 4
+- DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...].
 
-ATURAN SOAL ESAI / ISIAN TANPA PILIHAN:
-- Jika benar-benar soal esai atau isian tanpa opsi, jawab langsung inti jawaban secara padat dan tuntas.
+ATURAN SOAL ESAI / ISIAN SINGKAT:
+- Tuliskan perhitungan di [HITUNGAN: ...], lalu di baris paling bawah: Jawaban: [Hasil angka atau jawaban singkat].
 
 ATURAN FORMAT (SANGAT KETAT):
 - DILARANG menggunakan karakter bintang (*) atau cetak tebal (**) sama sekali.
@@ -54,22 +58,24 @@ ATURAN FORMAT (SANGAT KETAT):
 
 // 2. GEMINI VISION: Penjawab Soal Bergambar & Tes IQ Visual (WAJIB TO-THE-POINT TANPA PENJELASAN)
 function getGeminiVisionPrompt() {
-  return `Kamu adalah AI pemecah soal bergambar, grafik, tabel, dan tes IQ/kuis visual super cepat dan to-the-point.
+  return `Kamu adalah AI pemecah soal bergambar, grafik, tabel, matematika visual, dan tes IQ visual super cepat, akurat 100%, dan to-the-point.
 TUGAS UTAMA:
-Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, kuis skala psikometri/IQ, atau lembar tugas). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN YANG BENAR!
+Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, matematika/geometri, atau kuis visual). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN YANG BENAR!
 
-ATURAN PILIHAN GANDA & TES IQ (SANGAT KETAT - WAJIB HANYA 1 BARIS):
-- TULISKAN HANYA KUNCI JAWABANNYA LANGSUNG PADA 1 BARIS SAJA!
-- DILARANG MENULISKAN ALASAN, DILARANG MENULISKAN PENJELASAN, DILARANG MENULISKAN RANGKUMAN ATAU TEORI!
-- Contoh jika opsi ada huruf (A-H):
+ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, DAN TES IQ VISUAL:
+- WAJIB lakukan analisis/perhitungan pola dan angka secara teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris ringkas inti pola/rumus).
+- Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
+
+ATURAN PILIHAN GANDA & TES IQ:
+- Baris jawaban akhir WAJIB berupa 1 baris jelas:
+  Contoh jika opsi ada huruf (A-H):
   Jawaban: B. [Teks pilihan]
   (atau Jawaban: B)
-- Contoh jika opsi berupa teks langsung (seperti Strongly Agree, Agree, Neutral, Disagree, Benar, Salah, dsb):
-  Jawaban: [Teks opsi yang benar]
-  (Contoh: Jawaban: Strongly Agree)
 - Contoh jika pola tes IQ berupa kotak nomor urut:
-  Jawaban: [Nomor Kotak atau Huruf Opsi]
-  (Contoh: Jawaban: 4 atau Jawaban: D)
+  Jawaban: 4 (atau Jawaban: D)
+- Contoh jika opsi berupa teks langsung:
+  Jawaban: [Teks opsi yang benar]
+- DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...].
 
 ATURAN FORMAT (SANGAT KETAT):
 - DILARANG menggunakan karakter bintang (*) atau tanda tebal ganda (**) sama sekali.
@@ -504,6 +510,8 @@ function cleanAiSymbols(rawText) {
   if (!rawText) return "";
   let s = rawText;
 
+  s = s.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  s = s.replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "");
   s = s.replace(/\*{1,4}(.*?)\*{1,4}/g, "$1");
   s = s.replace(/_{1,3}(.*?)_{1,3}/g, "$1");
   s = s.replace(/\*/g, "");
@@ -575,23 +583,46 @@ async function getActivePageInfo() {
 function extractAnswerInfo(text) {
   if (!text) return { letter: null, targetText: "", isMultipleChoice: false, firstLine: "" };
 
-  // 1. Bersihkan badge & markdown formatting (*, _, `, #)
-  const clean = text.replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
+  // 1. Bersihkan blok think, hitungan tertutup, badge & markdown formatting (*, _, `, #)
+  const clean = text.replace(/<think>[\s\S]*?<\/think>/gi, "")
+                    .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
+                    .replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
                     .replace(/[*_`#]/g, "")
                     .trim();
 
-  const lines = clean.split("\n").map(l => l.trim()).filter(Boolean);
-  const firstLine = lines[0] || "";
+  let lines = clean.split("\n").map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+
+  let answerLine = "";
+  // Cari baris yang secara eksplisit memuat kata kunci Jawaban / Kunci (prioritaskan baris paling akhir jika ada beberapa)
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i];
+    if (/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)\s*[:\-]/i.test(line)) {
+      answerLine = line;
+      break;
+    }
+  }
+
+  // Jika tidak ada baris kata kunci, cari baris yang memuat huruf awalan "C. ..." dari bawah ke atas
+  if (!answerLine) {
+    for (let j = lines.length - 1; j >= 0; j--) {
+      if (/^[\(\[]?[A-H][\)\.\:\-\s\]\}]+/i.test(lines[j])) {
+        answerLine = lines[j];
+        break;
+      }
+    }
+  }
+  if (!answerLine) answerLine = lines[lines.length - 1] || lines[0] || "";
 
   // 2. Bersihkan prefix nomor soal jika ada (contoh "2. C. Jakarta" atau "Soal 2: B")
-  const strippedLine = firstLine.replace(/^(?:(?:soal|pertanyaan|no|nomor)\s*\d+[:.\-\s]*|\d+[:.\-\s]+(?=[A-H\(\[]|[a-z]))/i, "").trim();
+  const strippedLine = answerLine.replace(/^(?:(?:soal|pertanyaan|no|nomor)\s*\d+[:.\-\s]*|\d+[:.\-\s]+(?=[A-H\(\[]|[a-z]))/i, "").trim();
 
   let letter = null;
   let targetText = "";
 
-  // 3. Deteksi pola huruf: "Jawaban: C. Jakarta", "Kunci Jawaban: C", "Kunci: (C)", "Opsi: C", "C. Jakarta", "Jawaban yang benar adalah C"
-  const kwRegex = /^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*[\(\[]?([A-H1-8])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
-  const directLetterRegex = /^[\(\[]?([A-H])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
+  // 3. Deteksi pola huruf / angka opsi: "Jawaban: C. Jakarta", "Kunci Jawaban: C", "Kunci: (C)", "Opsi: 4", "Jawaban: 4"
+  const kwRegex = /^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*[\(\[]?([A-H1-9])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
+  const directLetterRegex = /^[\(\[]?([A-H1-9])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
 
   const mKw = strippedLine.match(kwRegex);
   if (mKw && mKw[1]) {
@@ -605,13 +636,15 @@ function extractAnswerInfo(text) {
     }
   }
 
-  // 4. Jika bukan huruf tapi teks langsung (contoh: "Jawaban: Strongly Agree", "Jawaban: Jupiter")
-  if (!letter) {
+  // 4. Jika bukan huruf tapi teks langsung / angka matematika (contoh: "Jawaban: -4", "Jawaban: Rp 80.000", "Jawaban: 200", "Jawaban: Strongly Agree")
+  if (!letter || !targetText) {
     const textMatch = strippedLine.match(/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)?(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*(.+)$/i);
     if (textMatch && textMatch[1]) {
-      targetText = textMatch[1].trim();
-    } else if (strippedLine.length > 0 && strippedLine.length < 60) {
-      targetText = strippedLine;
+      const extracted = textMatch[1].trim();
+      if (!letter) targetText = extracted;
+      else if (!targetText) targetText = extracted;
+    } else if (strippedLine.length > 0 && strippedLine.length < 80) {
+      if (!targetText) targetText = strippedLine;
     }
   }
 
@@ -620,7 +653,7 @@ function extractAnswerInfo(text) {
   }
 
   const isMultipleChoice = !!letter || (!!targetText && targetText.length < 70 && !targetText.includes("\n"));
-  return { letter, targetText, isMultipleChoice, firstLine };
+  return { letter, targetText, isMultipleChoice, firstLine: answerLine };
 }
 
 async function autoClickAnswerOnPage(letter, targetText) {
@@ -775,7 +808,11 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
 
     // 2. FALLBACK UTAMA: Jika opsi tidak terklik atau bukan pilgan, otomatis ketik ke kolom isian/esai!
     if (!actionSuccess) {
-      const textToFill = rawAnswer; // Gunakan full rawAnswer agar teks esai lengkap dan tidak terpotong
+      const cleanEssay = rawAnswer
+        .replace(/<think>[\s\S]*?<\/think>/gi, "")
+        .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
+        .trim();
+      const textToFill = isMultipleChoice ? (firstLine || cleanEssay || rawAnswer) : (cleanEssay || rawAnswer);
       setStatus(`✍️ Mengetikkan jawaban ke kolom isian/esai...`, true);
       const fillRes = await autoFillEssayOnPage(textToFill);
       if (fillRes && fillRes.success) {
@@ -785,7 +822,7 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
         setStatus(`✅ Jawaban berhasil diketik & tersimpan di layar web!`, false);
       } else {
         actionSuccess = false;
-        textToDisplay = isMultipleChoice ? firstLine : rawAnswer;
+        textToDisplay = isMultipleChoice ? firstLine : (cleanEssay || rawAnswer);
         banner = letter ? `💡 [KUNCI JAWABAN: ${displayChoice}]\n⚠️ Opsi belum terpilih otomatis. Silakan klik "${displayChoice}" di layar web!\n\n` :
                           `📝 [JAWABAN ESAI/ISIAN]\n(Silakan salin atau tempel ke kolom esai)\n\n`;
         setStatus(`⚠️ Opsi/kolom belum terisi otomatis. Silakan periksa di web.`, false);
@@ -946,8 +983,8 @@ btnGroq.addEventListener("click", async () => {
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
-        temperature: 0.1,
-        max_tokens: 300,
+        temperature: 0.0,
+        max_tokens: 400,
         messages: [
           { role: "system", content: getGroqPrompt() },
           { role: "user", content: content }
@@ -1172,7 +1209,7 @@ async function executeGeminiVision() {
     try {
       const generationConfig = {
         maxOutputTokens: 512,
-        temperature: 0.1
+        temperature: 0.0
       };
 
       res = await fetch(url, {

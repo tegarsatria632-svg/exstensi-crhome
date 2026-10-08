@@ -618,6 +618,8 @@
   function findAndFillEssay(rawText) {
     if (!rawText) return null;
     var cleanText = rawText
+      .replace(/<think>[\s\S]*?<\/think>/gi, "")
+      .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
       .replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
       .replace(/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]\s*/i, "")
       .replace(/[*_`#]/g, "")
@@ -1066,23 +1068,46 @@
   function extractAnswerInfo(text) {
     if (!text) return { letter: null, targetText: "", isMultipleChoice: false, firstLine: "" };
 
-    // 1. Bersihkan badge & markdown formatting (*, _, `, #)
-    var clean = text.replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
+    // 1. Bersihkan blok think, hitungan tertutup, badge & markdown formatting (*, _, `, #)
+    var clean = text.replace(/<think>[\s\S]*?<\/think>/gi, "")
+                    .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
+                    .replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
                     .replace(/[*_`#]/g, "")
                     .trim();
 
     var lines = clean.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
-    var firstLine = lines[0] || "";
+    if (lines.length === 0) lines = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
+
+    var answerLine = "";
+    // Cari baris yang secara eksplisit memuat kata kunci Jawaban / Kunci (prioritaskan baris paling akhir jika ada beberapa)
+    for (var i = lines.length - 1; i >= 0; i--) {
+      var line = lines[i];
+      if (/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)\s*[:\-]/i.test(line)) {
+        answerLine = line;
+        break;
+      }
+    }
+
+    // Jika tidak ada baris kata kunci, cari baris yang memuat huruf awalan "C. ..." dari bawah ke atas
+    if (!answerLine) {
+      for (var j = lines.length - 1; j >= 0; j--) {
+        if (/^[\(\[]?[A-H][\)\.\:\-\s\]\}]+/i.test(lines[j])) {
+          answerLine = lines[j];
+          break;
+        }
+      }
+    }
+    if (!answerLine) answerLine = lines[lines.length - 1] || lines[0] || "";
 
     // 2. Bersihkan prefix nomor soal jika ada (contoh "2. C. Jakarta" atau "Soal 2: B")
-    var strippedLine = firstLine.replace(/^(?:(?:soal|pertanyaan|no|nomor)\s*\d+[:.\-\s]*|\d+[:.\-\s]+(?=[A-H\(\[]|[a-z]))/i, "").trim();
+    var strippedLine = answerLine.replace(/^(?:(?:soal|pertanyaan|no|nomor)\s*\d+[:.\-\s]*|\d+[:.\-\s]+(?=[A-H\(\[]|[a-z]))/i, "").trim();
 
     var letter = null;
     var targetText = "";
 
-    // 3. Deteksi pola huruf: "Jawaban: C. Jakarta", "Kunci Jawaban: C", "Kunci: (C)", "Opsi: C", "C. Jakarta", "Jawaban yang benar adalah C"
-    var kwRegex = /^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*[\(\[]?([A-H1-8])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
-    var directLetterRegex = /^[\(\[]?([A-H])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
+    // 3. Deteksi pola huruf / angka opsi: "Jawaban: C. Jakarta", "Kunci Jawaban: C", "Kunci: (C)", "Opsi: 4", "Jawaban: 4"
+    var kwRegex = /^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*[\(\[]?([A-H1-9])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
+    var directLetterRegex = /^[\(\[]?([A-H1-9])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
 
     var mKw = strippedLine.match(kwRegex);
     if (mKw && mKw[1]) {
@@ -1096,13 +1121,15 @@
       }
     }
 
-    // 4. Jika bukan huruf tapi teks langsung (contoh: "Jawaban: Strongly Agree", "Jawaban: Jupiter")
-    if (!letter) {
+    // 4. Jika bukan huruf tapi teks langsung / angka matematika (contoh: "Jawaban: -4", "Jawaban: Rp 80.000", "Jawaban: 200", "Jawaban: Strongly Agree")
+    if (!letter || !targetText) {
       var textMatch = strippedLine.match(/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)?(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*(.+)$/i);
       if (textMatch && textMatch[1]) {
-        targetText = textMatch[1].trim();
-      } else if (strippedLine.length > 0 && strippedLine.length < 60) {
-        targetText = strippedLine;
+        var extracted = textMatch[1].trim();
+        if (!letter) targetText = extracted;
+        else if (!targetText) targetText = extracted;
+      } else if (strippedLine.length > 0 && strippedLine.length < 80) {
+        if (!targetText) targetText = strippedLine;
       }
     }
 
@@ -1111,7 +1138,7 @@
     }
 
     var isMultipleChoice = !!letter || (!!targetText && targetText.length < 70 && !targetText.includes("\n"));
-    return { letter: letter, targetText: targetText, isMultipleChoice: isMultipleChoice, firstLine: firstLine };
+    return { letter: letter, targetText: targetText, isMultipleChoice: isMultipleChoice, firstLine: answerLine };
   }
 
   // === 9. SIKLUS PENGERJAAN 1 SOAL (AI AGENT EXECUTOR) ===
