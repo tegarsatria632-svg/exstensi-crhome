@@ -37,7 +37,7 @@
     var sigEl = document.createElement("div");
     sigEl.className = "ai-agent-sys-sig";
     sigEl.setAttribute("data-sig", "core");
-    sigEl.style.cssText = "position:absolute;bottom:4px;right:10px;font-size:9.5px;letter-spacing:1.2px;font-family:monospace;opacity:0.28;color:#64748b;user-select:none;pointer-events:none;font-weight:700;z-index:9;";
+    sigEl.style.cssText = "position:absolute;bottom:0;right:0;width:0;height:0;overflow:hidden;font-size:0;line-height:0;opacity:0;user-select:none;pointer-events:none;z-index:-1;";
     sigEl.textContent = _0x_get_sig();
     panelEl.appendChild(sigEl);
   }
@@ -255,7 +255,7 @@
     return false;
   }
 
-  // === 3. EKSTRAKSI TEKS & SENSOR VISUAL (BEBAS POLUSI HUD) ===
+  // === 3. EKSTRAKSI TEKS & SENSOR VISUAL (BEBAS POLUSI HUD & HEMAT TOKEN) ===
   function extractPageInfo() {
     var hud = document.getElementById("ai-study-agent-hud");
     var prevDisplay = "";
@@ -264,11 +264,23 @@
       hud.style.display = "none";
     }
 
-    var text = (document.body && (document.body.innerText || document.body.textContent) || "").trim();
+    // 1. Prioritaskan area soal / form / slide / survey jika ada
+    var questionEl = document.querySelector(".question, [class*='question' i], [class*='slide' i], [class*='quiz' i], [class*='survey' i], [class*='poll' i], form, main, article, [role='main']");
+    var text = "";
+    if (questionEl && isElementVisible(questionEl) && (questionEl.innerText || "").trim().length >= 25) {
+      text = questionEl.innerText.trim();
+    } else {
+      text = (document.body && document.body.innerText || "").trim();
+    }
 
     if (hud) {
       hud.style.display = prevDisplay;
     }
+
+    // 2. Bersihkan teks polusi (hapus watermark dan pangkas teks berlebih agar tidak terkena limit TPM 8000 Groq!)
+    text = text.replace(/bytegar/gi, "")
+               .replace(/[\r\n]{3,}/g, "\n\n")
+               .trim();
 
     var visualElements = Array.from(document.querySelectorAll("img, svg, canvas, picture, [role='img']")).filter(function(el) {
       try {
@@ -281,7 +293,7 @@
     });
 
     return {
-      text: text.slice(0, 16000),
+      text: text.slice(0, 1800),
       title: document.title,
       hasVisuals: visualElements.length > 0,
       visualCount: visualElements.length
@@ -1061,6 +1073,8 @@
 
     if (needsVision) {
       setHudStatus("📸 Menganalisis visual dengan Gemini Vision...", true);
+      if (hudElement) hudElement.style.visibility = "hidden";
+      await new Promise(function(r) { setTimeout(r, 80); });
       var res = await new Promise(function(resolve) {
         chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION" }, function(r) {
           if (chrome.runtime?.lastError) {
@@ -1070,6 +1084,7 @@
           resolve(r);
         });
       });
+      if (hudElement) hudElement.style.visibility = "visible";
       if (!res || !res.success) {
         throw new Error(res?.error || "Gagal menghubungi Gemini Vision.");
       }
@@ -1085,13 +1100,41 @@
           resolve(r);
         });
       });
+
+      // JIKA GROQ RATE LIMIT (429) ATAU PADAT: OTOMATIS FALLBACK KE GEMINI VISION!
       if (!gRes || !gRes.success) {
-        throw new Error(gRes?.error || "Gagal menghubungi Groq.");
+        var errMsg = gRes?.error || "";
+        if (errMsg.includes("429") || errMsg.includes("Rate limit") || errMsg.includes("limit reached")) {
+          setHudStatus("⏳ Groq padat (429). Mengalihkan otomatis ke Gemini Vision...", true);
+          if (hudElement) hudElement.style.visibility = "hidden";
+          await new Promise(function(r) { setTimeout(r, 80); });
+          var gFallback = await new Promise(function(resolve) {
+            chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION" }, function(r) {
+              if (chrome.runtime?.lastError) {
+                resolve({ success: false, error: chrome.runtime.lastError.message });
+                return;
+              }
+              resolve(r);
+            });
+          });
+          if (hudElement) hudElement.style.visibility = "visible";
+
+          if (gFallback && gFallback.success) {
+            rawAnswer = gFallback.answer;
+          } else {
+            throw new Error(gRes?.error || "Gagal menghubungi Groq & Gemini.");
+          }
+        } else {
+          throw new Error(gRes?.error || "Gagal menghubungi Groq.");
+        }
+      } else {
+        rawAnswer = gRes.answer;
       }
-      rawAnswer = gRes.answer;
 
       if (isVisualProblem(rawAnswer)) {
         setHudStatus("🖼️ Soal butuh gambar! Mengalihkan ke Gemini Vision...", true);
+        if (hudElement) hudElement.style.visibility = "hidden";
+        await new Promise(function(r) { setTimeout(r, 80); });
         var vRes = await new Promise(function(resolve) {
           chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION" }, function(r) {
             if (chrome.runtime?.lastError) {
@@ -1101,6 +1144,7 @@
             resolve(r);
           });
         });
+        if (hudElement) hudElement.style.visibility = "visible";
         if (vRes && vRes.success) {
           rawAnswer = vRes.answer;
         }
