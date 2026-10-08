@@ -1090,29 +1090,34 @@
     return { hasNext: false, isFinalSubmit: false, buttonText: "", nextElement: null };
   }
 
-  // Helper untuk melompat langsung ke nomor soal berikutnya melalui grid palet nomor CBT
-  function clickNextQuestionNumberDirectly() {
-    var progress = getQuizProgress();
-    if (progress.current > 0 && !progress.isLast) {
-      var nextTargetNum = String(progress.current + 1);
-      var allNumElements = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function(el) {
-        if (isHudElement(el) || !isElementVisible(el) || isHeaderNavElement(el) || isInsideOptionCard(el)) return false;
-        var t = (el.textContent || el.innerText || "").trim();
-        if (t !== nextTargetNum || el.children.length > 0) return false;
-        var ancestor = el.parentElement;
-        var ancestorText = "";
-        for (var d = 0; d < 3 && ancestor && ancestor !== document.body; d++) {
-          ancestorText += " " + (ancestor.textContent || "");
-          ancestor = ancestor.parentElement;
-        }
-        return /\b1\b/.test(ancestorText) || /\b3\b/.test(ancestorText) || /\b4\b/.test(ancestorText) || /\b5\b/.test(ancestorText);
-      });
+  // Lacak nomor soal yang terakhir kali dieksekusi klik Next (Anti-Dobel Klik / Anti-Skip)
+  var lastNextClickedForQuestionNum = 0;
+  var lastNextClickedForQuestionText = "";
+  var sequentialQuestionCounter = 1;
 
-      if (allNumElements.length > 0) {
-        var targetNumEl = allNumElements[0].closest("button, a, [role='button']") || allNumElements[0];
-        clickNextButton(targetNumEl);
-        return true;
+  // Helper untuk melompat langsung ke nomor soal berikutnya melalui grid palet nomor CBT (HARUS URUT SEKUENSIAL)
+  function clickNextQuestionNumberDirectly(expectedNextNum) {
+    var progress = getQuizProgress();
+    var current = progress.current || sequentialQuestionCounter;
+    var targetNum = expectedNextNum || (current + 1);
+    var targetNumStr = String(targetNum);
+
+    var allNumElements = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function(el) {
+      if (isHudElement(el) || !isElementVisible(el) || isHeaderNavElement(el) || isInsideOptionCard(el)) return false;
+      var t = (el.textContent || el.innerText || "").trim();
+      if (t !== targetNumStr || el.children.length > 0) return false;
+      var ancestor = el.parentElement;
+      var ancestorText = "";
+      for (var d = 0; d < 3 && ancestor && ancestor !== document.body; d++) {
+        ancestorText += " " + (ancestor.textContent || "");
+        ancestor = ancestor.parentElement;
       }
+      return /\b1\b/.test(ancestorText) || /\b2\b/.test(ancestorText) || /\b3\b/.test(ancestorText) || /\b4\b/.test(ancestorText) || /\b5\b/.test(ancestorText);
+    });
+
+    if (allNumElements.length > 0) {
+      var targetNumEl = allNumElements[0].closest("button, a, [role='button']") || allNumElements[0];
+      return clickNextButton(targetNumEl);
     }
     return false;
   }
@@ -1167,11 +1172,23 @@
     }
   }
 
-  // EKSEKUSI KLIK TOMBOL NEXT (TUNGGAL, AMAN, DAN ANTI-DOBEL LOMPAT)
-  function findAndClickNextButton(isForce) {
-    // ATURAN MUTLAK AUTO-NEXT: JANGAN DI-NEXT DULU JIKA JAWABAN BELUM TERISI DI HALAMAN!
-    if (!isForce && autoNextEnabled && !isAnswerActuallySelectedOnPage()) {
+  // EKSEKUSI KLIK TOMBOL NEXT (SEKUENSIAL MUTLAK: 1 -> 2 -> 3 -> 4 -> 5, WAJIB TERJAWAB DULU)
+  function findAndClickNextButton(expectedNextNum) {
+    // 1. ATURAN MUTLAK: JAWABAN WAJIB BENAR-BENAR TERPILIH/TERISI DI HALAMAN SEBELUM BISA NEXT!
+    if (!isAnswerActuallySelectedOnPage()) {
       return { success: false, notAnswered: true };
+    }
+
+    var progress = getQuizProgress();
+    var currentNum = progress.current || sequentialQuestionCounter;
+    var currentTextKey = cleanQuestionForComparison(extractPageInfo().text).slice(0, 80);
+
+    // 2. ATURAN MUTLAK ANTI-SKIP: DILARANG MENEKAN NEXT DUA KALI PADA NOMOR SOAL YANG SAMA!
+    if (lastNextClickedForQuestionNum > 0 && lastNextClickedForQuestionNum === currentNum) {
+      return { success: false, alreadyClickedForThisQuestion: true, currentNum: currentNum };
+    }
+    if (lastNextClickedForQuestionText && lastNextClickedForQuestionText === currentTextKey) {
+      return { success: false, alreadyClickedForThisQuestion: true, currentNum: currentNum };
     }
 
     var detected = detectNextButtonState();
@@ -1179,16 +1196,20 @@
       return { success: false, isFinalSubmit: true, forbiddenText: detected.buttonText };
     }
 
-    // 1. Prioritas Utama: Jika tombol "Selanjutnya" / navigasi maju ditemukan
+    var targetSeqNum = expectedNextNum || (currentNum + 1);
+
+    // 3. Prioritas Utama: Jika tombol "Selanjutnya" / navigasi maju ditemukan
     // HANYA KLIK TOMBOL INI! Jangan pernah mengklik tombol simpan terpisah sekaligus agar tidak terjadi dobel lompatan soal!
     if (detected.hasNext && detected.nextElement) {
       var clicked = clickNextButton(detected.nextElement);
       if (clicked) {
-        return { success: true, buttonText: detected.buttonText };
+        lastNextClickedForQuestionNum = currentNum;
+        lastNextClickedForQuestionText = currentTextKey;
+        return { success: true, buttonText: detected.buttonText, fromNumber: currentNum, toNumber: targetSeqNum };
       }
     }
 
-    // 2. Jika TIDAK ADA tombol navigasi maju, tapi ada tombol "Simpan / Simpan Jawaban" mandiri
+    // 4. Jika TIDAK ADA tombol navigasi maju, tapi ada tombol "Simpan / Simpan Jawaban" mandiri
     try {
       var saveButtons = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function(b) {
         if (isHudElement(b) || !isElementVisible(b) || isHeaderNavElement(b) || isInsideOptionCard(b)) return false;
@@ -1198,15 +1219,20 @@
       if (saveButtons.length > 0) {
         var clickedSave = clickNextButton(saveButtons[0]);
         if (clickedSave) {
-          return { success: true, buttonText: "Simpan" };
+          lastNextClickedForQuestionNum = currentNum;
+          lastNextClickedForQuestionText = currentTextKey;
+          return { success: true, buttonText: "Simpan", fromNumber: currentNum, toNumber: targetSeqNum };
         }
       }
     } catch (_) {}
 
-    // 3. Jika tombol teks tidak ditemukan, coba lompat ke nomor soal berikutnya via nomor grid palet
-    var jumped = clickNextQuestionNumberDirectly();
+    // 5. Navigasi Grid Palet CBT: HANYA BOLEH KLIK NOMOR PERSIS BERIKUTNYA (currentNum + 1)!
+    // Contoh: dari nomor 1 HANYA boleh ke nomor 2, DILARANG LANGSUNG KE NOMOR 3!
+    var jumped = clickNextQuestionNumberDirectly(targetSeqNum);
     if (jumped) {
-      return { success: true, buttonText: "Nomor Soal Grid" };
+      lastNextClickedForQuestionNum = currentNum;
+      lastNextClickedForQuestionText = currentTextKey;
+      return { success: true, buttonText: "Soal " + targetSeqNum, fromNumber: currentNum, toNumber: targetSeqNum };
     }
 
     return { success: false, notFound: true };
@@ -1727,7 +1753,10 @@
 
     var shouldNext = autoNextEnabled === true;
     if (shouldNext) {
-      setHudStatus("✅ Terbaca sudah terjawab! Melanjutkan ke lembar selanjutnya dalam 1.2 detik...", true);
+      var progressNow = getQuizProgress();
+      var curSoalNum = progressNow.current || sequentialQuestionCounter;
+      var nextExpectedSoalNum = curSoalNum + 1;
+      setHudStatus("✅ Soal " + curSoalNum + " terbukti sudah terjawab! Berpindah urut ke Soal " + nextExpectedSoalNum + "...", true);
       await new Promise(function(r) { setTimeout(r, 1200); });
 
       // Verifikasi ulang sekali lagi sesaat sebelum klik tombol Next
@@ -1736,13 +1765,16 @@
         return { success: false, notSelected: true, answer: displayAnswer };
       }
 
-      var nextRes = findAndClickNextButton();
+      var nextRes = findAndClickNextButton(nextExpectedSoalNum);
       if (nextRes && nextRes.success) {
-        setHudStatus('⏩ Berpindah ke lembar berikutnya! (' + (nextRes.buttonText || ">") + ')', false);
-        return { success: true };
+        setHudStatus('⏩ Berpindah dari Soal ' + nextRes.fromNumber + ' ke Soal ' + nextRes.toNumber + '! (' + (nextRes.buttonText || ">") + ')', false);
+        return { success: true, fromNumber: nextRes.fromNumber, toNumber: nextRes.toNumber };
       } else if (nextRes && nextRes.isFinalSubmit) {
         setHudStatus("🛑 Soal terakhir sudah dijawab! Kumpulkan kuis secara manual.", false);
         return { finished: true, reason: "final_submit" };
+      } else if (nextRes && nextRes.alreadyClickedForThisQuestion) {
+        setHudStatus("⏳ Soal " + curSoalNum + " sudah diklik Next. Menunggu transisi ke Soal " + nextExpectedSoalNum + "...", true);
+        return { success: true, alreadyNext: true };
       } else {
         setHudStatus("⚠️ Tombol Next tidak terdeteksi otomatis.", false);
         return { success: false, notFound: true };
@@ -1815,36 +1847,69 @@
       try {
         var currentText = extractPageInfo().text;
         var currentClean = cleanQuestionForComparison(currentText);
+        var curProgress = getQuizProgress();
+        var curSoalNum = curProgress.current || sequentialQuestionCounter;
+        var nextSoalNum = curSoalNum + 1;
+
+        // Reset state jika soal terbukti sudah berganti!
+        if (lastAnsweredQuestion && hasQuestionChanged(lastAnsweredQuestion, currentClean)) {
+          lastAnsweredQuestion = "";
+          sameQuestionStall = 0;
+          sequentialQuestionCounter = curProgress.current || (sequentialQuestionCounter + 1);
+          lastNextClickedForQuestionNum = 0;
+          lastNextClickedForQuestionText = "";
+        }
 
         // Jika soal saat ini terdeteksi sama persis dengan yang baru saja dijawab
         if (lastAnsweredQuestion && currentClean === lastAnsweredQuestion) {
           sameQuestionStall++;
           if (sameQuestionStall === 1) {
-            setHudStatus("⏳ Menunggu transisi ke nomor berikutnya...", true);
+            setHudStatus("⏳ Menunggu transisi urut dari Soal " + curSoalNum + " ke Soal " + nextSoalNum + "...", true);
             var transitionedWait = await waitForQuestionTransition(currentText);
             if (transitionedWait) {
               sameQuestionStall = 0;
+              lastAnsweredQuestion = "";
+              lastNextClickedForQuestionNum = 0;
+              lastNextClickedForQuestionText = "";
               continue;
             }
           }
           if (sameQuestionStall === 2) {
-            if (isAnswerActuallySelectedOnPage()) {
-              setHudStatus("⚠️ Menekan tombol Selanjutnya untuk melanjutkan...", true);
-              findAndClickNextButton(true);
+            // JANGAN KLIK NEXT LAGI JIKA NOMOR INI SUDAH DIKLIK NEXT SEBELUMNYA (ANTI-LOMPAT / ANTI-DOUBLE-SKIP)
+            if (lastNextClickedForQuestionNum === curSoalNum) {
+              setHudStatus("⏳ Next untuk Soal " + curSoalNum + " sudah ditekan. Menunggu halaman memuat Soal " + nextSoalNum + "...", true);
+              await new Promise(function(r) { setTimeout(r, 1500); });
+              var transitionedWait2 = await waitForQuestionTransition(currentText);
+              if (transitionedWait2) {
+                sameQuestionStall = 0;
+                lastAnsweredQuestion = "";
+                lastNextClickedForQuestionNum = 0;
+                lastNextClickedForQuestionText = "";
+                continue;
+              }
+            } else if (isAnswerActuallySelectedOnPage()) {
+              setHudStatus("⚠️ Menekan tombol Selanjutnya menuju Soal " + nextSoalNum + "...", true);
+              findAndClickNextButton(nextSoalNum);
               var transitionedClick = await waitForQuestionTransition(currentText);
               if (transitionedClick) {
                 sameQuestionStall = 0;
+                lastAnsweredQuestion = "";
+                lastNextClickedForQuestionNum = 0;
+                lastNextClickedForQuestionText = "";
                 continue;
               }
             } else {
-              setHudStatus("⚠️ Soal ini belum terisi jawabannya! Silakan pilih jawaban sebelum lanjut.", false);
+              setHudStatus("⚠️ Soal " + curSoalNum + " belum terisi jawabannya! Silakan pilih jawaban sebelum lanjut.", false);
             }
           }
           if (sameQuestionStall >= 3) {
-            setHudStatus("⚠️ Silakan klik tombol 'Selanjutnya' atau nomor soal di layar web.", false);
+            setHudStatus("⚠️ Silakan klik tombol 'Selanjutnya' atau nomor " + nextSoalNum + " di layar web.", false);
             var transitionedManual = await waitForQuestionTransition(currentText);
             if (transitionedManual) {
               sameQuestionStall = 0;
+              lastAnsweredQuestion = "";
+              lastNextClickedForQuestionNum = 0;
+              lastNextClickedForQuestionText = "";
               continue;
             } else {
               await new Promise(function(r) { setTimeout(r, 2000); });
@@ -1883,7 +1948,7 @@
           }
           if (isAnswerActuallySelectedOnPage() && autoNextEnabled) {
             await new Promise(function(r) { setTimeout(r, 1000); });
-            findAndClickNextButton();
+            findAndClickNextButton(nextSoalNum);
             await waitForQuestionTransition(currentText);
           }
           continue;
@@ -1902,7 +1967,12 @@
         }
 
         setHudStatus("⏳ Menunggu soal berikutnya muncul...", true);
-        await waitForQuestionTransition(currentText);
+        var transitionedWaitStep = await waitForQuestionTransition(currentText);
+        if (transitionedWaitStep) {
+          lastAnsweredQuestion = "";
+          lastNextClickedForQuestionNum = 0;
+          lastNextClickedForQuestionText = "";
+        }
         await new Promise(function(r) { setTimeout(r, 600); });
       } catch (err) {
         setHudStatus('⚠️ Terjadi kendala: ' + err.message + '. Mencoba lagi dalam 3 detik...', false);
