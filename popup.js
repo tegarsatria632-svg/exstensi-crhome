@@ -919,8 +919,13 @@ btnGroq.addEventListener("click", async () => {
     const pageInfo = await getActivePageInfo();
     const content = pageInfo.text;
 
-    if (content.length < 80 && pageInfo.hasVisuals) {
-      setStatus("🖼️ Gambar soal visual terdeteksi! Mengerjakan dengan Gemini Vision...");
+    const isVisualPage = pageInfo.hasVisuals && (
+      content.length < 150 ||
+      /iqcenter|test-iq|tes-iq|pola|pattern|matrix|spatial|raven/i.test(currentTabUrl)
+    );
+
+    if (isVisualPage) {
+      setStatus("🖼️ Soal visual/pola terdeteksi! Mengerjakan dengan Gemini Vision...");
       const visionAnswer = await executeGeminiVision();
       await presentAnswerAndAutoProcess(visionAnswer);
       return;

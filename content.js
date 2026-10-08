@@ -255,7 +255,7 @@
     return false;
   }
 
-  // === 3. EKSTRAKSI TEKS & SENSOR VISUAL (BEBAS POLUSI HUD & HEMAT TOKEN) ===
+  // === 3. EKSTRAKSI TEKS & SENSOR VISUAL (BEBAS POLUSI HUD) ===
   function extractPageInfo() {
     var hud = document.getElementById("ai-study-agent-hud");
     var prevDisplay = "";
@@ -264,20 +264,13 @@
       hud.style.display = "none";
     }
 
-    // 1. Prioritaskan area soal / form / slide / survey jika ada
-    var questionEl = document.querySelector(".question, [class*='question' i], [class*='slide' i], [class*='quiz' i], [class*='survey' i], [class*='poll' i], form, main, article, [role='main']");
-    var text = "";
-    if (questionEl && isElementVisible(questionEl) && (questionEl.innerText || "").trim().length >= 25) {
-      text = questionEl.innerText.trim();
-    } else {
-      text = (document.body && document.body.innerText || "").trim();
-    }
+    var text = (document.body && (document.body.innerText || document.body.textContent) || "").trim();
 
     if (hud) {
       hud.style.display = prevDisplay;
     }
 
-    // 2. Bersihkan teks polusi (hapus watermark dan pangkas teks berlebih agar tidak terkena limit TPM 8000 Groq!)
+    // Bersihkan teks polusi dari watermark dan baris kosong berlebih
     text = text.replace(/bytegar/gi, "")
                .replace(/[\r\n]{3,}/g, "\n\n")
                .trim();
@@ -293,7 +286,7 @@
     });
 
     return {
-      text: text.slice(0, 1800),
+      text: text.slice(0, 4500),
       title: document.title,
       hasVisuals: visualElements.length > 0,
       visualCount: visualElements.length
@@ -1131,7 +1124,11 @@
     var pageInfo = extractPageInfo();
     var content = pageInfo.text;
 
-    var needsVision = forceVision || (content.length < 80 && pageInfo.hasVisuals);
+    var isVisualPage = pageInfo.hasVisuals && (
+      content.length < 150 ||
+      /iqcenter|test-iq|tes-iq|pola|pattern|matrix|spatial|raven/i.test(window.location.href + " " + document.title)
+    );
+    var needsVision = forceVision || isVisualPage;
     var rawAnswer = "";
 
     if (needsVision) {
