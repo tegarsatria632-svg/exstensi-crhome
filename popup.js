@@ -382,7 +382,7 @@ async function restoreTabState() {
       autoClickToggle.checked = settings?.autoClick !== undefined ? settings.autoClick : true;
     }
     if (autoNextToggle) {
-      autoNextToggle.checked = settings?.autoNext !== undefined ? settings.autoNext : true;
+      autoNextToggle.checked = settings?.autoNext !== undefined ? settings.autoNext : false;
     }
   });
 
@@ -997,7 +997,7 @@ btnGroq.addEventListener("click", async () => {
 
     if (isVisualPage) {
       setStatus("🖼️ Soal visual/pola terdeteksi! Mengerjakan dengan Gemini Vision...");
-      const visionAnswer = await executeGeminiVision();
+      const visionAnswer = await executeGeminiVision(content);
       await presentAnswerAndAutoProcess(visionAnswer);
       return;
     }
@@ -1060,7 +1060,7 @@ btnGroq.addEventListener("click", async () => {
       const activeGeminiKey = getApiKey("GEMINI_API_KEY");
       if (activeGeminiKey) {
         setStatus("Groq sedang mencapai batas limit (429). Mengalihkan otomatis ke Gemini...");
-        const visionAnswer = await executeGeminiVision();
+        const visionAnswer = await executeGeminiVision(content);
         await presentAnswerAndAutoProcess(visionAnswer);
         return;
       }
@@ -1069,7 +1069,7 @@ btnGroq.addEventListener("click", async () => {
 
     if (isVisualProblem(groqAnswer)) {
       setStatus("🖼️ Soal butuh visual! Mengalihkan ke Gemini Vision...");
-      const visionAnswer = await executeGeminiVision();
+      const visionAnswer = await executeGeminiVision(content);
       await presentAnswerAndAutoProcess(visionAnswer);
       return;
     }
@@ -1243,18 +1243,32 @@ btnHF.addEventListener("click", async () => {
 });
 
 // === MESIN PENGERJAAN GEMINI VISION (MULTIMODAL SOAL BERGAMBAR & TES IQ) ===
-async function executeGeminiVision() {
+async function executeGeminiVision(pageContent = "") {
   if (!currentTabId) await initActiveTab();
-  setStatus("Menangkap layar soal...");
-  const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 60 }).catch(() => {
+  setStatus("Membaca halaman & menangkap layar...");
+
+  let activeText = pageContent;
+  if (!activeText) {
+    try {
+      const pageInfo = await getActivePageInfo();
+      activeText = pageInfo?.text || "";
+    } catch (_) {}
+  }
+
+  const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 65 }).catch(() => {
     throw new Error("Gagal menangkap layar. Pastikan berada di tab web biasa (chrome:// tidak didukung).");
   });
 
   const base64Data = dataUrl.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
-  setStatus("Mencari jawaban soal di layar dengan Gemini...");
+  setStatus("Menganalisis soal yang sedang Anda pilih dengan Gemini...");
+
+  let promptText = getGeminiVisionPrompt();
+  if (activeText && activeText.trim().length > 10) {
+    promptText += `\n\nSOAL & OPSI PILIHAN YANG SEDANG DIBUKA / DIPILIH PENGGUNA DI LAYAR:\n${activeText.slice(0, 2500)}\n\nPERINTAH KHUSUS:\nFokuslah secara mutlak pada soal/nomor yang sedang aktif/dipilih oleh pengguna di atas! Pecahkan gambar/diagram yang terkait dengan nomor tersebut dan tentukan opsi yang paling tepat.`;
+  }
 
   const parts = [
-    { text: getGeminiVisionPrompt() },
+    { text: promptText },
     {
       inline_data: {
         mime_type: "image/jpeg",
@@ -1327,7 +1341,8 @@ btnVision.addEventListener("click", async () => {
   if (resultActions) resultActions.classList.remove("show");
 
   try {
-    const visionAnswer = await executeGeminiVision();
+    const pageInfo = await getActivePageInfo().catch(() => null);
+    const visionAnswer = await executeGeminiVision(pageInfo?.text || "");
     await presentAnswerAndAutoProcess(visionAnswer);
   } catch (e) {
     showResult(e.message, true);

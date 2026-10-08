@@ -8,7 +8,7 @@
 
   var isAgentRunning = false;
   var autoClickEnabled = true;
-  var autoNextEnabled = true;
+  var autoNextEnabled = false;
   var hudElement = null;
   var hudMinimized = false;
 
@@ -83,7 +83,7 @@
     chrome.storage?.local?.get(["isAgentRunning", "autoClick", "autoNext", "hudMinimized", "showHud", "lastActiveDomain", "lastActiveTime"], function(res) {
       if (res?.autoClick !== undefined) autoClickEnabled = res.autoClick;
       if (res?.autoNext !== undefined) autoNextEnabled = res.autoNext;
-      else autoNextEnabled = true;
+      else autoNextEnabled = false;
       if (res?.hudMinimized !== undefined) hudMinimized = res.hudMinimized;
 
       // HANYA RENDER HUD & JALANKAN AUTO-PILOT DI WINDOW UTAMA (TOP FRAME)
@@ -1699,7 +1699,7 @@
       if (hudElement) hudElement.style.visibility = "hidden";
       await new Promise(function(r) { setTimeout(r, 80); });
       var res = await new Promise(function(resolve) {
-        chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION" }, function(r) {
+        chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION", text: content }, function(r) {
           if (chrome.runtime?.lastError) {
             resolve({ success: false, error: chrome.runtime.lastError.message });
             return;
@@ -1732,7 +1732,7 @@
           if (hudElement) hudElement.style.visibility = "hidden";
           await new Promise(function(r) { setTimeout(r, 80); });
           var gFallback = await new Promise(function(resolve) {
-            chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION" }, function(r) {
+            chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION", text: content }, function(r) {
               if (chrome.runtime?.lastError) {
                 resolve({ success: false, error: chrome.runtime.lastError.message });
                 return;
@@ -1759,7 +1759,7 @@
         if (hudElement) hudElement.style.visibility = "hidden";
         await new Promise(function(r) { setTimeout(r, 80); });
         var vRes = await new Promise(function(resolve) {
-          chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION" }, function(r) {
+          chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION", text: content }, function(r) {
             if (chrome.runtime?.lastError) {
               resolve({ success: false, error: chrome.runtime.lastError.message });
               return;
@@ -1965,6 +1965,7 @@
     if (!isTop) return;
     if (isAgentRunning) return;
     isAgentRunning = true;
+    autoNextEnabled = true;
     chrome.storage?.local?.set({ 
       isAgentRunning: true,
       lastActiveDomain: window.location.hostname || "local",
@@ -2154,6 +2155,11 @@
 
   function stopAutoPilot() {
     isAgentRunning = false;
+    chrome.storage?.local?.get(["autoNext"], function(res) {
+      autoNextEnabled = res?.autoNext === true;
+      var chkNext = hudElement?.querySelector("#hud-autonext-chk");
+      if (chkNext) chkNext.checked = autoNextEnabled;
+    });
     chrome.storage?.local?.set({ isAgentRunning: false });
     updateHudRunningState(false);
     setHudStatus("⏹️ Agen Otomatis dihentikan.", false);

@@ -184,7 +184,7 @@ async function handleCallGeminiText(questionText) {
 }
 
 // Eksekusi Panggilan Gemini Vision
-async function handleCallGeminiVision(windowId = null) {
+async function handleCallGeminiVision(windowId = null, pageText = "") {
   const activeGeminiKey = getApiKey("GEMINI_API_KEY");
   if (!activeGeminiKey) {
     throw new Error("API Key Gemini belum dikonfigurasi. Silakan salin config.example.js menjadi config.js dan masukkan API Key Anda.");
@@ -199,8 +199,13 @@ async function handleCallGeminiVision(windowId = null) {
 
   const base64Data = dataUrl.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
 
+  let promptText = getGeminiVisionPrompt();
+  if (pageText && pageText.trim().length > 10) {
+    promptText += `\n\nSOAL & OPSI PILIHAN YANG SEDANG DIBUKA / DIPILIH PENGGUNA DI LAYAR:\n${pageText.slice(0, 2500)}\n\nPERINTAH KHUSUS:\nFokuslah secara mutlak pada soal/nomor yang sedang aktif/dipilih oleh pengguna di atas! Pecahkan gambar/diagram yang terkait dengan nomor tersebut dan tentukan opsi yang paling tepat.`;
+  }
+
   const parts = [
-    { text: getGeminiVisionPrompt() },
+    { text: promptText },
     {
       inline_data: {
         mime_type: "image/jpeg",
@@ -271,7 +276,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   // Panggilan Gemini Vision dari content script atau popup
   if (msg.type === "EXECUTE_GEMINI_VISION") {
     const windowId = sender.tab ? sender.tab.windowId : null;
-    handleCallGeminiVision(windowId)
+    const pageText = msg.text || "";
+    handleCallGeminiVision(windowId, pageText)
       .then(answer => sendResponse({ success: true, answer }))
       .catch(err => sendResponse({ success: false, error: err.message }));
     return true; // asynchronous response
