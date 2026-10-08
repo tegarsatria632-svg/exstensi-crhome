@@ -8,7 +8,7 @@
 
   var isAgentRunning = false;
   var autoClickEnabled = true;
-  var autoNextEnabled = false;
+  var autoNextEnabled = true;
   var hudElement = null;
   var hudMinimized = false;
 
@@ -83,6 +83,7 @@
     chrome.storage?.local?.get(["isAgentRunning", "autoClick", "autoNext", "hudMinimized", "showHud", "lastActiveDomain", "lastActiveTime"], function(res) {
       if (res?.autoClick !== undefined) autoClickEnabled = res.autoClick;
       if (res?.autoNext !== undefined) autoNextEnabled = res.autoNext;
+      else autoNextEnabled = true;
       if (res?.hudMinimized !== undefined) hudMinimized = res.hudMinimized;
 
       // HANYA RENDER HUD & JALANKAN AUTO-PILOT DI WINDOW UTAMA (TOP FRAME)
@@ -233,6 +234,14 @@
     // Toggle Auto-Pilot dari Popup
     if (msg.type === "TOGGLE_AUTOPILOT") {
       if (msg.running) {
+        if (msg.autoNext !== undefined) {
+          autoNextEnabled = !!msg.autoNext;
+        } else {
+          autoNextEnabled = true;
+        }
+        if (msg.autoClick !== undefined) {
+          autoClickEnabled = !!msg.autoClick;
+        }
         startAutoPilotLoop();
       } else {
         stopAutoPilot();
@@ -927,10 +936,12 @@
       return (
         t === "selanjutnya" || t === "soal selanjutnya" || t === "soal selanjutnya >" || t === "soal selanjutnya &gt;" ||
         t === "berikutnya" || t === "soal berikutnya" || t === "soal berikutnya >" || t === "soal berikutnya →" ||
+        t === "berikutnya >" || t === "berikutnya &gt;" ||
+        t.startsWith("berikutnya") || t.startsWith("soal berikutnya") ||
         t === "lanjut" || t === "lanjutkan" ||
         t === "simpan & lanjutkan" || t === "simpan dan lanjutkan" ||
         t === "simpan & selanjutnya" || t === "simpan dan selanjutnya" ||
-        t === "next" || t === "next question" ||
+        t === "next" || t === "next question" || t.startsWith("next") ||
         t === "selanjutnya >" || t === "berikutnya →" || t === ">" || t === ">>" || t === "→" || t === "»" ||
         t.startsWith("soal selanjutnya") || t.startsWith("selanjutnya") ||
         classId.includes("btn-next") || classId.includes("nextbtn")
@@ -1250,13 +1261,23 @@
 
     var progress = getQuizProgress();
     var currentNum = progress.current || sequentialQuestionCounter;
-    var currentTextKey = cleanQuestionForComparison(extractPageInfo().text).slice(0, 80);
+    var currentFullClean = cleanQuestionForComparison(extractPageInfo().text);
+
+    // Reset lock jika soal terbukti sudah berganti (teks berbeda atau nomor bertambah)
+    if (lastNextClickedForQuestionText && hasQuestionChanged(lastNextClickedForQuestionText, currentFullClean)) {
+      lastNextClickedForQuestionNum = 0;
+      lastNextClickedForQuestionText = "";
+    }
+    if (lastNextClickedForQuestionNum > 0 && currentNum > 0 && lastNextClickedForQuestionNum !== currentNum) {
+      lastNextClickedForQuestionNum = 0;
+      lastNextClickedForQuestionText = "";
+    }
 
     // 2. ATURAN MUTLAK ANTI-SKIP: DILARANG MENEKAN NEXT DUA KALI PADA NOMOR SOAL YANG SAMA!
     if (lastNextClickedForQuestionNum > 0 && lastNextClickedForQuestionNum === currentNum) {
       return { success: false, alreadyClickedForThisQuestion: true, currentNum: currentNum };
     }
-    if (lastNextClickedForQuestionText && lastNextClickedForQuestionText === currentTextKey) {
+    if (lastNextClickedForQuestionText && !hasQuestionChanged(lastNextClickedForQuestionText, currentFullClean)) {
       return { success: false, alreadyClickedForThisQuestion: true, currentNum: currentNum };
     }
 
@@ -1273,7 +1294,8 @@
       var clicked = clickNextButton(detected.nextElement);
       if (clicked) {
         lastNextClickedForQuestionNum = currentNum;
-        lastNextClickedForQuestionText = currentTextKey;
+        lastNextClickedForQuestionText = currentFullClean;
+        if (!progress.current) sequentialQuestionCounter++;
         return { success: true, buttonText: detected.buttonText, fromNumber: currentNum, toNumber: targetSeqNum };
       }
     }
@@ -1641,7 +1663,10 @@
     }
 
     if (targetText) {
-      targetText = targetText.replace(/^[\(\[]|[\)\]]$/g, "").replace(/[\.\,\;]+$/, "").trim();
+      if ((targetText.startsWith("(") && targetText.endsWith(")")) || (targetText.startsWith("[") && targetText.endsWith("]"))) {
+        targetText = targetText.slice(1, -1).trim();
+      }
+      targetText = targetText.replace(/[\.\,\;]+$/, "").trim();
     }
 
     var isMultipleChoice = !!letter || (!!targetText && targetText.length < 70 && !targetText.includes("\n"));
@@ -1658,9 +1683,13 @@
     var pageInfo = extractPageInfo();
     var content = pageInfo.text;
 
+    var visualUrlPattern = /iqcenter|test-iq|tes-iq|pola|pattern|matrix|matriks|spatial|raven|vision|gambar|diagram|visual|cbt/i;
+    var visualTextPattern = /(?:perhatikan|berdasarkan|pada|lihat|amatilah|analisislah)\s*(?:gambar|diagram|tabel|grafik|pola|matriks|potongan kode|screenshot|terminal|arsitektur|erd)|tanda\s*tanya\s*\(\?\)|matriks\s*2x2|screenshot|gambar\s*(?:di\s*bawah|berikut)/i;
+
     var isVisualPage = pageInfo.hasVisuals && (
-      content.length < 150 ||
-      /iqcenter|test-iq|tes-iq|pola|pattern|matrix|spatial|raven/i.test(window.location.href + " " + document.title)
+      content.length < 160 ||
+      visualUrlPattern.test(window.location.href + " " + document.title) ||
+      visualTextPattern.test(content)
     );
     var needsVision = forceVision || isVisualPage;
     var rawAnswer = "";

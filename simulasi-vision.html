@@ -581,11 +581,16 @@
           radio.id = `opt_${optIdx}`;
           radio.value = optText.charAt(0);
           radio.checked = userAnswers[currentIndex] === optIdx;
+          radio.onchange = () => selectOption(optIdx);
 
           const label = document.createElement("label");
           label.className = "option-label";
           label.htmlFor = `opt_${optIdx}`;
           label.textContent = optText;
+          label.onclick = (e) => {
+            e.stopPropagation();
+            selectOption(optIdx);
+          };
 
           item.appendChild(radio);
           item.appendChild(label);

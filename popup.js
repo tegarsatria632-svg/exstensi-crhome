@@ -382,7 +382,7 @@ async function restoreTabState() {
       autoClickToggle.checked = settings?.autoClick !== undefined ? settings.autoClick : true;
     }
     if (autoNextToggle) {
-      autoNextToggle.checked = settings?.autoNext !== undefined ? settings.autoNext : false;
+      autoNextToggle.checked = settings?.autoNext !== undefined ? settings.autoNext : true;
     }
   });
 
@@ -668,7 +668,10 @@ function extractAnswerInfo(text) {
   }
 
   if (targetText) {
-    targetText = targetText.replace(/^[\(\[]|[\)\]]$/g, "").replace(/[\.\,\;]+$/, "").trim();
+    if ((targetText.startsWith("(") && targetText.endsWith(")")) || (targetText.startsWith("[") && targetText.endsWith("]"))) {
+      targetText = targetText.slice(1, -1).trim();
+    }
+    targetText = targetText.replace(/[\.\,\;]+$/, "").trim();
   }
 
   const isMultipleChoice = !!letter || (!!targetText && targetText.length < 70 && !targetText.includes("\n"));
@@ -940,7 +943,12 @@ if (toggleAgentBtn) {
         lastActiveTime: Date.now()
       });
       updatePopupAgentState(running);
-      chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_AUTOPILOT", running }, () => {
+      chrome.tabs.sendMessage(tab.id, { 
+        type: "TOGGLE_AUTOPILOT", 
+        running,
+        autoNext: autoNextToggle ? autoNextToggle.checked : true,
+        autoClick: autoClickToggle ? autoClickToggle.checked : true
+      }, () => {
         if (chrome.runtime?.lastError) {
           const _ignored = chrome.runtime.lastError.message;
         }
@@ -978,9 +986,13 @@ btnGroq.addEventListener("click", async () => {
     const pageInfo = await getActivePageInfo();
     const content = pageInfo.text;
 
+    const visualUrlPattern = /iqcenter|test-iq|tes-iq|pola|pattern|matrix|matriks|spatial|raven|vision|gambar|diagram|visual|cbt/i;
+    const visualTextPattern = /(?:perhatikan|berdasarkan|pada|lihat|amatilah|analisislah)\s*(?:gambar|diagram|tabel|grafik|pola|matriks|potongan kode|screenshot|terminal|arsitektur|erd)|tanda\s*tanya\s*\(\?\)|matriks\s*2x2|screenshot|gambar\s*(?:di\s*bawah|berikut)/i;
+
     const isVisualPage = pageInfo.hasVisuals && (
-      content.length < 150 ||
-      /iqcenter|test-iq|tes-iq|pola|pattern|matrix|spatial|raven/i.test(currentTabUrl)
+      content.length < 160 ||
+      visualUrlPattern.test(currentTabUrl + " " + (pageInfo.title || "")) ||
+      visualTextPattern.test(content)
     );
 
     if (isVisualPage) {
