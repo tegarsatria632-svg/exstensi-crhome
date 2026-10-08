@@ -396,6 +396,60 @@
       return el.children.length <= 15;
     });
 
+    // --- TIER 0: SCANNING RADIO LANGSUNG (ANTI-GAGAL UNTUK OPSI TANPA KELAS SEPERTI OPSI D) ---
+    var allRadios = Array.from(document.querySelectorAll("input[type='radio'], input[type='checkbox']")).filter(function(r) {
+      return !isHudElement(r) && isElementVisible(r.parentElement || r);
+    });
+
+    if (allRadios.length > 0) {
+      // 0a. Cari radio yang label, parent, atau siblingnya cocok dengan Huruf (misal: "D. Federal" atau "D.")
+      if (isRealLetter) {
+        for (var ri = 0; ri < allRadios.length; ri++) {
+          var rInput = allRadios[ri];
+          var rVal = (rInput.value || rInput.getAttribute("data-value") || rInput.getAttribute("data-choice") || "").trim().toUpperCase();
+          var rLabel = rInput.id ? document.querySelector("label[for='" + rInput.id + "']") : null;
+          if (!rLabel) rLabel = rInput.closest("label") || rInput.parentElement;
+          var rText = (rLabel ? (rLabel.textContent || rLabel.innerText || "") : "") ||
+                      (rInput.nextSibling ? (rInput.nextSibling.textContent || "") : "");
+          
+          if (rVal === upperLetter || (numStr && rVal === numStr && rVal !== "ON") || matchesLetterPrefix(rText.trim(), upperLetter)) {
+            var rClean = cleanText(rText);
+            if (!cleanSnippet && !pureNum) {
+              var res0a = activateOption(rInput);
+              if (res0a) return rText.trim() || ("Opsi " + upperLetter);
+            } else if ((cleanSnippet && rClean.includes(cleanSnippet)) || (pureNum && rClean.includes(pureNum)) || matchesLetterPrefix(rText.trim(), upperLetter)) {
+              var res0a2 = activateOption(rInput);
+              if (res0a2) return rText.trim() || ("Opsi " + upperLetter);
+            }
+          }
+        }
+      }
+
+      // 0b. Cari radio yang teks label/sibling/parent cocok dengan teks snippet atau pureNum
+      if (cleanSnippet || pureNum) {
+        for (var rj = 0; rj < allRadios.length; rj++) {
+          var rInput2 = allRadios[rj];
+          var rLabel2 = rInput2.id ? document.querySelector("label[for='" + rInput2.id + "']") : null;
+          if (!rLabel2) rLabel2 = rInput2.closest("label") || rInput2.parentElement;
+          var rText2 = (rLabel2 ? (rLabel2.textContent || rLabel2.innerText || "") : "") ||
+                       (rInput2.nextSibling ? (rInput2.nextSibling.textContent || "") : "");
+          var rClean2 = cleanText(rText2);
+          var isMatch2 = (cleanSnippet && rClean2.includes(cleanSnippet)) || (pureNum && rClean2.includes(pureNum));
+          if (isMatch2) {
+            var res0b = activateOption(rInput2);
+            if (res0b) return rText2.trim() || cleanSnippet;
+          }
+        }
+      }
+
+      // 0c. Jika ada persis sejumlah opsi kuis (misal 4 atau 5 radio) dan huruf A-E, cocokkan via index radio
+      if (isRealLetter && letterIndex >= 0 && letterIndex < allRadios.length && (allRadios.length === 4 || allRadios.length === 5)) {
+        var indexedRadio = allRadios[letterIndex];
+        var res0c = activateOption(indexedRadio);
+        if (res0c) return "Opsi " + upperLetter + " (Index " + letterIndex + ")";
+      }
+    }
+
     // --- TIER 1: MATCH LENGKAP: HURUF DAN TEKS/ANGKA OPSI COCOK SEKALIGUS (100% PRESISI) ---
     // Contoh: "C. 7" saat jawaban C dan nilai x = 7, atau "C. Jakarta"
     if (isRealLetter && (cleanSnippet || pureNum)) {
@@ -1200,8 +1254,9 @@
     if (!radio) {
       var pNode = targetEl.parentElement;
       for (var d = 0; d < 6 && pNode && pNode !== document.body; d++) {
-        var foundR = pNode.querySelector ? pNode.querySelector("input[type='radio'], input[type='checkbox']") : null;
-        if (foundR) { radio = foundR; break; }
+        var allFoundR = pNode.querySelectorAll ? pNode.querySelectorAll("input[type='radio'], input[type='checkbox']") : [];
+        if (allFoundR.length === 1) { radio = allFoundR[0]; break; }
+        if (allFoundR.length > 1) break;
         pNode = pNode.parentElement;
       }
     }
@@ -1240,6 +1295,12 @@
     // Temukan wadah kartu pilihan (option card / row / item)
     var card = (targetEl.closest && targetEl.closest(".option-item, [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], [class*='item' i], [class*='card' i], [class*='check' i], [class*='radio' i], label, tr, li")) || targetEl;
 
+    // Keamanan: Jika 'card' ternyata mencakup lebih dari 1 radio (artinya card adalah container seluruh soal),
+    // jangan gunakan card tersebut agar tidak salah klik opsi pertama/opsi A!
+    if (card && card.querySelectorAll && card.querySelectorAll("input[type='radio'], input[type='checkbox']").length > 1) {
+      card = (radio && radio.parentElement && radio.parentElement !== card && (!radio.parentElement.querySelectorAll || radio.parentElement.querySelectorAll("input[type='radio'], input[type='checkbox']").length <= 1)) ? radio.parentElement : targetEl;
+    }
+
     // Scroll ke elemen target agar terlihat jelas
     try {
       (card || targetEl).scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1248,10 +1309,12 @@
     // 2. Berikan highlight visual hijau langsung pada wadah kartu pilihan
     highlightElement(card || targetEl);
 
-    // 3. Kirim simulasi Pointer & Mouse events ke seluruh hierarki target (targetEl, card, radio, label)
-    var elementsToClick = [targetEl];
-    if (card && card !== targetEl) elementsToClick.push(card);
-    if (radio && !elementsToClick.includes(radio)) elementsToClick.push(radio);
+    // 3. Kirim simulasi Pointer & Mouse events ke seluruh hierarki target (radio, targetEl, card, label)
+    // Prioritaskan elemen radio secara langsung agar tidak meleset ke container
+    var elementsToClick = [];
+    if (radio) elementsToClick.push(radio);
+    if (targetEl && !elementsToClick.includes(targetEl)) elementsToClick.push(targetEl);
+    if (card && !elementsToClick.includes(card) && (!card.querySelectorAll || card.querySelectorAll("input[type='radio'], input[type='checkbox']").length <= 1)) elementsToClick.push(card);
     if (label && !elementsToClick.includes(label)) elementsToClick.push(label);
 
     elementsToClick.forEach(function(el) {

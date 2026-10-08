@@ -51,7 +51,15 @@ ATURAN KHUSUS SOAL MATEMATIKA, ALJABAR & MENGHITUNG NILAI X / VARIABEL:
 - Jangan menebak! Periksa ulang operasi aljabar, tanda plus minus (+/-), dan pecahan dengan cermat.
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
-ATURAN KHUSUS SOAL TWK (TES WAWASAN KEBANGSAAN CPNS):
+ATURAN KHUSUS SOAL TWK & SEJARAH TATA NEGARA (KETELITIAN TINGGI):
+- EVALUASI SELURUH 5 OPSI (A, B, C, D, E) SECARA OBJEKTIF:
+  * DILARANG bias terhadap opsi awal (A/B/C). Opsi D dan E memiliki bobot dan peluang kebenaran yang sama besarnya. Jika jawaban yang tepat adalah D atau E, WAJIB pilih D atau E secara tegas!
+- KRONOLOGI SISTEM KETATANEGARAAN & PEMERINTAHAN INDONESIA:
+  * Sistem pemerintahan PERTAMA KALI setelah kemerdekaan (18 Agustus 1945 - 14 November 1945): SISTEM PRESIDENSIAL (Kabinet Presidensial Soekarno berdasar UUD 1945).
+  * 14 November 1945: Berubah menjadi SISTEM PARLEMENTER (Maklumat Pemerintah 14 Nov 1945, PM Sutan Sjahrir).
+  * KMB 1949: Pembentukan Negara FEDERAL / SERIKAT (Republik Indonesia Serikat - RIS).
+  * 17 Agustus 1950 (Mosi Integral Natsir): Pembubaran RIS kembali ke NEGARA KESATUAN (NKRI) dengan UUDS 1950 (Demokrasi Liberal/Parlementer).
+  * Dekrit Presiden 5 Juli 1959 s.d. Sekarang: Kembali ke UUD 1945 asli (Sistem Presidensial).
 - PANCASILA & UUD 1945: Pahami butir-butir pengamalan Sila 1-5, sejarah perumusan (BPUPKI 29 Mei-1 Juni 1945, Piagam Jakarta 22 Juni 1945, pengesahan PPKI 18 Agustus 1945), hierarki perundang-undangan (Pasal 7 UU No. 12/2011: UUD 1945 -> Tap MPR -> UU/Perppu -> PP -> Perpres -> Perda Provinsi -> Perda Kab/Kota), sistem checks and balances lembaga negara hasil amandemen (MPR, DPR, DPD, Presiden, MA, MK, KY, BPK), serta hak asasi manusia (Pasal 28A-J).
 - SEJARAH PERJUANGAN BANGSA: Kuasai kronologi Kebangkitan Nasional (Budi Utomo 1908), Sumpah Pemuda (1928), Proklamasi (17 Agustus 1945), masa revolusi fisik & diplomasi (Linggarjati, Renville, Roem-Royen, KMB 1949), transisi RIS ke NKRI (17 Agustus 1950), Dekrit Presiden 5 Juli 1959, Reformasi 1998, dan 4 tahap amandemen UUD 1945 (1999-2002).
 - TATA NEGARA & ADMINISTRASI PEMERINTAHAN: Kuasai asas-asas umum pemerintahan yang baik (AUPB), otonomi daerah (desentralisasi, dekonsentrasi, tugas pembantuan), dan fungsi ASN sebagai pelaksana kebijakan publik, pelayan publik, serta perekat dan pemersatu bangsa (UU ASN).
@@ -67,9 +75,12 @@ ATURAN KHUSUS SOAL TKP (TES KARAKTERISTIK PRIBADI CPNS - TARGET SKOR 5 MUTLAK):
 
 ATURAN PILIHAN GANDA & KUIS (WAJIB FORMAT TEPAT):
 - Baris jawaban akhir WAJIB berupa 1 baris jelas:
-  Contoh jika opsi memiliki huruf (A/B/C/D/E):
-  Jawaban: B. [Teks pilihan]
-  (atau Jawaban: B jika tanpa teks)
+  Contoh variasi huruf:
+  Jawaban: D. [Teks pilihan D]
+  Jawaban: B. [Teks pilihan B]
+  Jawaban: A. [Teks pilihan A]
+  Jawaban: E. [Teks pilihan E]
+  Jawaban: C. [Teks pilihan C]
 - Contoh jika opsi berupa teks langsung (seperti Strongly Agree, Agree, Neutral, Disagree, Benar, Salah, angka, dsb):
   Jawaban: [Teks opsi yang benar]
 - Contoh jika nomor urut kotak (1-9):
