@@ -745,10 +745,12 @@
 
   var lastNextClickTime = 0;
 
-  // Deteksi nomor & total soal kuis (contoh: "Soal 1 dari 15", "1/15 Dijawab", "1 of 15")
+  // Deteksi nomor & total soal kuis (prioritaskan pola judul: "Soal No. 1 dari 15" atau "Soal 1 dari 15")
   function getQuizProgress() {
     var bodyText = (document.body && (document.body.innerText || document.body.textContent)) || "";
-    var m = bodyText.match(/(?:soal|pertanyaan|no|nomor)?\s*(?:no\.?)?\s*(\d+)\s*(?:of|\/|dari)\s*(\d+)/i);
+    var m = bodyText.match(/soal\s*(?:no\.?)?\s*(\d+)\s*(?:of|\/|dari)\s*(\d+)/i);
+    if (!m) m = bodyText.match(/(?:pertanyaan|nomor|no)\s*(\d+)\s*(?:of|\/|dari)\s*(\d+)/i);
+    if (!m) m = bodyText.match(/\b(\d+)\s*(?:of|dari)\s*(\d+)\b/i);
     if (m) {
       var cur = parseInt(m[1], 10);
       var max = parseInt(m[2], 10);
@@ -777,9 +779,15 @@
     var progress = getQuizProgress();
     var definitelyNotLast = progress.total > 0 && progress.current > 0 && progress.current < progress.total;
 
+    // Helper pengecek apakah elemen berada di dalam kartu opsi jawaban (bukan tombol navigasi)
+    function isInsideOptionCard(el) {
+      if (!el || !el.closest) return false;
+      return !!el.closest(".option-item, [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], label");
+    }
+
     // 1. Pagination "1 of 10", "1 dari 10", dsb. (HANYA JIKA TOMBOL BERADA PERSIS BERDAMPINGAN < 120px)
     var pageSpans = Array.from(document.querySelectorAll("span, p, b, div")).filter(function(el) {
-      if (isHudElement(el) || el.children.length > 2) return false;
+      if (isHudElement(el) || isInsideOptionCard(el) || el.children.length > 2) return false;
       var txt = (el.textContent || "").trim();
       return /(?:\b\d+\s*(?:of|\/|dari)\s*\d+\b)/i.test(txt);
     });
@@ -791,12 +799,11 @@
         var buttons = Array.from(container.querySelectorAll("button, a, input[type='button'], input[type='submit'], [role='button']")).filter(function(b) {
           if (isHudElement(b) || !isElementVisible(b) || b.disabled || b.getAttribute("aria-disabled") === "true") return false;
           if (b === pageEl || pageEl.contains(b) || b.contains(pageEl)) return false;
-          if (isHeaderNavElement(b)) return false; // Abaikan tombol keluar/selesai di header
+          if (isHeaderNavElement(b) || isInsideOptionCard(b)) return false;
           return true;
         });
 
         var pageRect = pageEl.getBoundingClientRect();
-        // Tombol panah pagination harus berdampingan langsung (< 120px)
         var rightButtons = buttons.filter(function(b) {
           var r = b.getBoundingClientRect();
           var dist = r.left - pageRect.right;
@@ -809,7 +816,7 @@
           var btnText = (targetBtn.textContent || targetBtn.innerText || targetBtn.value || "").trim();
           if (isForbiddenButton(btnText)) {
             if (!definitelyNotLast) {
-              // Jika baru nomor awal (contoh 1 dari 15), jangan anggap sebagai submit kuis
+              // Jika belum nomor terakhir, jangan anggap submit
             } else {
               return { hasNext: false, isFinalSubmit: true, buttonText: btnText, nextElement: null };
             }
@@ -821,12 +828,12 @@
       }
     }
 
-    // 2. Tombol Next Standar: PRIORITASKAN ELEMEN TOMBOL ASLI DI AREA SOAL / FOOTER (Bukan Header!)
+    // 2. Tombol Next Standar & Pencarian Komprehensif (Termasuk Tombol Simpan & SVG Arrow)
     var candidates = Array.from(document.querySelectorAll(
-      "button, a, input[type='button'], input[type='submit'], [role='button'], [class*='btn' i], [class*='button' i]"
+      "button, a, input[type='button'], input[type='submit'], [role='button'], [class*='btn' i], [class*='button' i], [class*='cursor-pointer' i]"
     )).filter(function(el) {
       if (isHudElement(el) || !isElementVisible(el) || el.disabled || el.getAttribute("aria-disabled") === "true") return false;
-      if (isHeaderNavElement(el)) return false; // DILARANG COCOKKAN TOMBOL DI HEADER (SELESAI / AKHIRI UJIAN)
+      if (isHeaderNavElement(el) || isInsideOptionCard(el)) return false;
       if (el.querySelector("button, a, input[type='button'], input[type='submit'], [role='button']")) return false;
       var text = (el.textContent || el.innerText || el.value || "").trim();
       if (text.length > 45) return false;
@@ -851,73 +858,76 @@
         continue;
       }
 
+      // Abaikan tombol mundur/kembali/ragu-ragu
+      if (text.match(/^(?:sebelumnya|kembali|back|prev|ragu|tandai|reset)/i) || aria.match(/^(?:sebelumnya|kembali|back|prev)/i)) {
+        continue;
+      }
+
       var lower = text.toLowerCase();
       var cleanSym = lower.replace(/[\s\-_→>»]+/g, " ").trim();
-      var isNext = (
-        lower.includes("next") || lower.includes("selanjutnya") || lower.includes("berikutnya") ||
+
+      // Deteksi teks navigasi maju (bahasa Indonesia & Inggris, termasuk tombol simpan jawaban)
+      var textMatches = (
+        lower.includes("selanjutnya") || lower.includes("berikutnya") ||
         lower.includes("lanjut") || lower.includes("continue") || lower.includes("forward") ||
         lower.includes("soal selanjutnya") || lower.includes("soal berikutnya") ||
         lower.includes("simpan & lanjut") || lower.includes("simpan dan lanjut") ||
+        lower.includes("simpan jawaban") || lower.includes("simpan") ||
         lower === ">" || lower === ">>" || lower === "→" || lower === "»" ||
         cleanSym === ">" || cleanSym === "→" ||
         aria.includes("next") || aria.includes("selanjutnya") || aria.includes("forward") || aria.includes("right") ||
         title.includes("next") || title.includes("selanjutnya") || title.includes("forward") ||
         classId.includes("btn-next") || classId.includes("next-btn") || classId.includes("nextbutton") ||
-        classId.includes("btnnext") || classId.includes("next_btn") ||
-        classId.includes("chevron-right") || classId.includes("arrow-right") ||
-        innerHtml.includes("chevron-right") || innerHtml.includes("arrow-right") ||
-        innerHtml.includes("arrow_forward")
+        classId.includes("btnnext") || classId.includes("next_btn")
       );
 
-      if (isNext) {
-        return { hasNext: true, isFinalSubmit: false, buttonText: text || ">", nextElement: btn };
+      // Deteksi ikon panah kanan (SVG Heroicons, Lucide, Feather, FontAwesome, dsb)
+      var svgMatches = (
+        innerHtml.includes("chevron-right") || innerHtml.includes("arrow-right") ||
+        innerHtml.includes("arrow_forward") || innerHtml.includes("navigate_next") ||
+        innerHtml.includes("chevron_right") ||
+        innerHtml.includes("l7 7-7 7") || innerHtml.includes("l7.5 7.5-7.5 7.5") ||
+        innerHtml.includes("9 18 15 12 9 6") || innerHtml.includes("m14 5") || innerHtml.includes("m9 5") ||
+        innerHtml.includes("m13.5 4.5") || innerHtml.includes("m5 12h14")
+      );
+
+      if (textMatches || svgMatches) {
+        return { hasNext: true, isFinalSubmit: false, buttonText: text || "Selanjutnya", nextElement: btn };
       }
     }
 
-    // 3. Tombol kanan di footer navigasi kuis
-    var footers = Array.from(document.querySelectorAll("footer, [class*='footer' i], [class*='bottom' i], [class*='nav' i], [class*='pagination' i]")).filter(function(el) {
-      return !isHudElement(el) && !isHeaderNavElement(el);
+    // 3. Deteksi Heuristik Spasial: Tombol di baris navigasi bawah kuis sebelah kanan
+    var navButtons = candidates.filter(function(b) {
+      var r = b.getBoundingClientRect();
+      var t = (b.textContent || b.innerText || "").trim().toLowerCase();
+      if (t.match(/^(?:sebelumnya|kembali|back|prev|ragu|tandai|reset)/i)) return false;
+      return r.top > window.innerHeight * 0.35 && r.left >= window.innerWidth * 0.35;
     });
-    for (var f = 0; f < footers.length; f++) {
-      var foot = footers[f];
-      if (!isElementVisible(foot)) continue;
-      var fButtons = Array.from(foot.querySelectorAll("button, a, input[type='button'], input[type='submit'], [role='button']")).filter(function(b) {
-        if (!isElementVisible(b) || b.disabled) return false;
-        var r = b.getBoundingClientRect();
-        return r.width >= 16 && r.height >= 16;
-      });
 
-      var rightSide = fButtons.filter(function(b) { return b.getBoundingClientRect().left >= window.innerWidth * 0.40; });
-      if (rightSide.length > 0) {
-        rightSide.sort(function(a, b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });
-        var targetBtn2 = rightSide[0];
-        var btnText2 = (targetBtn2.textContent || targetBtn2.innerText || targetBtn2.value || "").trim();
-        if (isForbiddenButton(btnText2)) {
-          if (!definitelyNotLast) {
-            // Abaikan jika belum nomor terakhir
-          } else {
-            return { hasNext: false, isFinalSubmit: true, buttonText: btnText2, nextElement: null };
-          }
-        } else {
-          return { hasNext: true, isFinalSubmit: false, buttonText: btnText2 || ">", nextElement: targetBtn2 };
-        }
+    if (navButtons.length > 0) {
+      navButtons.sort(function(a, b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });
+      var spatialBtn = navButtons[0];
+      var sText = (spatialBtn.textContent || spatialBtn.innerText || spatialBtn.value || "").trim();
+      if (!isForbiddenButton(sText)) {
+        return { hasNext: true, isFinalSubmit: false, buttonText: sText || "Selanjutnya", nextElement: spatialBtn };
       }
     }
 
-    // 4. Deteksi navigasi tombol nomor soal berikutnya (misal jika sedang di Soal 1, cari nomor '2')
+    // 4. Deteksi navigasi tombol nomor soal berikutnya (misal sedang di Soal 1, cari kotak/nomor '2')
     if (progress.current > 0 && !progress.isLast) {
       var nextNumStr = String(progress.current + 1);
-      var numButtons = Array.from(document.querySelectorAll("button, a, [role='button'], [class*='page' i], [class*='number' i], [class*='badge' i]")).filter(function(el) {
-        if (isHudElement(el) || !isElementVisible(el) || isHeaderNavElement(el)) return false;
+      var numCandidates = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function(el) {
+        if (isHudElement(el) || !isElementVisible(el) || isHeaderNavElement(el) || isInsideOptionCard(el)) return false;
         var t = (el.textContent || el.innerText || "").trim();
-        return t === nextNumStr;
+        return t === nextNumStr && el.children.length === 0;
       });
-      if (numButtons.length > 0) {
-        return { hasNext: true, isFinalSubmit: false, buttonText: "Soal " + nextNumStr, nextElement: numButtons[0] };
+      if (numCandidates.length > 0) {
+        var numEl = numCandidates[0].closest("button, a, [role='button']") || numCandidates[0];
+        return { hasNext: true, isFinalSubmit: false, buttonText: "Soal " + nextNumStr, nextElement: numEl };
       }
     }
 
-    // 5. Final Submit HANYA JIKA terbukti memang sudah nomor terakhir di kuis
+    // 5. Final Submit HANYA JIKA memang terbukti nomor terakhir di kuis
     if (foundForbiddenInNav && (progress.isLast || progress.total === 0)) {
       return { hasNext: false, isFinalSubmit: true, buttonText: foundForbiddenInNav, nextElement: null };
     }
@@ -931,12 +941,22 @@
     if (detected.isFinalSubmit) {
       return { success: false, isFinalSubmit: true, forbiddenText: detected.buttonText };
     }
-    if (!detected.hasNext || !detected.nextElement) {
-      return { success: false, notFound: true };
+
+    if (detected.hasNext && detected.nextElement) {
+      clickNextButton(detected.nextElement);
+      return { success: true, buttonText: detected.buttonText };
     }
 
-    clickNextButton(detected.nextElement);
-    return { success: true, buttonText: detected.buttonText };
+    // Fallback: Dispatch shortcut navigasi tombol keyboard (ArrowRight) yang didukung banyak sistem ujian
+    try {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", code: "ArrowRight", keyCode: 39, which: 39, bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", code: "ArrowRight", keyCode: 39, which: 39, bubbles: true }));
+      window.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight", code: "ArrowRight", keyCode: 39, which: 39, bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight", code: "ArrowRight", keyCode: 39, which: 39, bubbles: true }));
+      return { success: true, buttonText: "ArrowRight (Keyboard)" };
+    } catch (_) {}
+
+    return { success: false, notFound: true };
   }
 
   // === 8. EKSEKUSI KLIK REALISTIS, AKURAT & TERPISAH (OPSI vs NEXT) ===
@@ -1105,7 +1125,7 @@
     return true;
   }
 
-  // B. Eksekusi tombol Next: Tepat 1x klik murni tanpa dobel-event sintetis (anti-skip)
+  // B. Eksekusi tombol Next: Realistis dengan pointer, mouse, focus, dan keyboard trigger
   function clickNextButton(btn) {
     if (!btn || isHudElement(btn)) return;
     highlightElement(btn);
@@ -1115,14 +1135,37 @@
     } catch (_) {}
 
     try {
+      if (typeof btn.focus === "function") btn.focus();
+    } catch (_) {}
+
+    var mouseOpts = { bubbles: true, cancelable: true, view: window, composed: true, buttons: 1 };
+    var releaseOpts = { bubbles: true, cancelable: true, view: window, composed: true, buttons: 0 };
+
+    try {
+      if (typeof PointerEvent !== "undefined") {
+        btn.dispatchEvent(new PointerEvent("pointerdown", mouseOpts));
+        btn.dispatchEvent(new PointerEvent("pointerup", releaseOpts));
+      }
+      btn.dispatchEvent(new MouseEvent("mousedown", mouseOpts));
+      btn.dispatchEvent(new MouseEvent("mouseup", releaseOpts));
       if (typeof btn.click === "function") {
         btn.click();
-      } else {
-        btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
       }
+      btn.dispatchEvent(new MouseEvent("click", releaseOpts));
+
+      // Jika tombol memiliki elemen teks anak (span/p/svg), klik juga langsung
+      var innerClickable = btn.querySelector("span, p, b, svg, div");
+      if (innerClickable) {
+        if (typeof innerClickable.click === "function") innerClickable.click();
+        innerClickable.dispatchEvent(new MouseEvent("click", releaseOpts));
+      }
+
+      // Trigger Enter pada tombol yang aktif difokuskan
+      btn.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
+      btn.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
     } catch (_) {
       try {
-        btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+        btn.click();
       } catch (_) {}
     }
   }
@@ -1430,12 +1473,20 @@
 
   async function waitForQuestionTransition(prevText) {
     var start = Date.now();
+    var retried = false;
     while (Date.now() - start < 4500) {
       await new Promise(function(r) { setTimeout(r, 350); });
       var currentText = extractPageInfo().text;
       if (currentText !== prevText && currentText.length > 20) {
         await new Promise(function(r) { setTimeout(r, 600); });
         return true;
+      }
+      // Jika setelah 1.5 detik halaman belum berganti, coba klik ulang tombol Next!
+      if (!retried && Date.now() - start > 1500) {
+        retried = true;
+        try {
+          findAndClickNextButton();
+        } catch (_) {}
       }
     }
     return false;
