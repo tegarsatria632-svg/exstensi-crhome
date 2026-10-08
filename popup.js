@@ -97,24 +97,23 @@ PANDUAN PEMBACAAN & ANALISIS SOAL SECARA DETAIL (SANGAT KRUSIAL):
      Jawaban: 4
    - DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...] untuk soal pilihan ganda.
 
-3. ATURAN SOAL ESAI, ISIAN, & PERTANYAAN TERBUKA (LENGKAP SESUAI KEBUTUHAN SOAL):
-   - Jika soal meminta sejumlah N poin/contoh (misal: "sebutkan 3 contoh...", "jelaskan 4 pilar OOP"): Sebutkan dan jelaskan SELURUH N poin tersebut tanpa ada yang terpotong atau dikurangi.
-   - Jika soal meminta perbandingan dan contoh untuk masing-masing (misal: "perbedaan SQL vs NoSQL dan minimal 1 contoh DBMS untuk masing-masing"): Jelaskan perbedaan struktur data dan skemanya secara tepat, serta sebutkan contoh DBMS untuk SQL dan NoSQL secara eksplisit.
-   - Jika soal menanyakan konsep dan pencegahan (misal: "prinsip SQL Injection dan teknik pencegahannya"): Jelaskan cara kerja kerentanan dan langkah pencegahan teknisnya secara tuntas.
-   - Jika soal isian singkat yang hanya menanyakan 1 istilah/angka (misal: kepanjangan HTTPS, nilai x): Tuliskan istilah atau angka tersebut secara presisi.
+3. ATURAN SOAL ESAI, KELEBIHAN/KEKURANGAN, PENDAPAT, & ANALISIS (LENGKAP SESUAI KEBUTUHAN SOAL):
+   - Soal Kelebihan & Kekurangan (Pros & Cons): Wajib menguraikan kelebihan dan kekurangan secara berimbang dan terstruktur (Kelebihan: 1, 2... Kekurangan: 1, 2...) disertai alasan teknis/ilmiah yang kuat.
+   - Soal Berikan Pendapat / Analisis Kritis / Solusi Kasus: Berikan pandangan yang logis, objektif, berbasis teori ilmiah/data, serta sertakan solusi atau rekomendasi konkret yang aplikatif.
+   - Soal Dampak / Pengaruh / Fungsi / Tahapan: Uraikan secara runtut, mendalam, dan terstruktur.
+   - Soal Permintaan Jumlah N Poin / Contoh: Sebutkan dan jelaskan SELURUH N poin/contoh tanpa ada yang terlewat atau dikurangi.
+   - Soal Perbandingan & Contoh DBMS/Kategori: Jelaskan perbedaan konsep dan sebutkan contoh masing-masing secara eksplisit.
+   - Soal Isian Singkat 1 Istilah/Angka: Tuliskan istilah atau angka tersebut secara presisi.
    - Format jawaban esai/uraian:
      Tuliskan analisis/langkah di [HITUNGAN: ...] jika memerlukan perhitungan.
      Lalu tuliskan jawaban lengkap di bawah Jawaban:
      Jawaban:
-     1. [Poin pertama lengkap]
-     2. [Poin kedua lengkap]
-     3. [Poin ketiga lengkap]
-     (Atau uraian penjelasan berbobot yang memenuhi semua kriteria yang diminta soal).
+     [Uraian berbobot, lengkap, dan terstruktur sesuai seluruh kriteria yang diminta soal]
 
 4. ATURAN FORMAT (SANGAT KETAT):
    - DILARANG menggunakan karakter bintang (*) atau cetak tebal (**) sama sekali.
    - DILARANG menggunakan tanda pagar (#).
-   - DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-). Gunakan penomoran angka (1., 2., 3.) untuk daftar poin.
+   - DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-). Gunakan penomoran angka (1., 2., 3.) atau huruf (a., b.) untuk daftar poin.
    - Tanpa salam pembuka, tanpa basa-basi, dan tanpa penutup.`;
 }
 
@@ -124,51 +123,31 @@ function getGeminiVisionPrompt() {
 TUGAS UTAMA:
 Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, matematika/geometri, atau kuis visual). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN YANG PALING TEPAT!
 
-PANDUAN KHUSUS LOGIKA TES IQ VISUAL, FIGURAL & MATRIKS POLA (RAVEN'S / MENSA / IQ CENTER):
-1. POLA GAMBAR TERBALIK, PENCERMINAN & ROTASI (INVERSION, MIRROR, FLIP, ROTATION):
-   - Pencerminan Horizontal (Flip Sumbu Vertikal / Kiri-Kanan): Periksa apakah elemen di sisi kiri berpindah ke kanan dan sebaliknya (seperti bayangan cermin datar).
-   - Pencerminan Vertikal (Flip Sumbu Horizontal / Atas-Bawah / Terbalik / Upside Down): Periksa apakah bentuk dibalik dari atas ke bawah (seperti bayangan di atas air).
-   - Rotasi Sudut Teratur: Pola yang berputar searah atau berlawanan jarum jam (45°, 90°, 135°, atau 180° / terbalik penuh). Amati perputaran jarum, anak panah, atau titik sudut secara presisi.
-   - Inversi Negatif (Pembalikan Warna): Bidang yang tadinya hitam menjadi putih, dan yang tadinya putih menjadi hitam.
-   - Hubungan Analogi Gambar: Jika Gambar A menjadi Gambar B (misal: terbalik 180° dan dibalik warnanya), maka Gambar C harus diperlakukan dengan transformasi yang SAMA PERSIS untuk menghasilkan Gambar D.
+PANDUAN MEMBACA TEKS SOAL DALAM GAMBAR (OCR & ANALISIS VISUAL):
+1. PEMBACAAN TEKS & OCR DARI GAMBAR SECARA AKURAT:
+   - Bacalah seluruh isi teks pertanyaan, instruksi, dan opsi jawaban (A, B, C, D, E) yang tertera langsung di dalam gambar atau tangkapan layar.
+   - Jika soal berbasis teks yang disajikan sebagai gambar (misalnya ujian CBT yang mengunci seleksi teks dengan merender teks ke dalam gambar/canvas): bacalah teks pertanyaan tersebut kata demi kata secara teliti.
+   - Jika gambar memuat diagram arsitektur, flowchart, tabel data, grafik statistik, rumus matematika/fisika, atau potongan kode: baca dan analisis setiap label teks, nilai angka, dan hubungan antar-elemen di dalamnya.
 
-2. POLA SAMBUNGAN KONTINU & POTONGAN KAIN/MATRIKS (PATTERN CONTINUITY & MISSING PIECE '?'):
-   - Kontinuitas Garis Sambungan (Seamless Fit): Garis horizontal, vertikal, kurva, atau diagonal dari potongan jawaban HARUS MENYAMBUNG LANGSUNG dengan garis-garis matriks di sekeliling lubang tanda tanya '?'. Tidak boleh ada garis yang terputus, melenceng, atau patah.
-   - Orientasi & Kemiringan Garis: Bedakan TEGAK LURUS (0° horizontal & 90° vertikal) vs MIRING/DIAGONAL (45°). ELIMINASI LANGSUNG potongan yang garisnya miring jika matriks utamanya tegak lurus!
-   - Kerapatan Kisi-Kisi & Skala Kotak (Grid Spacing / Density): Bandingkan jarak antar-garis dan ukuran kotak. Potongan yang benar memiliki kerapatan garis, ketebalan, dan ukuran sel yang IDENTIK dan PROPOSIONAL persis dengan matriks utama. Jangan pilih yang terlalu renggang atau terlalu rapat.
+2. LOGIKA TES IQ VISUAL, FIGURAL & MATRIKS POLA (RAVEN'S / MENSA / IQ CENTER):
+   - Pola Terbalik / Pencerminan / Rotasi: Amati pembalikan sumbu vertikal/horizontal, perputaran sudut jarum jam (45°, 90°, 180°), dan inversi warna (hitam/putih).
+   - Pola Sambungan & Potongan Matriks '?': Periksa kontinuitas garis (seamless fit), sudut kemiringan (tegak vs miring), dan kerapatan kisi-kisi (grid density) agar identik dengan matriks utama.
+   - Operasi Bentuk: Evaluasi superposisi XOR, penggabungan AND, atau pergeseran langkah.
 
-3. LOGIKA OPERASI BENTUK MATRIKS 3x3 / 2x2:
-   - Superposisi & XOR: Garis yang sama di kotak 1 dan 2 akan HILANG/DIHAPUS di kotak 3; garis yang berbeda akan DIPERTAHANKAN.
-   - Penggabungan (Union / AND): Menggabungkan seluruh garis/elemen kotak 1 dan kotak 2 menjadi satu di kotak 3.
-   - Pergerakan Bertahap: Titik atau simbol yang bergeser 1 langkah per kotak sesuai lintasan jarum jam.
-
-4. ATURAN PENOMORAN OPSI JAWABAN VISUAL (KARTU GAMBAR TANPA HURUF):
-   - Pada kuis seperti IQ Center di mana opsi disusun dalam 2 atau 3 kolom (kiri-ke-kanan, atas-ke-bawah):
+3. ATURAN PENOMORAN OPSI JAWABAN VISUAL (KARTU GAMBAR TANPA HURUF):
+   - Jika opsi disusun dalam kolom/baris kartu gambar:
      * Baris 1: Kotak 1 (Kiri Atas), Kotak 2 (Kanan Atas)
      * Baris 2: Kotak 3 (Kiri Tengah), Kotak 4 (Kanan Tengah)
      * Baris 3: Kotak 5 (Kiri Bawah), Kotak 6 (Kanan Bawah)
-   - Tuliskan jawaban akhir dengan menyebutkan nomor urut kotak atau hurufnya:
-     Contoh: Jawaban: 1   (atau Jawaban: A)
-     Sistem akan otomatis mengklik kartu urutan ke-1 (kiri atas) sesuai tata letak layar.
+   - Tuliskan nomor urut kotak atau hurufnya: Jawaban: 1 (atau Jawaban: A).
 
-ATURAN KHUSUS SOAL MATEMATIKA VISUAL & ALJABAR (x, y):
-- Lakukan kalkulasi teliti di dalam blok [HITUNGAN: ...].
-- Jika ada pilihan ganda huruf (A/B/C/D/E), tuliskan: Jawaban: [Huruf Opsi]. [Nilai angka].
-- Evaluasi seluruh opsi secara objektif tanpa bias urutan.
+4. ATURAN SOAL PILIHAN GANDA & KUIS BERGAMBAR:
+   - Baris jawaban akhir WAJIB berupa 1 baris jelas:
+     Jawaban: B. [Teks pilihan] (atau Jawaban: B)
+   - DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...] untuk pilihan ganda.
 
-ATURAN PILIHAN GANDA & TES IQ:
-- Baris jawaban akhir WAJIB berupa 1 baris jelas:
-  Contoh jika opsi ada huruf (A-H):
-  Jawaban: B. [Teks pilihan]
-  (atau Jawaban: B)
-- Contoh jika pola tes IQ berupa kotak nomor urut:
-  Jawaban: 1 (atau Jawaban: A)
-- Contoh jika opsi berupa teks langsung:
-  Jawaban: [Teks opsi yang benar]
-- DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...] untuk pilihan ganda.
-
-ATURAN SOAL ESAI / ISIAN BERGAMBAR:
-- Jika soal bergambar meminta menyebutkan sejumlah N poin/contoh/komponen atau uraian detail: baca gambar dan teks soal dengan cermat, lalu sajikan seluruh poin yang diminta secara lengkap dan berbobot di bawah "Jawaban:".
+5. ATURAN SOAL ESAI BERGAMBAR, ANALISIS KASUS, KELEBIHAN/KEKURANGAN, & PENDAPAT:
+   - Jika soal di dalam gambar menanyakan kelebihan/kekurangan, opini/pendapat ilmiah, analisis grafik/diagram, atau sejumlah N contoh: baca pertanyaan di dalam gambar secara detail dan sajikan jawaban lengkap, terstruktur, dan berbobot di bawah "Jawaban:".
 
 ATURAN FORMAT (SANGAT KETAT):
 - DILARANG menggunakan karakter bintang (*) atau tanda tebal ganda (**) sama sekali.
@@ -1347,7 +1326,7 @@ async function executeGeminiVision() {
 
     try {
       const generationConfig = {
-        maxOutputTokens: 512,
+        maxOutputTokens: 1500,
         temperature: 0.0
       };
 
