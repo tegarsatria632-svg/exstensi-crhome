@@ -30,9 +30,9 @@ function getGroqPrompt() {
 TUGAS UTAMA:
 Selesaikan pertanyaan atau soal pada teks dan berikan jawaban yang benar dan akurat.
 
-ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, DAN HITUNGAN:
-- WAJIB lakukan perhitungan langkah demi langkah secara ringkas dan teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris kalkulasi inti aljabar/aritmatika, tanpa kalimat pengantar).
-- Jangan menebak! Periksa ulang operasi aljabar, perkalian, pembagian, dan substitusi variabel dengan cermat.
+ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, PENALARAN ANALITIS, & HITUNGAN:
+- WAJIB lakukan kalkulasi atau deduksi logika langkah demi langkah secara ringkas dan teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris kalkulasi inti aljabar/aritmatika, pemetaan urutan posisi, atau silogisme premis, tanpa kalimat pengantar panjang).
+- Jangan menebak! Periksa ulang operasi aljabar, premis silogisme (Semua vs Sebagian, implikasi majemuk), dan urutan penalaran dengan cermat.
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
 ATURAN PILIHAN GANDA & KUIS (WAJIB FORMAT TEPAT):
@@ -61,8 +61,8 @@ function getGeminiVisionPrompt() {
 TUGAS UTAMA:
 Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, matematika/geometri, atau kuis visual). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN YANG BENAR!
 
-ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, DAN TES IQ VISUAL:
-- WAJIB lakukan analisis/perhitungan pola dan angka secara teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris ringkas inti pola/rumus).
+ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA VISUAL, DAN TES IQ (MATRIKS/POLA/FIGURAL):
+- WAJIB lakukan analisis deduksi pola, rotasi bentuk, matriks 3x3, atau angka secara teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris ringkas inti pola/rumus).
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
 ATURAN PILIHAN GANDA & TES IQ:
