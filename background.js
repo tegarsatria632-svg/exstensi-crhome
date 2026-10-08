@@ -35,6 +35,9 @@ ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, PENALARAN ANALITIS, & HITUNGAN:
 - Jangan menebak! Periksa ulang operasi aljabar, premis silogisme (Semua vs Sebagian, implikasi majemuk), dan urutan penalaran dengan cermat.
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
+ATURAN KHUSUS SOAL TKP (TES KARAKTERISTIK PRIBADI CPNS / KEDINASAN / BUMN):
+- Untuk soal kepribadian / TKP, WAJIB pilih opsi yang memberikan SKOR TERTINGGI (SKOR 5): tindakan yang paling berintegritas tinggi, berorientasi pada pelayanan publik terbaik, profesional, proaktif mencari solusi, adaptif terhadap teknologi baru, kolaboratif, dan taat etika kedinasan ASN.
+
 ATURAN PILIHAN GANDA & KUIS (WAJIB FORMAT TEPAT):
 - Baris jawaban akhir WAJIB berupa 1 baris jelas:
   Contoh jika opsi memiliki huruf (A/B/C/D/E):
