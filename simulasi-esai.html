@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulasi CBT Esai & Isian Informatika (Penilaian Skor Otomatis)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      color: #ffffff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    header h1 {
+      font-size: 16.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-test {
+      background: #4f46e5;
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-weight: 600;
+    }
+
+    .container {
+      max-width: 860px;
+      width: 100%;
+      margin: 28px auto;
+      padding: 0 16px;
+      flex: 1;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 26px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e2e8f0;
+    }
+
+    .question-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+
+    .question-num {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: #4338ca;
+    }
+
+    .question-type-badge {
+      font-size: 12px;
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .question-text {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #1e293b;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    .input-section {
+      margin-top: 10px;
+    }
+
+    .input-label {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    textarea.essay-input {
+      width: 100%;
+      padding: 13px 15px;
+      font-size: 14.5px;
+      font-family: inherit;
+      color: #0f172a;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      resize: vertical;
+      min-height: 140px;
+      outline: none;
+      line-height: 1.5;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    textarea.essay-input:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    input[type="text"].short-input {
+      width: 100%;
+      padding: 13px 15px;
+      font-size: 14.5px;
+      font-family: inherit;
+      color: #0f172a;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    input[type="text"].short-input:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .rich-editor-box {
+      width: 100%;
+      min-height: 140px;
+      padding: 13px 15px;
+      font-size: 14.5px;
+      color: #0f172a;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      outline: none;
+      background: #ffffff;
+      line-height: 1.55;
+    }
+
+    .rich-editor-box:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .rich-editor-box[contenteditable]:empty:before {
+      content: attr(placeholder);
+      color: #94a3b8;
+    }
+
+    .footer-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .nav-btn {
+      padding: 10px 20px;
+      font-size: 13.5px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .15s;
+    }
+
+    .btn-prev {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .btn-prev:hover {
+      background: #cbd5e1;
+    }
+
+    .btn-next {
+      background: #4f46e5;
+      color: #ffffff;
+    }
+
+    .btn-next:hover {
+      background: #4338ca;
+    }
+
+    .btn-finish {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .btn-finish:hover {
+      background: #15803d;
+    }
+
+    .saved-status {
+      font-size: 12.5px;
+      color: #16a34a;
+      display: none;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+    }
+
+    .question-dots {
+      display: flex;
+      gap: 8px;
+      margin-top: 22px;
+      justify-content: center;
+    }
+
+    .dot {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: #4f46e5;
+      color: #fff;
+      border-color: #4f46e5;
+    }
+
+    .dot.filled {
+      border-color: #16a34a;
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    /* Scoreboard Result */
+    .result-section {
+      display: none;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #4338ca);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.3);
+    }
+
+    .score-circle .num {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .score-circle .label {
+      font-size: 11.5px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    .score-summary-title {
+      font-size: 21px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .score-summary-desc {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+
+    .eval-table {
+      width: 100%;
+      text-align: left;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 13.5px;
+    }
+
+    .eval-table th, .eval-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    .eval-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .badge-score-full {
+      background: #dcfce7;
+      color: #166534;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .badge-score-partial {
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .badge-score-zero {
+      background: #fee2e2;
+      color: #991b1b;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .btn-restart {
+      padding: 12px 28px;
+      background: #4f46e5;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-restart:hover {
+      background: #4338ca;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>💻 CBT Ujian Esai & Isian Informatika</h1>
+    <span class="badge-test">5 Soal Informatika & CS</span>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <!-- Tampilan Pengerjaan Soal -->
+      <div id="examView">
+        <div class="question-header">
+          <span class="question-num" id="qNumTitle">Soal Nomor 1 dari 5</span>
+          <span class="question-type-badge" id="qTypeBadge">Isian Singkat</span>
+        </div>
+
+        <div class="question-text" id="qText">
+          Memuat teks soal...
+        </div>
+
+        <div class="input-section" id="inputContainer">
+          <!-- Input dinamis -->
+        </div>
+
+        <div class="footer-nav">
+          <button id="prevBtn" class="nav-btn btn-prev" style="visibility: hidden;">&lt; Soal Sebelumnya</button>
+          <span id="savedIndicator" class="saved-status">✓ Tersimpan</span>
+          <button id="nextBtn" class="nav-btn btn-next">Soal Selanjutnya &gt;</button>
+        </div>
+
+        <div class="question-dots" id="dotsContainer">
+          <!-- Dot nomor navigasi -->
+        </div>
+      </div>
+
+      <!-- Tampilan Skor Evaluasi Ujian -->
+      <div class="result-section" id="resultView">
+        <div class="score-circle">
+          <span class="num" id="totalScoreText">100</span>
+          <span class="label">SKOR TOTAL</span>
+        </div>
+        <h2 class="score-summary-title" id="evalTitle">Evaluasi Ujian Informatika</h2>
+        <p class="score-summary-desc" id="evalDesc">Hasil penilaian otomatis berdasarkan kriteria kata kunci dan ketepatan konsep:</p>
+
+        <table class="eval-table">
+          <thead>
+            <tr>
+              <th style="width: 8%;">No</th>
+              <th style="width: 25%;">Topik Soal</th>
+              <th style="width: 42%;">Jawaban Anda</th>
+              <th style="width: 15%;">Nilai</th>
+              <th style="width: 10%;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="evalTableBody">
+            <!-- Review rows -->
+          </tbody>
+        </table>
+
+        <button class="btn-restart" onclick="restartExam()">🔄 Ulangi Ujian</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        num: 1,
+        topic: "Struktur Data (LIFO)",
+        type: "input",
+        badge: "Isian Singkat (<input type='text'>)",
+        text: "Sebutkan struktur data linier yang beroperasi dengan prinsip Last In First Out (LIFO), di mana elemen terakhir yang dimasukkan adalah elemen pertama yang dikeluarkan!",
+        placeholder: "Tuliskan nama struktur data di sini...",
+        points: 20,
+        evaluate: function(answer) {
+          if (!answer) return { score: 0, feedback: "Tidak dijawab" };
+          const low = answer.toLowerCase().trim();
+          if (low.includes("stack") || low.includes("tumpukan")) {
+            return { score: 20, feedback: "Tepat (Stack / Tumpukan)" };
+          }
+          return { score: 0, feedback: "Kurang tepat (Jawaban benar: Stack)" };
+        }
+      },
+      {
+        num: 2,
+        topic: "Jaringan & Protokol Web",
+        type: "input",
+        badge: "Isian Singkat (<input type='text'>)",
+        text: "Apa kepanjangan dari protokol komunikasi web terenkripsi HTTPS yang menggunakan sertifikat SSL/TLS pada port default 443?",
+        placeholder: "Tuliskan kepanjangan HTTPS...",
+        points: 20,
+        evaluate: function(answer) {
+          if (!answer) return { score: 0, feedback: "Tidak dijawab" };
+          const low = answer.toLowerCase().trim();
+          if (low.includes("hypertext") && low.includes("transfer") && low.includes("protocol") && low.includes("secure")) {
+            return { score: 20, feedback: "Tepat (Hypertext Transfer Protocol Secure)" };
+          }
+          if (low.includes("hypertext transfer protocol")) {
+            return { score: 10, feedback: "Kurang kata 'Secure' di akhir" };
+          }
+          return { score: 0, feedback: "Kurang tepat" };
+        }
+      },
+      {
+        num: 3,
+        topic: "Basis Data (SQL vs NoSQL)",
+        type: "textarea",
+        badge: "Kotak Uraian (<textarea>)",
+        text: "Jelaskan perbedaan mendasar antara database relasional (SQL) dan database non-relasional (NoSQL) dari segi struktur data dan skemanya, serta sebutkan minimal satu contoh DBMS untuk masing-masing jenis database tersebut!",
+        placeholder: "Ketikkan penjelasan perbandingan SQL vs NoSQL dan contoh DBMS-nya...",
+        points: 20,
+        evaluate: function(answer) {
+          if (!answer) return { score: 0, feedback: "Tidak dijawab" };
+          const low = answer.toLowerCase();
+          let score = 0;
+          let notes = [];
+
+          // Kriteria 1: Struktur data SQL (tabel, baris/kolom, skema terstruktur)
+          if (low.includes("tabel") || low.includes("skema") || low.includes("terstruktur") || low.includes("relasi")) {
+            score += 6;
+            notes.push("Konsep SQL tepat");
+          }
+          // Kriteria 2: Struktur data NoSQL (dokumen, json, key-value, fleksibel, tanpa skema)
+          if (low.includes("dokumen") || low.includes("json") || low.includes("key-value") || low.includes("fleksibel") || low.includes("dinamis") || low.includes("grafik") || low.includes("kolom")) {
+            score += 6;
+            notes.push("Konsep NoSQL tepat");
+          }
+          // Kriteria 3: Contoh DBMS SQL (MySQL, PostgreSQL, Oracle, SQLite, SQL Server)
+          if (low.includes("mysql") || low.includes("postgresql") || low.includes("postgres") || low.includes("oracle") || low.includes("sqlite") || low.includes("sql server")) {
+            score += 4;
+            notes.push("Contoh SQL benar");
+          }
+          // Kriteria 4: Contoh DBMS NoSQL (MongoDB, Redis, Cassandra, Firebase, CouchDB, DynamoDB)
+          if (low.includes("mongodb") || low.includes("redis") || low.includes("cassandra") || low.includes("firebase") || low.includes("dynamodb")) {
+            score += 4;
+            notes.push("Contoh NoSQL benar");
+          }
+
+          if (score === 0) return { score: 5, feedback: "Penjelasan umum singkat" };
+          return { score: Math.min(score, 20), feedback: notes.join(", ") };
+        }
+      },
+      {
+        num: 4,
+        topic: "Pemrograman OOP",
+        type: "contenteditable",
+        badge: "Rich Text Editor (contenteditable)",
+        text: "Jelaskan secara ringkas pengertian dari 4 pilar utama dalam Pemrograman Berorientasi Objek (OOP): Encapsulation, Inheritance, Polymorphism, dan Abstraction!",
+        placeholder: "Tuliskan penjelasan 4 pilar OOP di sini...",
+        points: 20,
+        evaluate: function(answer) {
+          if (!answer) return { score: 0, feedback: "Tidak dijawab" };
+          const low = answer.toLowerCase();
+          let count = 0;
+          if (low.includes("encapsulation") || low.includes("enkapsulasi") || low.includes("bungkus") || low.includes("private")) count++;
+          if (low.includes("inheritance") || low.includes("pewarisan") || low.includes("turunan") || low.includes("induk")) count++;
+          if (low.includes("polymorphism") || low.includes("polimorfisme") || low.includes("banyak bentuk") || low.includes("overrid")) count++;
+          if (low.includes("abstraction") || low.includes("abstraksi") || low.includes("sembunyi") || low.includes("detail")) count++;
+
+          const score = count * 5;
+          return { score: score, feedback: `${count} dari 4 pilar dijelaskan dengan baik` };
+        }
+      },
+      {
+        num: 5,
+        topic: "Keamanan Siber (SQL Injection)",
+        type: "textarea",
+        badge: "Kotak Uraian (<textarea>)",
+        text: "Jelaskan prinsip dasar serangan SQL Injection (SQLi) dan bagaimana teknik terbaik yang direkomendasikan untuk mencegah kerentanan tersebut pada kode aplikasi web!",
+        placeholder: "Ketikkan penjelasan SQL Injection dan pencegahannya...",
+        points: 20,
+        evaluate: function(answer) {
+          if (!answer) return { score: 0, feedback: "Tidak dijawab" };
+          const low = answer.toLowerCase();
+          let score = 0;
+          let notes = [];
+
+          // Prinsip serangan: menyisipkan kode/query SQL berbahaya melalui input form
+          if (low.includes("injeksi") || low.includes("sisip") || low.includes("manipulasi") || low.includes("input") || low.includes("query") || low.includes("perintah")) {
+            score += 10;
+            notes.push("Prinsip serangan dipahami");
+          }
+          // Teknik pencegahan: prepared statements, parameterized queries, ORM, validasi input
+          if (low.includes("prepared") || low.includes("parameter") || low.includes("orm") || low.includes("validasi") || low.includes("sanitasi") || low.includes("escape")) {
+            score += 10;
+            notes.push("Teknik pencegahan tepat");
+          }
+
+          if (score === 0) return { score: 5, feedback: "Penjelasan umum singkat" };
+          return { score: Math.min(score, 20), feedback: notes.join(", ") };
+        }
+      }
+    ];
+
+    let currentIndex = 0;
+    const userAnswers = {};
+
+    const qNumTitle = document.getElementById("qNumTitle");
+    const qTypeBadge = document.getElementById("qTypeBadge");
+    const qText = document.getElementById("qText");
+    const inputContainer = document.getElementById("inputContainer");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const savedIndicator = document.getElementById("savedIndicator");
+    const dotsContainer = document.getElementById("dotsContainer");
+
+    function renderQuestion(idx) {
+      const q = questions[idx];
+      qNumTitle.textContent = `Soal Nomor ${q.num} dari ${questions.length}`;
+      qTypeBadge.textContent = q.badge;
+      qText.textContent = q.text;
+
+      inputContainer.innerHTML = "";
+      const label = document.createElement("label");
+      label.className = "input-label";
+      label.textContent = "Jawaban Anda:";
+      inputContainer.appendChild(label);
+
+      let inputEl;
+      if (q.type === "textarea") {
+        inputEl = document.createElement("textarea");
+        inputEl.className = "essay-input";
+        inputEl.placeholder = q.placeholder;
+        inputEl.value = userAnswers[idx] || "";
+        inputEl.addEventListener("input", () => saveAnswer(idx, inputEl.value));
+      } else if (q.type === "input") {
+        inputEl = document.createElement("input");
+        inputEl.type = "text";
+        inputEl.className = "short-input";
+        inputEl.placeholder = q.placeholder;
+        inputEl.value = userAnswers[idx] || "";
+        inputEl.addEventListener("input", () => saveAnswer(idx, inputEl.value));
+      } else if (q.type === "contenteditable") {
+        inputEl = document.createElement("div");
+        inputEl.contentEditable = "true";
+        inputEl.className = "rich-editor-box";
+        inputEl.setAttribute("placeholder", q.placeholder);
+        inputEl.innerText = userAnswers[idx] || "";
+        inputEl.addEventListener("input", () => saveAnswer(idx, inputEl.innerText));
+      }
+
+      inputContainer.appendChild(inputEl);
+
+      prevBtn.style.visibility = idx === 0 ? "hidden" : "visible";
+      if (idx === questions.length - 1) {
+        nextBtn.textContent = "Selesai & Kumpulkan";
+        nextBtn.className = "nav-btn btn-finish";
+      } else {
+        nextBtn.textContent = "Soal Selanjutnya >";
+        nextBtn.className = "nav-btn btn-next";
+      }
+
+      renderDots();
+    }
+
+    function saveAnswer(idx, val) {
+      userAnswers[idx] = val;
+      savedIndicator.style.display = "inline-flex";
+      setTimeout(() => {
+        savedIndicator.style.display = "none";
+      }, 1200);
+      renderDots();
+    }
+
+    function renderDots() {
+      dotsContainer.innerHTML = "";
+      questions.forEach((q, i) => {
+        const dot = document.createElement("div");
+        dot.className = `dot ${i === currentIndex ? "active" : ""} ${userAnswers[i] && userAnswers[i].trim() ? "filled" : ""}`;
+        dot.textContent = q.num;
+        dot.addEventListener("click", () => {
+          currentIndex = i;
+          renderQuestion(currentIndex);
+        });
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion(currentIndex);
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderQuestion(currentIndex);
+      } else {
+        submitAndScoreExam();
+      }
+    });
+
+    function submitAndScoreExam() {
+      let totalScore = 0;
+      const tbody = document.getElementById("evalTableBody");
+      tbody.innerHTML = "";
+
+      questions.forEach((q, i) => {
+        const ans = userAnswers[i] || "";
+        const result = q.evaluate(ans);
+        totalScore += result.score;
+
+        let badgeClass = "badge-score-full";
+        if (result.score === 0) badgeClass = "badge-score-zero";
+        else if (result.score < q.points) badgeClass = "badge-score-partial";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><b>#${q.num}</b></td>
+          <td><b>${q.topic}</b></td>
+          <td style="color:#334155;">${ans ? (ans.length > 120 ? ans.slice(0, 120) + "..." : ans) : "<i style='color:#ef4444;'>Kosong</i>"}</td>
+          <td><b>${result.score} / ${q.points}</b></td>
+          <td><span class="${badgeClass}">${result.feedback}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("totalScoreText").textContent = totalScore;
+      document.getElementById("evalDesc").textContent = `Hasil Penilaian Otomatis: Nilai Akhir ${totalScore} dari 100 poin.`;
+
+      if (totalScore >= 80) {
+        document.getElementById("evalTitle").textContent = "🎉 Luar Biasa! Pemahaman Sangat Mendalam";
+      } else if (totalScore >= 60) {
+        document.getElementById("evalTitle").textContent = "👍 Lulus! Pemahaman Konsep Cukup Baik";
+      } else {
+        document.getElementById("evalTitle").textContent = "⚠️ Perlu Pendalaman Materi Informatika";
+      }
+
+      document.getElementById("examView").style.display = "none";
+      document.getElementById("resultView").style.display = "block";
+    }
+
+    function restartExam() {
+      for (const k in userAnswers) delete userAnswers[k];
+      currentIndex = 0;
+      document.getElementById("examView").style.display = "block";
+      document.getElementById("resultView").style.display = "none";
+      renderQuestion(0);
+    }
+
+    // Mulai render soal 1
+    renderQuestion(0);
+  </script>
+</body>
+
+</html>

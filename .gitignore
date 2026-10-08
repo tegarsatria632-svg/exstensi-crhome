@@ -8,10 +8,8 @@ config.js
 .env
 .env.*
 
-# 2. FILE SIMULASI & PENGUJIAN LOKAL
+# 2. FILE PENGUJIAN LOKAL SCRATCH
 server.js
-simulasi-esai.html
-simulasi-kuis.html
 test_*.js
 test_*.cjs
 *.log

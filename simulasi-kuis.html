@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulasi CBT Informatika & Ilmu Komputer (Pilihan Ganda)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      padding: 30px 16px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .quiz-container {
+      width: 100%;
+      max-width: 740px;
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+
+    .quiz-header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+      color: #ffffff;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .quiz-header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quiz-badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .quiz-body {
+      padding: 26px;
+    }
+
+    .question-title {
+      font-size: 16.5px;
+      font-weight: 600;
+      line-height: 1.55;
+      margin-bottom: 22px;
+      color: #0f172a;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 26px;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all .15s ease;
+      background: #fafafa;
+    }
+
+    .option-item:hover {
+      border-color: #6366f1;
+      background: #f5f3ff;
+    }
+
+    .option-item.selected {
+      border-color: #4f46e5;
+      background: #eef2ff;
+    }
+
+    .option-item input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #4f46e5;
+      cursor: pointer;
+    }
+
+    .option-label {
+      font-size: 14.5px;
+      cursor: pointer;
+      user-select: none;
+      flex: 1;
+      color: #334155;
+    }
+
+    .quiz-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 18px;
+    }
+
+    .btn-nav {
+      padding: 10px 20px;
+      font-size: 13.5px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .btn-prev {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .btn-prev:hover:not(:disabled) {
+      background: #cbd5e1;
+    }
+
+    .btn-prev:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-next {
+      background: #4f46e5;
+      color: #ffffff;
+    }
+
+    .btn-next:hover {
+      background: #4338ca;
+    }
+
+    .btn-submit {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .btn-submit:hover {
+      background: #15803d;
+    }
+
+    .pagination-bar {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .page-dot {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #475569;
+    }
+
+    .page-dot.active {
+      background: #4f46e5;
+      border-color: #4f46e5;
+      color: #ffffff;
+    }
+
+    .page-dot.answered {
+      border-color: #16a34a;
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    /* Result Scoreboard */
+    .result-card {
+      display: none;
+      padding: 30px 24px;
+      text-align: center;
+    }
+
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #ffffff;
+      margin: 0 auto 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.3);
+    }
+
+    .score-num {
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    .result-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .result-desc {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+
+    .review-table {
+      width: 100%;
+      text-align: left;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 13.5px;
+    }
+
+    .review-table th, .review-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .review-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .badge-correct {
+      background: #dcfce7;
+      color: #166534;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-wrong {
+      background: #fee2e2;
+      color: #991b1b;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .btn-restart {
+      padding: 12px 28px;
+      background: #4f46e5;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-restart:hover {
+      background: #4338ca;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="quiz-container">
+    <div class="quiz-header">
+      <h1>💻 Ujian CBT Informatika & Komputer</h1>
+      <span class="quiz-badge" id="quizBadge">Soal 1 dari 10</span>
+    </div>
+
+    <!-- Halaman Kuis Berjalan -->
+    <div class="quiz-body" id="quizBody">
+      <div class="question-title" id="questionText">Memuat pertanyaan...</div>
+
+      <div class="options-list" id="optionsContainer">
+        <!-- Opsi rendered dynamically -->
+      </div>
+
+      <div class="quiz-footer">
+        <button class="btn-nav btn-prev" id="prevBtn" onclick="prevQuestion()">&lt; Sebelumnya</button>
+        <span id="paginationIndicator" style="font-size: 13px; color: #64748b; font-weight: 600;">1 of 10</span>
+        <button class="btn-nav btn-next" id="nextBtn" onclick="nextQuestion()">Berikutnya &gt;</button>
+      </div>
+
+      <div class="pagination-bar" id="paginationBar">
+        <!-- Number buttons -->
+      </div>
+    </div>
+
+    <!-- Halaman Hasil Skor -->
+    <div class="result-card" id="resultCard">
+      <div class="score-circle">
+        <span class="score-num" id="finalScoreVal">100</span>
+        <span class="score-label">SKOR ANDA</span>
+      </div>
+      <h2 class="result-title" id="resultStatusTitle">Evaluasi Ujian Selesai!</h2>
+      <p class="result-desc" id="resultDescText">Berikut rincian pengerjaan soal ujian Informatika:</p>
+
+      <table class="review-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Topik</th>
+            <th>Jawaban Anda</th>
+            <th>Kunci</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="reviewTableBody">
+          <!-- Render review rows -->
+        </tbody>
+      </table>
+
+      <button class="btn-restart" onclick="restartQuiz()">🔄 Ulangi Ujian</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        num: 1,
+        topic: "Struktur Data",
+        question: "1. Struktur data linier yang bekerja dengan prinsip First In First Out (FIFO), di mana elemen yang pertama kali dimasukkan adalah elemen yang pertama kali dikeluarkan, adalah...",
+        options: [
+          "A. Stack",
+          "B. Queue",
+          "C. Tree",
+          "D. Graph",
+          "E. Array"
+        ],
+        correct: 1 // B
+      },
+      {
+        num: 2,
+        topic: "Algoritma & Kompleksitas",
+        question: "2. Kompleksitas waktu kasus terburuk (worst-case time complexity) dari algoritma pencarian biner (Binary Search) pada array terurut berukuran n adalah...",
+        options: [
+          "A. O(1)",
+          "B. O(n)",
+          "C. O(log n)",
+          "D. O(n log n)",
+          "E. O(n^2)"
+        ],
+        correct: 2 // C
+      },
+      {
+        num: 3,
+        topic: "Jaringan Komputer",
+        question: "3. Pada model referensi OSI (Open Systems Interconnection) 7 Layer, protokol HTTP, HTTPS, FTP, dan DNS beroperasi pada lapisan (layer)...",
+        options: [
+          "A. Transport Layer",
+          "B. Network Layer",
+          "C. Data Link Layer",
+          "D. Application Layer",
+          "E. Session Layer"
+        ],
+        correct: 3 // D
+      },
+      {
+        num: 4,
+        topic: "Basis Data & SQL",
+        question: "4. Perintah SQL standar yang digunakan untuk menampilkan data dari sebuah tabel tanpa menampilkan baris data yang duplikat (hanya baris unik) adalah...",
+        options: [
+          "A. SELECT UNIQUE",
+          "B. SELECT DISTINCT",
+          "C. SELECT DIFFERENT",
+          "D. SELECT FILTER",
+          "E. SELECT GROUP"
+        ],
+        correct: 1 // B
+      },
+      {
+        num: 5,
+        topic: "Pemrograman OOP",
+        question: "5. Konsep dalam Pemrograman Berorientasi Objek (OOP) di mana sebuah class turunan (subclass) dapat mewarisi atribut dan method dari class induk (superclass) disebut...",
+        options: [
+          "A. Polymorphism",
+          "B. Encapsulation",
+          "C. Inheritance",
+          "D. Abstraction",
+          "E. Overloading"
+        ],
+        correct: 2 // C
+      },
+      {
+        num: 6,
+        topic: "Sistem Operasi",
+        question: "6. Kondisi dalam sistem operasi di mana dua atau lebih proses saling terhenti dan menunggu sumber daya (resource) yang sedang dikunci oleh proses lain sehingga tidak ada proses yang dapat berjalan disebut...",
+        options: [
+          "A. Deadlock",
+          "B. Starvation",
+          "C. Paging",
+          "D. Thrashing",
+          "E. Race Condition"
+        ],
+        correct: 0 // A
+      },
+      {
+        num: 7,
+        topic: "Keamanan Siber",
+        question: "7. Serangan siber yang bertujuan melumpuhkan server atau layanan web dengan cara membanjiri lalu lintas jaringan menggunakan jutaan paket data palsu secara serentak disebut...",
+        options: [
+          "A. Phishing",
+          "B. SQL Injection",
+          "C. DDoS (Distributed Denial of Service)",
+          "D. Man-in-the-Middle (MitM)",
+          "E. Cross-Site Scripting (XSS)"
+        ],
+        correct: 2 // C
+      },
+      {
+        num: 8,
+        topic: "Arsitektur Komputer",
+        question: "8. Berapakah nilai representasi bilangan desimal dari bilangan biner 10110100?",
+        options: [
+          "A. 172",
+          "B. 180",
+          "C. 192",
+          "D. 164",
+          "E. 178"
+        ],
+        correct: 1 // B (128+32+16+4 = 180)
+      },
+      {
+        num: 9,
+        topic: "Rekayasa Perangkat Lunak",
+        question: "9. Dalam metodologi pengembangan perangkat lunak Agile / Scrum, pertemuan harian berdurasi singkat sekitar 15 menit untuk menyinkronkan pekerjaan dan kendala tim disebut...",
+        options: [
+          "A. Sprint Planning",
+          "B. Daily Standup / Daily Scrum",
+          "C. Sprint Review",
+          "D. Sprint Retrospective",
+          "E. Backlog Refinement"
+        ],
+        correct: 1 // B
+      },
+      {
+        num: 10,
+        topic: "Kecerdasan Buatan (AI)",
+        question: "10. Paradigma pembelajaran mesin (Machine Learning) di mana model mengelompokkan data (clustering) atau mencari pola tersembunyi tanpa adanya label target data sebelumnya adalah...",
+        options: [
+          "A. Supervised Learning",
+          "B. Reinforcement Learning",
+          "C. Semi-Supervised Learning",
+          "D. Unsupervised Learning",
+          "E. Deep Q-Learning"
+        ],
+        correct: 3 // D
+      }
+    ];
+
+    let currentIndex = 0;
+    const userAnswers = {};
+
+    function renderQuestion() {
+      const q = questions[currentIndex];
+      const isLast = currentIndex === questions.length - 1;
+
+      document.getElementById("quizBadge").textContent = `Soal ${currentIndex + 1} dari ${questions.length}`;
+      document.getElementById("paginationIndicator").textContent = `${currentIndex + 1} of ${questions.length}`;
+      document.getElementById("questionText").textContent = q.question;
+
+      const container = document.getElementById("optionsContainer");
+      container.innerHTML = "";
+
+      q.options.forEach((optText, optIdx) => {
+        const item = document.createElement("div");
+        item.className = "option-item" + (userAnswers[currentIndex] === optIdx ? " selected" : "");
+        item.onclick = () => selectOption(optIdx);
+
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "quizOption";
+        radio.id = `opt_${optIdx}`;
+        radio.value = optText.charAt(0); // A, B, C, D, E
+        radio.checked = userAnswers[currentIndex] === optIdx;
+
+        const label = document.createElement("label");
+        label.className = "option-label";
+        label.htmlFor = `opt_${optIdx}`;
+        label.textContent = optText;
+
+        item.appendChild(radio);
+        item.appendChild(label);
+        container.appendChild(item);
+      });
+
+      document.getElementById("prevBtn").disabled = currentIndex === 0;
+
+      const nextBtn = document.getElementById("nextBtn");
+      if (isLast) {
+        nextBtn.textContent = "Selesai & Kumpulkan";
+        nextBtn.className = "btn-nav btn-submit";
+      } else {
+        nextBtn.textContent = "Berikutnya >";
+        nextBtn.className = "btn-nav btn-next";
+      }
+
+      renderPaginationBar();
+    }
+
+    function selectOption(index) {
+      userAnswers[currentIndex] = index;
+      renderQuestion();
+    }
+
+    function nextQuestion() {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+      }
+    }
+
+    function renderPaginationBar() {
+      const bar = document.getElementById("paginationBar");
+      bar.innerHTML = "";
+      questions.forEach((q, i) => {
+        const dot = document.createElement("div");
+        dot.className = `page-dot ${i === currentIndex ? "active" : ""} ${userAnswers[i] !== undefined ? "answered" : ""}`;
+        dot.textContent = q.num;
+        dot.onclick = () => {
+          currentIndex = i;
+          renderQuestion();
+        };
+        bar.appendChild(dot);
+      });
+    }
+
+    function showResults() {
+      let correctCount = 0;
+      const reviewTbody = document.getElementById("reviewTableBody");
+      reviewTbody.innerHTML = "";
+
+      questions.forEach((q, idx) => {
+        const userChoiceIdx = userAnswers[idx];
+        const isCorrect = userChoiceIdx === q.correct;
+        if (isCorrect) correctCount++;
+
+        const userChoiceText = userChoiceIdx !== undefined ? q.options[userChoiceIdx] : "<i style='color:#ef4444;'>Tidak dijawab</i>";
+        const correctChoiceText = q.options[q.correct];
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><b>#${q.num}</b></td>
+          <td>${q.topic}</td>
+          <td>${userChoiceText}</td>
+          <td><b>${correctChoiceText}</b></td>
+          <td><span class="${isCorrect ? 'badge-correct' : 'badge-wrong'}">${isCorrect ? 'BENAR (+10)' : 'SALAH (+0)'}</span></td>
+        `;
+        reviewTbody.appendChild(tr);
+      });
+
+      const totalScore = (correctCount / questions.length) * 100;
+      document.getElementById("finalScoreVal").textContent = totalScore;
+      document.getElementById("resultDescText").textContent = `Hasil Pengerjaan: ${correctCount} dari ${questions.length} soal benar (Tingkat Akurasi ${totalScore}%).`;
+
+      if (totalScore >= 80) {
+        document.getElementById("resultStatusTitle").textContent = "🎉 Luar Biasa! Kompetensi Sangat Baik";
+      } else if (totalScore >= 60) {
+        document.getElementById("resultStatusTitle").textContent = "👍 Bagus! Anda Dinyatakan Lulus";
+      } else {
+        document.getElementById("resultStatusTitle").textContent = "⚠️ Perlu Peningkatan Pemahaman";
+      }
+
+      document.getElementById("quizBody").style.display = "none";
+      document.getElementById("resultCard").style.display = "block";
+    }
+
+    function restartQuiz() {
+      for (const k in userAnswers) delete userAnswers[k];
+      currentIndex = 0;
+      document.getElementById("quizBody").style.display = "block";
+      document.getElementById("resultCard").style.display = "none";
+      renderQuestion();
+    }
+
+    // Mulai render pertama
+    renderQuestion();
+  </script>
+</body>
+
+</html>
