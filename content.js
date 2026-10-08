@@ -921,14 +921,17 @@
       if (!t || t.length > 40) return false;
       if (isForbiddenButton(t)) return false;
       if (t.match(/^(?:sebelumnya|kembali|back|prev|ragu|tandai|reset)/i)) return false;
+      var classId = `${getElementClassName(el)} ${el.id || ""}`.toLowerCase();
       return (
-        t === "selanjutnya" || t === "soal selanjutnya" ||
-        t === "berikutnya" || t === "soal berikutnya" ||
+        t === "selanjutnya" || t === "soal selanjutnya" || t === "soal selanjutnya >" || t === "soal selanjutnya &gt;" ||
+        t === "berikutnya" || t === "soal berikutnya" || t === "soal berikutnya >" || t === "soal berikutnya →" ||
         t === "lanjut" || t === "lanjutkan" ||
         t === "simpan & lanjutkan" || t === "simpan dan lanjutkan" ||
         t === "simpan & selanjutnya" || t === "simpan dan selanjutnya" ||
         t === "next" || t === "next question" ||
-        t === "selanjutnya >" || t === "berikutnya →" || t === ">" || t === ">>" || t === "→" || t === "»"
+        t === "selanjutnya >" || t === "berikutnya →" || t === ">" || t === ">>" || t === "→" || t === "»" ||
+        t.startsWith("soal selanjutnya") || t.startsWith("selanjutnya") ||
+        classId.includes("btn-next") || classId.includes("nextbtn")
       );
     });
 
@@ -1143,6 +1146,43 @@
   // === VERIFIKASI RIIL APAKAH JAWABAN SUDAH TERPILIH/TERISI DI HALAMAN ===
   function isAnswerActuallySelectedOnPage() {
     try {
+      // 0. SENSOR NOTIFIKASI SIMPAN & STATUS TERSIMPAN (KUNCI UTAMA ANTI-GAGAL!)
+      // Jika web sudah memunculkan notifikasi "✓ Tersimpan", "Tersimpan", "Jawaban Tersimpan", "Saved", dsb:
+      // MAKA JAWABAN 100% SUDAH TERBUKTI TERSIMPAN DI SISTEM KUIS!
+      var savedNotifs = Array.from(document.querySelectorAll(
+        "#savedIndicator, .saved-status, [class*='saved-status' i], [class*='saved_status' i], .saved, [class*='saved' i], [class*='is-saved' i], [class*='answer-saved' i], [class*='terjawab' i], [class*='dijawab' i], [class*='sudah-dijawab' i], [id*='saved' i], [id*='simpan' i], span, div, p, b, strong, .badge, [class*='badge' i], .toast, [class*='toast' i], .alert, [class*='alert' i]"
+      )).filter(function(el) {
+        if (!el || isHudElement(el)) return false;
+        var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+        if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
+        var r = el.getBoundingClientRect();
+        if (r.width <= 0 && r.height <= 0) return false;
+        
+        var txt = (el.textContent || el.innerText || "").trim().toLowerCase();
+        return (
+          txt.includes("tersimpan") || txt.includes("disimpan") ||
+          txt === "saved" || txt.includes("saved successfully") || txt.includes("answer saved") ||
+          txt.includes("sudah dijawab") || txt.includes("jawaban tersimpan") ||
+          txt.includes("berhasil disimpan") || txt.includes("status: tersimpan")
+        );
+      });
+      if (savedNotifs.length > 0) return true;
+
+      // 0b. Cek Palet Nomor Soal yang Berstatus Terisi/Terjawab (contoh .dot.filled, .dot.active.filled, .answered)
+      var answeredDots = Array.from(document.querySelectorAll(
+        ".dot.filled, [class*='dot' i][class*='filled' i], [class*='palette' i][class*='filled' i], [class*='number' i][class*='answered' i], [class*='item' i][class*='terjawab' i], [data-answered='true'], [data-status='answered']"
+      )).filter(function(el) {
+        if (!el || isHudElement(el)) return false;
+        var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+        if (style && (style.display === "none" || style.visibility === "hidden")) return false;
+        return true;
+      });
+      var activeFilledDot = answeredDots.find(function(d) {
+        var cl = getElementClassName(d).toLowerCase();
+        return cl.includes("active") || cl.includes("current");
+      });
+      if (activeFilledDot) return true;
+
       // 1. Cek input radio atau checkbox HTML standar yang :checked
       var checkedInputs = Array.from(document.querySelectorAll("input[type='radio']:checked, input[type='checkbox']:checked")).filter(function(el) {
         return !isHudElement(el) && isElementVisible(el.parentElement || el);
@@ -1176,11 +1216,13 @@
 
       // 5. Cek jika soal bertipe isian / esai dan sudah terisi teks (input teks, angka, textarea, contenteditable, role='textbox')
       var essayElements = Array.from(document.querySelectorAll(
-        "textarea:not([disabled]):not([readonly]), input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='radio']):not([type='checkbox']):not([type='file']):not([disabled]):not([readonly]), [contenteditable='true'], [role='textbox']"
+        "textarea, input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='radio']):not([type='checkbox']):not([type='file']), [contenteditable='true'], [role='textbox']"
       )).filter(function(el) {
-        if (!isElementVisible(el) || isHudElement(el)) return false;
+        if (!el || isHudElement(el)) return false;
+        var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
+        if (style && (style.display === "none" || style.visibility === "hidden")) return false;
         var meta = ((el.name || "") + " " + (el.id || "") + " " + (el.placeholder || "")).toLowerCase();
-        if (meta.includes("search") || meta.includes("cari") || meta.includes("token") || meta.includes("pass") || meta.includes("login")) return false;
+        if (meta.includes("search") || meta.includes("cari") || meta.includes("token") || meta.includes("password") || meta.includes("login")) return false;
         var val = "";
         if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
           val = (el.value || "").trim();
@@ -1443,8 +1485,8 @@
     if (!btn || isHudElement(btn)) return false;
 
     var now = Date.now();
-    // DEBOUNCE KETAT: Dilarang keras mengklik tombol Next dua kali dalam jeda kurang dari 2000ms!
-    if (now - lastNextClickTime < 2000) {
+    // DEBOUNCE REALISTIS: Mencegah double click dalam jeda kurang dari 900ms tanpa mengunci transisi
+    if (now - lastNextClickTime < 900) {
       return false;
     }
     lastNextClickTime = now;
@@ -1812,12 +1854,15 @@
     var curSoalNum = progressNow.current || sequentialQuestionCounter;
     var nextExpectedSoalNum = curSoalNum + 1;
     setHudStatus("✅ Soal " + curSoalNum + " terbukti sudah terjawab! Berpindah urut ke Soal " + nextExpectedSoalNum + "...", true);
-    await new Promise(function(r) { setTimeout(r, 1000); });
+    await new Promise(function(r) { setTimeout(r, 700); });
 
-    // Verifikasi ulang sekali lagi sesaat sebelum klik tombol Next
+    // Verifikasi ulang sekali lagi sesaat sebelum klik tombol Next (dengan toleransi transisi DOM)
     if (!isAnswerActuallySelectedOnPage()) {
-      setHudStatus("⚠️ Jawaban belum terisi di web! Membatalkan perpindahan lembar...", false);
-      return { success: false, notSelected: true, answer: displayAnswer };
+      await new Promise(function(r) { setTimeout(r, 300); });
+      if (!isAnswerActuallySelectedOnPage()) {
+        setHudStatus("⚠️ Jawaban belum terisi di web! Membatalkan perpindahan lembar...", false);
+        return { success: false, notSelected: true, answer: displayAnswer };
+      }
     }
 
     var nextRes = findAndClickNextButton(nextExpectedSoalNum);
