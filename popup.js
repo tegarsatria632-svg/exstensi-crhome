@@ -143,7 +143,9 @@ PANDUAN PEMBACAAN & ANALISIS SOAL SECARA DETAIL (SANGAT KRUSIAL):
    - Soal Berikan Pendapat / Analisis Kritis / Solusi Kasus: Berikan pandangan yang logis, objektif, berbasis teori ilmiah/data, serta sertakan solusi atau rekomendasi konkret yang aplikatif.
    - Soal Dampak / Pengaruh / Fungsi / Tahapan: Uraikan secara runtut, mendalam, dan terstruktur.
    - Soal Permintaan Jumlah N Poin / Contoh: Sebutkan dan jelaskan SELURUH N poin/contoh tanpa ada yang terlewat atau dikurangi.
-   - Soal Perbandingan & Contoh DBMS/Kategori: Jelaskan perbedaan konsep dan sebutkan contoh masing-masing secara eksplisit.
+   - Soal Perbedaan Definisi & Perbandingan Konsep (Istilah A vs Istilah B):
+     * Wajib mendefinisikan masing-masing istilah secara baku, presisi, dan jelas terlebih dahulu.
+     * Uraikan parameter pembeda utama secara terstruktur (aspek fokus/tujuan, mekanisme alur kerja, karakteristik, output, dan contoh kasus konkret).
    - Soal Isian Singkat 1 Istilah/Angka: Tuliskan istilah atau angka tersebut secara presisi.
    - Format jawaban esai/uraian:
      Tuliskan analisis/langkah di [HITUNGAN: ...] jika memerlukan perhitungan.
