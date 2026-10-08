@@ -903,7 +903,7 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
     textToDisplay = isMultipleChoice ? firstLine : rawAnswer;
     const displayChoice = targetText || letter || "Kunci Jawaban";
     banner = `💡 [KUNCI JAWABAN: ${displayChoice}]\n(Auto-Click dimatikan, silakan pilih manual)\n\n`;
-    setStatus("💡 Jawaban siap.", false);
+    setStatus("💡 Jawaban siap di atas.", false);
     actionSuccess = true;
   }
 
@@ -917,6 +917,13 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
   // JIKA AUTO-NEXT DIMATIKAN (DEFAULT UNTUK MODE SATUAN):
   // TETAP DI SOAL INI DENGAN OPSI TERPILIH & HIGHLIGHT HIJAU MENYALA!
   if (!shouldAutoNext) {
+    return;
+  }
+
+  // JIKA AUTO-CLICK DIMATIKAN TAPI AUTO-NEXT NYALA:
+  // AI TIDAK BOLEH PINDAH SEBELUM PENGGUNA SENDIRI MEMILIH JAWABAN DI WEB
+  if (!autoClickEnabled) {
+    setStatus("💡 Jawaban siap di atas. Silakan pilih/isi di layar web terlebih dahulu.", false);
     return;
   }
 
@@ -943,6 +950,8 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
     setStatus("", false);
   } else if (nextRes && nextRes.isFinalSubmit) {
     setStatus("🛑 Soal terakhir sudah dijawab & tersimpan! Silakan periksa jawaban & kumpulkan secara manual.", false);
+  } else if (nextRes && nextRes.notAnswered) {
+    setStatus("⚠️ Jawaban belum terisi di halaman web! Silakan pilih jawaban sebelum lanjut.", false);
   } else {
     setTimeout(() => setStatus("", false), 1000);
   }

@@ -739,24 +739,32 @@
 
   function findAndFillEssay(rawText) {
     if (!rawText) return null;
+    
+    // 1. Bersihkan think block, hitungan tertutup, badge, dan prefix kunci/jawaban dengan regex multiline (/gim)
     var cleanText = rawText
       .replace(/<think>[\s\S]*?<\/think>/gi, "")
       .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
-      .replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
-      .replace(/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]\s*/i, "")
+      .replace(/^(?:🎯|✍️|💡|📝)\s*\[[^\]]+\]\s*/gim, "")
+      .replace(/^\s*(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]\s*/gim, "")
       .replace(/[*_`#]/g, "")
       .trim();
 
+    var ansInfo = extractAnswerInfo(rawText);
+    var conciseAnswer = (ansInfo.targetText || ansInfo.firstLine || "").replace(/^\s*(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)\s*[:\-]\s*/i, "").trim();
+    if (!conciseAnswer) conciseAnswer = cleanText.split("\n")[0].trim();
+
+    // 2. Prioritas 1: Textarea aktif (untuk soal esai / uraian panjang)
     var textareas = Array.from(document.querySelectorAll("textarea:not([disabled]):not([readonly])")).filter(function(ta) {
       return !isHudElement(ta);
     });
     for (var ta = 0; ta < textareas.length; ta++) {
       if (isElementVisible(textareas[ta])) {
-        fillInput(textareas[ta], cleanText);
+        fillInput(textareas[ta], cleanText || conciseAnswer);
         return "textarea";
       }
     }
 
+    // 3. Prioritas 2: Rich text editor / Contenteditable / role='textbox' (Quill, CKEditor, contenteditable div)
     var editables = Array.from(document.querySelectorAll("[contenteditable='true'], [role='textbox']")).filter(function(ed) {
       return !isHudElement(ed);
     });
@@ -765,9 +773,17 @@
         try {
           var targetEd = editables[ed];
           targetEd.focus();
-          targetEd.innerText = cleanText;
+          var textToPut = cleanText || conciseAnswer;
+          var successExec = false;
+          try {
+            document.execCommand("selectAll", false, null);
+            successExec = document.execCommand("insertText", false, textToPut);
+          } catch (_) {}
+          if (!successExec || !(targetEd.innerText || targetEd.textContent || "").trim()) {
+            targetEd.innerText = textToPut;
+          }
           if (typeof InputEvent !== "undefined") {
-            targetEd.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: cleanText }));
+            try { targetEd.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: textToPut })); } catch (_) {}
           }
           targetEd.dispatchEvent(new Event("input", { bubbles: true }));
           targetEd.dispatchEvent(new Event("change", { bubbles: true }));
@@ -779,13 +795,15 @@
       }
     }
 
+    // 4. Prioritas 3: Input teks atau angka (untuk soal isian singkat / CBT short-answer)
     var inputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='radio']):not([type='checkbox']):not([type='file']):not([disabled]):not([readonly])")).filter(function(inp) {
       return !isHudElement(inp);
     });
     for (var inp = 0; inp < inputs.length; inp++) {
       var meta = `${inputs[inp].name || ""} ${inputs[inp].id || ""} ${inputs[inp].placeholder || ""}`.toLowerCase();
-      if (!meta.includes("search") && !meta.includes("token") && !meta.includes("pass") && isElementVisible(inputs[inp])) {
-        fillInput(inputs[inp], cleanText);
+      if (!meta.includes("search") && !meta.includes("cari") && !meta.includes("token") && !meta.includes("pass") && isElementVisible(inputs[inp])) {
+        var textForInput = (conciseAnswer && conciseAnswer.length < 120) ? conciseAnswer : (cleanText.split("\n")[0] || cleanText);
+        fillInput(inputs[inp], textForInput);
         return "input";
       }
     }
@@ -1156,15 +1174,22 @@
       });
       if (selectedElements.length > 0) return true;
 
-      // 5. Cek jika soal bertipe isian / esai dan sudah terisi teks (bukan form search/login/token)
-      var textInputs = Array.from(document.querySelectorAll("textarea, input[type='text'], input:not([type]), [contenteditable='true']")).filter(function(el) {
+      // 5. Cek jika soal bertipe isian / esai dan sudah terisi teks (input teks, angka, textarea, contenteditable, role='textbox')
+      var essayElements = Array.from(document.querySelectorAll(
+        "textarea:not([disabled]):not([readonly]), input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='radio']):not([type='checkbox']):not([type='file']):not([disabled]):not([readonly]), [contenteditable='true'], [role='textbox']"
+      )).filter(function(el) {
         if (!isElementVisible(el) || isHudElement(el)) return false;
         var meta = ((el.name || "") + " " + (el.id || "") + " " + (el.placeholder || "")).toLowerCase();
         if (meta.includes("search") || meta.includes("cari") || meta.includes("token") || meta.includes("pass") || meta.includes("login")) return false;
-        var val = el.isContentEditable ? (el.innerText || "").trim() : (el.value || "").trim();
+        var val = "";
+        if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+          val = (el.value || "").trim();
+        } else {
+          val = (el.innerText || el.textContent || "").trim();
+        }
         return val.length > 0;
       });
-      if (textInputs.length > 0) return true;
+      if (essayElements.length > 0) return true;
 
       return false;
     } catch (_) {
@@ -1682,10 +1707,10 @@
 
       var hasEssayField = hasActiveEssayField();
       var hasPilgan = hasMultipleChoiceOptionsOnPage();
-      var clicked = null;
+      var radioCount = document.querySelectorAll("input[type='radio']:not([disabled]), [role='radio']:not([aria-disabled='true'])").length;
 
-      // 1. Jika ini murni soal esai/isian (ada input/textarea & tidak ada opsi pilihan ganda di halaman)
-      if (hasEssayField && !hasPilgan) {
+      // 1. Jika murni soal esai/isian (ada input/textarea & tidak ada radio pilihan ganda)
+      if (hasEssayField && radioCount < 2 && !hasPilgan) {
         var filledDirect = findAndFillEssay(rawAnswer);
         if (filledDirect) {
           actionCompleted = true;
@@ -1694,18 +1719,17 @@
           actionCompleted = false;
           setHudStatus("⚠️ Kolom jawaban belum terisi otomatis. Silakan salin jawaban.", false);
         }
-      } else {
+      } else if (hasPilgan || radioCount >= 2) {
         // 2. Jika ada opsi pilihan ganda
-        if (ansInfo.letter || !hasEssayField) {
-          clicked = findAndClickOption(ansInfo.letter, ansInfo.targetText);
-        }
-
+        var clicked = findAndClickOption(ansInfo.letter, ansInfo.targetText);
         if (clicked) {
+          actionCompleted = true;
           setHudStatus('✅ Opsi "' + choiceName + '" diklik di layar...', false);
         } else if (hasEssayField) {
           // Fallback ke isian esai jika opsi tidak terklik tapi ada kolom esai
           var filledFallback = findAndFillEssay(rawAnswer);
           if (filledFallback) {
+            actionCompleted = true;
             setHudStatus('✍️ Jawaban berhasil diketik & tersimpan permanen!', false);
           } else {
             setHudStatus('⚠️ Opsi "' + choiceName + '" belum terklik otomatis.', false);
@@ -1715,74 +1739,100 @@
         } else {
           setHudStatus("⚠️ Kolom jawaban belum terisi otomatis. Silakan salin jawaban.", false);
         }
+      } else if (hasEssayField) {
+        // 3. Fallback jika ada kolom isian/esai
+        var filledFallback2 = findAndFillEssay(rawAnswer);
+        if (filledFallback2) {
+          actionCompleted = true;
+          setHudStatus('✍️ Jawaban isian/esai berhasil diketik & tersimpan permanen!', false);
+        }
       }
 
       // Berikan jeda 350ms untuk rendering DOM & event loop web
       await new Promise(function(r) { setTimeout(r, 350); });
       var isAnsweredInDom = isAnswerActuallySelectedOnPage();
 
-      if (!isAnsweredInDom && (ansInfo.letter || ansInfo.targetText)) {
-        // Coba klik ulang dengan aktivasi langsung
-        findAndClickOption(ansInfo.letter, ansInfo.targetText);
-        await new Promise(function(r) { setTimeout(r, 400); });
-        isAnsweredInDom = isAnswerActuallySelectedOnPage();
+      // RETRY JIKA BELUM TERVERIFIKASI TERISI
+      if (!isAnsweredInDom) {
+        if (hasEssayField && (radioCount < 2 || !hasPilgan)) {
+          findAndFillEssay(rawAnswer);
+          await new Promise(function(r) { setTimeout(r, 400); });
+          isAnsweredInDom = isAnswerActuallySelectedOnPage();
+        } else if (ansInfo.letter || ansInfo.targetText) {
+          findAndClickOption(ansInfo.letter, ansInfo.targetText);
+          await new Promise(function(r) { setTimeout(r, 400); });
+          isAnsweredInDom = isAnswerActuallySelectedOnPage();
+        }
       }
 
       actionCompleted = isAnsweredInDom;
     } else {
-      // Jika auto-click dimatikan, periksa apakah pengguna sudah memilih jawaban sendiri
       actionCompleted = isAnswerActuallySelectedOnPage();
     }
 
-    // === ATURAN MUTLAK AUTO-NEXT: DETEKSI JAWABAN BELUM TERISI ===
-    // JIKA JAWABAN BELUM TERBACA TERPILIH/TERISI DI WEB: JANGAN DI-NEXT DULU!
-    if (!actionCompleted || !isAnswerActuallySelectedOnPage()) {
+    // === EVALUASI KEBIJAKAN TOGGLE SESUAI PROSEDUR RESMI ===
+    var isAnsweredInDomNow = isAnswerActuallySelectedOnPage();
+
+    // KASUS 1: AUTO-FILL DIMATIKAN
+    if (!autoClickEnabled) {
+      if (!autoNextEnabled) {
+        // Auto-Fill OFF & Auto-Next OFF: AI hanya tampilkan jawaban di HUD
+        setHudStatus("💡 Jawaban siap di HUD. (Auto-Fill & Auto-Next dinonaktifkan - silakan isi & lanjut manual).", false);
+        return { success: true, manualMode: true, answer: displayAnswer };
+      } else {
+        // Auto-Fill OFF & Auto-Next ON: Menunggu pengguna memilih/mengisi di web
+        if (!isAnsweredInDomNow) {
+          setHudStatus("💡 Jawaban siap di HUD! Silakan pilih/ketik di web... (Auto-Next akan lanjut setelah terjawab)", false);
+          return { success: false, waitingUserAnswer: true, answer: displayAnswer };
+        }
+        // Jika sudah dipilih oleh pengguna di web, lanjut ke tahap Auto-Next di bawah
+      }
+    }
+
+    // KASUS 2: AUTO-FILL AKTIF TAPI JAWABAN BELUM TERVERIFIKASI DI DOM
+    if (autoClickEnabled && !isAnsweredInDomNow) {
       setHudStatus('⚠️ Jawaban belum terisi di web! Menahan Next sampai jawaban dipilih...', false);
       return { success: false, notSelected: true, answer: displayAnswer };
     }
 
-    // Jeda 800ms agar pemilihan opsi stabil & terlihat jelas oleh pengguna
-    await new Promise(function(r) { setTimeout(r, 800); });
+    // KASUS 3: AUTO-FILL AKTIF & JAWABAN SUDAH TERVERIFIKASI, TAPI AUTO-NEXT DIMATIKAN
+    if (!autoNextEnabled) {
+      setHudStatus("✅ Jawaban terisi & tersimpan permanen! (Auto-Next dinonaktifkan - tetap di soal ini).", false);
+      return { success: true, autoNextDisabled: true, answer: displayAnswer };
+    }
 
-    // === TAHAP 2: HANYA SETELAH TERBACA SUDAH TERJAWAB, BARU LANJUTKAN LEMBARAN SELANJUTNYA ===
+    // KASUS 4: AUTO-NEXT AKTIF & JAWABAN SUDAH TERVERIFIKASI TERISI (SEKUENSIAL 1 -> 2 -> 3 -> 4 -> 5)
     var detectedNext = detectNextButtonState();
     if (detectedNext.isFinalSubmit) {
       setHudStatus("🛑 Soal terakhir sudah dijawab & tersimpan! Silakan periksa jawaban & kumpulkan secara manual.", false);
       return { finished: true, reason: "final_submit" };
     }
 
-    var shouldNext = autoNextEnabled === true;
-    if (shouldNext) {
-      var progressNow = getQuizProgress();
-      var curSoalNum = progressNow.current || sequentialQuestionCounter;
-      var nextExpectedSoalNum = curSoalNum + 1;
-      setHudStatus("✅ Soal " + curSoalNum + " terbukti sudah terjawab! Berpindah urut ke Soal " + nextExpectedSoalNum + "...", true);
-      await new Promise(function(r) { setTimeout(r, 1200); });
+    var progressNow = getQuizProgress();
+    var curSoalNum = progressNow.current || sequentialQuestionCounter;
+    var nextExpectedSoalNum = curSoalNum + 1;
+    setHudStatus("✅ Soal " + curSoalNum + " terbukti sudah terjawab! Berpindah urut ke Soal " + nextExpectedSoalNum + "...", true);
+    await new Promise(function(r) { setTimeout(r, 1000); });
 
-      // Verifikasi ulang sekali lagi sesaat sebelum klik tombol Next
-      if (!isAnswerActuallySelectedOnPage()) {
-        setHudStatus("⚠️ Jawaban belum terisi di web! Membatalkan perpindahan lembar...", false);
-        return { success: false, notSelected: true, answer: displayAnswer };
-      }
+    // Verifikasi ulang sekali lagi sesaat sebelum klik tombol Next
+    if (!isAnswerActuallySelectedOnPage()) {
+      setHudStatus("⚠️ Jawaban belum terisi di web! Membatalkan perpindahan lembar...", false);
+      return { success: false, notSelected: true, answer: displayAnswer };
+    }
 
-      var nextRes = findAndClickNextButton(nextExpectedSoalNum);
-      if (nextRes && nextRes.success) {
-        setHudStatus('⏩ Berpindah dari Soal ' + nextRes.fromNumber + ' ke Soal ' + nextRes.toNumber + '! (' + (nextRes.buttonText || ">") + ')', false);
-        return { success: true, fromNumber: nextRes.fromNumber, toNumber: nextRes.toNumber };
-      } else if (nextRes && nextRes.isFinalSubmit) {
-        setHudStatus("🛑 Soal terakhir sudah dijawab! Kumpulkan kuis secara manual.", false);
-        return { finished: true, reason: "final_submit" };
-      } else if (nextRes && nextRes.alreadyClickedForThisQuestion) {
-        setHudStatus("⏳ Soal " + curSoalNum + " sudah diklik Next. Menunggu transisi ke Soal " + nextExpectedSoalNum + "...", true);
-        return { success: true, alreadyNext: true };
-      } else {
-        setHudStatus("⚠️ Tombol Next tidak terdeteksi otomatis.", false);
-        return { success: false, notFound: true };
-      }
+    var nextRes = findAndClickNextButton(nextExpectedSoalNum);
+    if (nextRes && nextRes.success) {
+      setHudStatus('⏩ Berpindah dari Soal ' + nextRes.fromNumber + ' ke Soal ' + nextRes.toNumber + '! (' + (nextRes.buttonText || ">") + ')', false);
+      return { success: true, fromNumber: nextRes.fromNumber, toNumber: nextRes.toNumber };
+    } else if (nextRes && nextRes.isFinalSubmit) {
+      setHudStatus("🛑 Soal terakhir sudah dijawab! Kumpulkan kuis secara manual.", false);
+      return { finished: true, reason: "final_submit" };
+    } else if (nextRes && nextRes.alreadyClickedForThisQuestion) {
+      setHudStatus("⏳ Soal " + curSoalNum + " sudah diklik Next. Menunggu transisi ke Soal " + nextExpectedSoalNum + "...", true);
+      return { success: true, alreadyNext: true };
     } else {
-      // HANYA AUTO-FILL / AUTO-CLICK: JAWABAN TERISI DAN TETAP DI SOAL INI!
-      setHudStatus("✅ Jawaban terisi & tersimpan permanen! (Auto-Next dinonaktifkan)", false);
-      return { success: true, autoNextDisabled: true };
+      setHudStatus("⚠️ Tombol Next tidak terdeteksi otomatis.", false);
+      return { success: false, notFound: true };
     }
   }
 
@@ -1861,7 +1911,9 @@
         }
 
         // Jika soal saat ini terdeteksi sama persis dengan yang baru saja dijawab
-        if (lastAnsweredQuestion && currentClean === lastAnsweredQuestion) {
+        // HANYA JALANKAN LOGIKA STALL INI JIKA AUTO-NEXT AKTIF!
+        // Jika Auto-Next NONAKTIF, tetap di soal ini secara tenang tanpa menampilkan stall atau menekan next!
+        if (autoNextEnabled && lastAnsweredQuestion && currentClean === lastAnsweredQuestion) {
           sameQuestionStall++;
           if (sameQuestionStall === 1) {
             setHudStatus("⏳ Menunggu transisi urut dari Soal " + curSoalNum + " ke Soal " + nextSoalNum + "...", true);
@@ -1921,7 +1973,6 @@
         }
 
         var step = await executeSingleQuestionCycle();
-        lastAnsweredQuestion = currentClean;
 
         chrome.storage?.local?.set({ 
           lastActiveTime: Date.now()
@@ -1934,9 +1985,30 @@
           break;
         }
 
+        // KASUS: AUTO-FILL MATI, TAPI AUTO-NEXT NYALA
+        // (AI menunggu pengguna memilih/mengetik jawaban sendiri di layar web)
+        if (step.waitingUserAnswer) {
+          var userWaitCount = 0;
+          while (isAgentRunning && !isAnswerActuallySelectedOnPage() && userWaitCount < 60) {
+            await new Promise(function(r) { setTimeout(r, 500); });
+            var pollTxt = extractPageInfo().text;
+            if (hasQuestionChanged(currentText, pollTxt)) break;
+            userWaitCount++;
+          }
+          if (isAgentRunning && isAnswerActuallySelectedOnPage() && autoNextEnabled) {
+            setHudStatus("✅ Terdeteksi sudah Anda jawab! Menyiapkan lembar selanjutnya...", true);
+            await new Promise(function(r) { setTimeout(r, 1000); });
+            findAndClickNextButton(nextSoalNum);
+            await waitForQuestionTransition(currentText);
+            lastAnsweredQuestion = currentClean;
+          }
+          continue;
+        }
+
+        // KASUS: AUTO-FILL AKTIF TAPI JAWABAN BELUM TERVERIFIKASI TERISI
+        // (DILARANG set lastAnsweredQuestion agar tidak terjadi stall palsu seolah-olah harus next!)
         if (step.notSelected) {
           setHudStatus("⚠️ Jawaban belum terisi di web! Menunggu jawaban dipilih sebelum lanjut ke lembar berikutnya...", false);
-          // Tunggu dan pantau apakah jawaban terisi (oleh user yang memilih di layar)
           var waitCount = 0;
           while (isAgentRunning && waitCount < 8) {
             await new Promise(function(r) { setTimeout(r, 500); });
@@ -1946,26 +2018,40 @@
             }
             waitCount++;
           }
-          if (isAnswerActuallySelectedOnPage() && autoNextEnabled) {
+          if (isAgentRunning && isAnswerActuallySelectedOnPage() && autoNextEnabled) {
             await new Promise(function(r) { setTimeout(r, 1000); });
             findAndClickNextButton(nextSoalNum);
             await waitForQuestionTransition(currentText);
+            lastAnsweredQuestion = currentClean;
           }
           continue;
         }
 
         if (!isAgentRunning) break;
 
-        // JIKA USER MEMATIKAN AUTO-NEXT: JANGAN PINDAH OTOMATIS!
+        // KASUS: AUTO-NEXT DIMATIKAN
+        // (Jawaban sudah terisi atau ditampilkan di HUD. AI WAJIB TETAP DI SOAL INI TANPA PINDAH!)
         if (!autoNextEnabled) {
-          setHudStatus("✅ Soal dijawab & tersimpan. Klik nomor berikutnya di web jika sudah siap.", false);
-          var transitionedManualNext = await waitForQuestionTransition(currentText);
-          if (!transitionedManualNext) {
-            await new Promise(function(r) { setTimeout(r, 1500); });
+          lastAnsweredQuestion = currentClean;
+          var msgManual = autoClickEnabled 
+            ? "✅ Jawaban terisi & tersimpan permanen! (Auto-Next dinonaktifkan - tetap di soal ini)." 
+            : "💡 Jawaban siap di HUD. (Auto-Fill & Auto-Next dinonaktifkan - silakan salin & lanjut manual).";
+          setHudStatus(msgManual, false);
+
+          // Tunggu secara pasif sampai pengguna sendiri yang berpindah soal di web
+          while (isAgentRunning && !autoNextEnabled) {
+            await new Promise(function(r) { setTimeout(r, 600); });
+            var pollNext = extractPageInfo().text;
+            if (hasQuestionChanged(currentText, pollNext)) {
+              // Pengguna sudah berpindah soal di web!
+              break;
+            }
           }
           continue;
         }
 
+        // KASUS: AUTO-NEXT AKTIF & BERHASIL MENJAWAB
+        lastAnsweredQuestion = currentClean;
         setHudStatus("⏳ Menunggu soal berikutnya muncul...", true);
         var transitionedWaitStep = await waitForQuestionTransition(currentText);
         if (transitionedWaitStep) {
