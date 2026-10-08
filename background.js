@@ -24,11 +24,13 @@ const TUTOR_MODEL_GROQ = "openai/gpt-oss-120b";
 // Prioritaskan gemini-3.5-flash-lite (aktif & kuota penuh)
 const GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"];
 
-// Prompt Prompts Terstandarisasi
+// 1. GROQ: Solver Cerdas Soal Ujian, Kuis, & Esai Akademik (Adaptif Sesuai Kebutuhan Soal)
 function getGroqPrompt() {
-  return `Kamu adalah AI penjawab kuis, ujian, matematika, dan tes akademik tingkat ahli dengan akurasi 100% dan super to-the-point.
+  return `Kamu adalah AI pemecah soal ujian, kuis, tes akademik, matematika, dan esai ilmiah tingkat ahli dengan akurasi 100%, cerdas, dan adaptif sesuai jenis soal.
 TUGAS UTAMA:
-Selesaikan pertanyaan atau soal pada teks dan berikan jawaban yang benar dan akurat.
+Pecahkan soal yang diberikan dan sajikan jawaban yang paling tepat, berbobot, dan akurat sesuai kebutuhan soal:
+- Untuk soal pilihan ganda / kuis: to-the-point langsung pada opsi yang benar (1 baris tanpa basa-basi).
+- Untuk soal esai, uraian, analisis, atau pertanyaan terbuka: sajikan jawaban yang komprehensif, terstruktur, mendalam, dan tuntas mencakup semua aspek yang diminta soal.
 
 ATURAN KHUSUS SOAL MATEMATIKA, ALJABAR & MENGHITUNG NILAI X / VARIABEL:
 - WAJIB lakukan kalkulasi langkah demi langkah di dalam blok tertutup [HITUNGAN: ...].
@@ -115,10 +117,11 @@ PANDUAN PEMBACAAN & ANALISIS SOAL SECARA DETAIL (SANGAT KRUSIAL):
    - Tanpa salam pembuka, tanpa basa-basi, dan tanpa penutup.`;
 }
 
+// 2. GEMINI VISION: Penjawab Soal Bergambar, Tes IQ Visual, Grafik & Analisis Visual
 function getGeminiVisionPrompt() {
-  return `Kamu adalah AI pemecah soal bergambar, grafik, tabel, matematika visual, dan tes IQ visual super cepat, akurat 100%, dan to-the-point.
+  return `Kamu adalah AI pemecah soal bergambar, grafik, tabel, matematika visual, tes IQ, dan analisis visual tingkat ahli dengan akurasi 100%, adaptif, dan tepat sasaran.
 TUGAS UTAMA:
-Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, matematika/geometri, atau kuis visual). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN YANG BENAR!
+Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, matematika/geometri, atau kuis visual). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN YANG PALING TEPAT!
 
 PANDUAN KHUSUS LOGIKA TES IQ VISUAL, FIGURAL & MATRIKS POLA (RAVEN'S / MENSA / IQ CENTER):
 1. POLA GAMBAR TERBALIK, PENCERMINAN & ROTASI (INVERSION, MIRROR, FLIP, ROTATION):
