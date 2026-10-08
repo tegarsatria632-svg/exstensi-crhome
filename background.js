@@ -102,10 +102,28 @@ function getGeminiVisionPrompt() {
 TUGAS UTAMA:
 Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, matematika/geometri, atau kuis visual). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN YANG BENAR!
 
-ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA VISUAL, DAN TES IQ (MATRIKS/POLA/FIGURAL):
-- WAJIB lakukan analisis deduksi pola, rotasi bentuk, matriks 3x3, atau angka secara teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris ringkas inti pola/rumus).
-- Untuk soal aljabar mencari nilai variabel (x, y): hitung teliti di [HITUNGAN: ...]. Jika ada opsi pilihan ganda (A/B/C/D/E), WAJIB format: Jawaban: [Huruf Opsi]. [Nilai angka] (contoh: Jawaban: C. 3).
-- Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
+PANDUAN KHUSUS TES IQ VISUAL & MATRIKS POLA (RAVEN'S MATRICES / IQ CENTER / FIGURAL):
+1. SOAL POTONGAN HILANG (PATTERN COMPLETION / MISSING PIECE TANDA TANYA '?'):
+   - Analisis Pola Matriks Utama:
+     * Arah Garis / Orientasi: Perhatikan apakah garisnya TEGAK LURUS (horizontal & vertikal 90°) atau MIRING/DIAGONAL (45°). ELIMINASI LANGSUNG semua opsi yang orientasinya salah! (Contoh: jika matriks utama berupa jaring kotak tegak lurus, jangan pilih potongan yang garisnya miring/diagonal/belah ketupat).
+     * Kerapatan Garis & Skala Kotak (Density & Grid Spacing): Bandingkan jarak antar-garis dan ukuran kotak pada matriks utama dengan setiap opsi jawaban. Potongan yang benar memiliki kerapatan garis, ketebalan, dan ukuran kotak yang IDENTIK dan PROPOSIONAL persis dengan pola di sekitarnya. Jangan pilih yang terlalu renggang (garis sedikit) atau terlalu rapat/tidak simetris.
+     * Kontinuitas Garis (Seamless Fit): Bayangkan memasukkan potongan ke dalam area tanda tanya '?'. Semua garis horizontal dan vertikal harus menyambung lurus tanpa patah.
+2. MATRIKS PROGRESIF (POLA BARIS 3x3 / 2x2):
+   - Amati transformasi dari kiri ke kanan (per baris) dan atas ke bawah (per kolom).
+   - Periksa operasi logika: Rotasi (searah jarum jam 45°/90°/180°), Pencerminan (Flip horizontal/vertikal), Penjumlahan/Pengurangan bentuk (XOR/AND/OR), Perubahan jumlah elemen, atau Perubahan warna/arsiran (hitam, putih, garis).
+3. ATURAN PENOMORAN OPSI JAWABAN VISUAL (KARTU GAMBAR TANPA HURUF):
+   - Pada kuis seperti IQ Center di mana opsi disusun dalam 2 atau 3 kolom (kiri-ke-kanan, atas-ke-bawah):
+     * Baris 1: Kotak 1 (Kiri Atas), Kotak 2 (Kanan Atas)
+     * Baris 2: Kotak 3 (Kiri Tengah), Kotak 4 (Kanan Tengah)
+     * Baris 3: Kotak 5 (Kiri Bawah), Kotak 6 (Kanan Bawah)
+   - Tuliskan jawaban akhir dengan menyebutkan nomor urut kotak atau hurufnya:
+     Contoh: Jawaban: 1   (atau Jawaban: A)
+     Sistem akan otomatis mengklik kartu urutan ke-1 (kiri atas) sesuai tata letak layar.
+
+ATURAN KHUSUS SOAL MATEMATIKA VISUAL & ALJABAR (x, y):
+- Lakukan kalkulasi teliti di dalam blok [HITUNGAN: ...].
+- Jika ada pilihan ganda huruf (A/B/C/D/E), tuliskan: Jawaban: [Huruf Opsi]. [Nilai angka].
+- Evaluasi seluruh opsi (A sampai F / 1 sampai 6) secara objektif tanpa bias urutan.
 
 ATURAN PILIHAN GANDA & TES IQ:
 - Baris jawaban akhir WAJIB berupa 1 baris jelas:
@@ -113,7 +131,7 @@ ATURAN PILIHAN GANDA & TES IQ:
   Jawaban: B. [Teks pilihan]
   (atau Jawaban: B)
 - Contoh jika pola tes IQ berupa kotak nomor urut:
-  Jawaban: 4 (atau Jawaban: D)
+  Jawaban: 1 (atau Jawaban: A)
 - Contoh jika opsi berupa teks langsung:
   Jawaban: [Teks opsi yang benar]
 - DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...].
