@@ -745,10 +745,39 @@
 
   var lastNextClickTime = 0;
 
-  // HANYA MENDETEKSI TOMBOL NEXT TANPA PERNAH MENGKLIK
+  // Deteksi nomor & total soal kuis (contoh: "Soal 1 dari 15", "1/15 Dijawab", "1 of 15")
+  function getQuizProgress() {
+    var bodyText = (document.body && (document.body.innerText || document.body.textContent)) || "";
+    var m = bodyText.match(/(?:soal|pertanyaan|no|nomor)?\s*(?:no\.?)?\s*(\d+)\s*(?:of|\/|dari)\s*(\d+)/i);
+    if (m) {
+      var cur = parseInt(m[1], 10);
+      var max = parseInt(m[2], 10);
+      if (!isNaN(cur) && !isNaN(max) && max > 0) {
+        return { current: cur, total: max, isLast: cur >= max };
+      }
+    }
+    return { current: 0, total: 0, isLast: false };
+  }
+
+  // Helper untuk mengecek apakah elemen berada di header / topbar ujian (tombol header BUKAN tombol soal selanjutnya)
+  function isHeaderNavElement(el) {
+    if (!el) return false;
+    try {
+      if (el.closest("header, nav, [class*='header' i], [class*='navbar' i], [class*='topbar' i]")) return true;
+      var r = el.getBoundingClientRect();
+      if (r.top < 85 && (r.left > window.innerWidth * 0.6 || r.right < window.innerWidth * 0.35)) return true;
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // HANYA MENDETEKSI TOMBOL NEXT TANPA PERNAH MENGKLIK
   function detectNextButtonState() {
-    // 1. Pagination "1 of 10", "1 dari 10", dsb.
+    var progress = getQuizProgress();
+    var definitelyNotLast = progress.total > 0 && progress.current > 0 && progress.current < progress.total;
+
+    // 1. Pagination "1 of 10", "1 dari 10", dsb. (HANYA JIKA TOMBOL BERADA PERSIS BERDAMPINGAN < 120px)
     var pageSpans = Array.from(document.querySelectorAll("span, p, b, div")).filter(function(el) {
       if (isHudElement(el) || el.children.length > 2) return false;
       var txt = (el.textContent || "").trim();
@@ -758,17 +787,20 @@
     for (var ps = 0; ps < pageSpans.length; ps++) {
       var pageEl = pageSpans[ps];
       var container = pageEl.parentElement;
-      for (var depth = 0; depth < 5 && container && container !== document.body; depth++) {
+      for (var depth = 0; depth < 4 && container && container !== document.body; depth++) {
         var buttons = Array.from(container.querySelectorAll("button, a, input[type='button'], input[type='submit'], [role='button']")).filter(function(b) {
           if (isHudElement(b) || !isElementVisible(b) || b.disabled || b.getAttribute("aria-disabled") === "true") return false;
           if (b === pageEl || pageEl.contains(b) || b.contains(pageEl)) return false;
+          if (isHeaderNavElement(b)) return false; // Abaikan tombol keluar/selesai di header
           return true;
         });
 
         var pageRect = pageEl.getBoundingClientRect();
+        // Tombol panah pagination harus berdampingan langsung (< 120px)
         var rightButtons = buttons.filter(function(b) {
           var r = b.getBoundingClientRect();
-          return r.left >= pageRect.right - 10 && r.width >= 16 && r.height >= 16;
+          var dist = r.left - pageRect.right;
+          return dist >= -5 && dist <= 120 && r.width >= 16 && r.height >= 16;
         });
 
         if (rightButtons.length > 0) {
@@ -776,28 +808,32 @@
           var targetBtn = rightButtons[0];
           var btnText = (targetBtn.textContent || targetBtn.innerText || targetBtn.value || "").trim();
           if (isForbiddenButton(btnText)) {
-            return { hasNext: false, isFinalSubmit: true, buttonText: btnText, nextElement: null };
+            if (!definitelyNotLast) {
+              // Jika baru nomor awal (contoh 1 dari 15), jangan anggap sebagai submit kuis
+            } else {
+              return { hasNext: false, isFinalSubmit: true, buttonText: btnText, nextElement: null };
+            }
+          } else {
+            return { hasNext: true, isFinalSubmit: false, buttonText: btnText || ">", nextElement: targetBtn };
           }
-          return { hasNext: true, isFinalSubmit: false, buttonText: btnText || ">", nextElement: targetBtn };
         }
         container = container.parentElement;
       }
     }
 
-    // 2. Tombol Next Standar: PRIORITASKAN ELEMEN TOMBOL ASLI (Bukan wrapper container!)
+    // 2. Tombol Next Standar: PRIORITASKAN ELEMEN TOMBOL ASLI DI AREA SOAL / FOOTER (Bukan Header!)
     var candidates = Array.from(document.querySelectorAll(
       "button, a, input[type='button'], input[type='submit'], [role='button'], [class*='btn' i], [class*='button' i]"
     )).filter(function(el) {
       if (isHudElement(el) || !isElementVisible(el) || el.disabled || el.getAttribute("aria-disabled") === "true") return false;
-      // JANGAN PERNAH ambil elemen container yang memiliki tombol lain di dalamnya!
+      if (isHeaderNavElement(el)) return false; // DILARANG COCOKKAN TOMBOL DI HEADER (SELESAI / AKHIRI UJIAN)
       if (el.querySelector("button, a, input[type='button'], input[type='submit'], [role='button']")) return false;
       var text = (el.textContent || el.innerText || el.value || "").trim();
-      // Tombol navigasi tidak pernah berisi teks lebih dari 45 karakter!
       if (text.length > 45) return false;
       return true;
     });
 
-    var foundForbidden = null;
+    var foundForbiddenInNav = null;
 
     for (var i = 0; i < candidates.length; i++) {
       var btn = candidates[i];
@@ -808,7 +844,10 @@
       var innerHtml = btn.innerHTML ? btn.innerHTML.toLowerCase() : "";
 
       if (isForbiddenButton(text) || isForbiddenButton(aria) || isForbiddenButton(title) || isForbiddenButton(btn.id || "")) {
-        foundForbidden = text || "Kumpulkan / Selesai";
+        var bRect = btn.getBoundingClientRect();
+        if (bRect.top > window.innerHeight * 0.3) {
+          foundForbiddenInNav = text || "Kumpulkan / Selesai";
+        }
         continue;
       }
 
@@ -817,10 +856,12 @@
       var isNext = (
         lower.includes("next") || lower.includes("selanjutnya") || lower.includes("berikutnya") ||
         lower.includes("lanjut") || lower.includes("continue") || lower.includes("forward") ||
+        lower.includes("soal selanjutnya") || lower.includes("soal berikutnya") ||
+        lower.includes("simpan & lanjut") || lower.includes("simpan dan lanjut") ||
         lower === ">" || lower === ">>" || lower === "→" || lower === "»" ||
         cleanSym === ">" || cleanSym === "→" ||
-        aria.includes("next") || aria.includes("forward") || aria.includes("right") ||
-        title.includes("next") || title.includes("forward") ||
+        aria.includes("next") || aria.includes("selanjutnya") || aria.includes("forward") || aria.includes("right") ||
+        title.includes("next") || title.includes("selanjutnya") || title.includes("forward") ||
         classId.includes("btn-next") || classId.includes("next-btn") || classId.includes("nextbutton") ||
         classId.includes("btnnext") || classId.includes("next_btn") ||
         classId.includes("chevron-right") || classId.includes("arrow-right") ||
@@ -835,7 +876,7 @@
 
     // 3. Tombol kanan di footer navigasi kuis
     var footers = Array.from(document.querySelectorAll("footer, [class*='footer' i], [class*='bottom' i], [class*='nav' i], [class*='pagination' i]")).filter(function(el) {
-      return !isHudElement(el);
+      return !isHudElement(el) && !isHeaderNavElement(el);
     });
     for (var f = 0; f < footers.length; f++) {
       var foot = footers[f];
@@ -852,14 +893,33 @@
         var targetBtn2 = rightSide[0];
         var btnText2 = (targetBtn2.textContent || targetBtn2.innerText || targetBtn2.value || "").trim();
         if (isForbiddenButton(btnText2)) {
-          return { hasNext: false, isFinalSubmit: true, buttonText: btnText2, nextElement: null };
+          if (!definitelyNotLast) {
+            // Abaikan jika belum nomor terakhir
+          } else {
+            return { hasNext: false, isFinalSubmit: true, buttonText: btnText2, nextElement: null };
+          }
+        } else {
+          return { hasNext: true, isFinalSubmit: false, buttonText: btnText2 || ">", nextElement: targetBtn2 };
         }
-        return { hasNext: true, isFinalSubmit: false, buttonText: btnText2 || ">", nextElement: targetBtn2 };
       }
     }
 
-    if (foundForbidden) {
-      return { hasNext: false, isFinalSubmit: true, buttonText: foundForbidden, nextElement: null };
+    // 4. Deteksi navigasi tombol nomor soal berikutnya (misal jika sedang di Soal 1, cari nomor '2')
+    if (progress.current > 0 && !progress.isLast) {
+      var nextNumStr = String(progress.current + 1);
+      var numButtons = Array.from(document.querySelectorAll("button, a, [role='button'], [class*='page' i], [class*='number' i], [class*='badge' i]")).filter(function(el) {
+        if (isHudElement(el) || !isElementVisible(el) || isHeaderNavElement(el)) return false;
+        var t = (el.textContent || el.innerText || "").trim();
+        return t === nextNumStr;
+      });
+      if (numButtons.length > 0) {
+        return { hasNext: true, isFinalSubmit: false, buttonText: "Soal " + nextNumStr, nextElement: numButtons[0] };
+      }
+    }
+
+    // 5. Final Submit HANYA JIKA terbukti memang sudah nomor terakhir di kuis
+    if (foundForbiddenInNav && (progress.isLast || progress.total === 0)) {
+      return { hasNext: false, isFinalSubmit: true, buttonText: foundForbiddenInNav, nextElement: null };
     }
 
     return { hasNext: false, isFinalSubmit: false, buttonText: "", nextElement: null };
@@ -1413,9 +1473,7 @@
         if (step.finished) {
           stopAutoPilot();
           setHudStatus("🛑 Soal terakhir sudah dijawab & tersimpan permanen! Kumpulkan kuis secara manual.", false);
-          setTimeout(function() {
-            alert("🎉 Semua soal kuis selesai dikerjakan!\nJawaban soal terakhir telah tersimpan permanen.\nAI berhenti otomatis agar Anda dapat memeriksa jawaban dan mengumpulkan kuis secara manual.");
-          }, 400);
+          showInPageToast("🎉 Semua soal kuis selesai dikerjakan! Jawaban terakhir telah tersimpan. Silakan kumpulkan kuis secara manual.");
           break;
         }
 
@@ -1667,6 +1725,22 @@
     window.addEventListener("mouseup", function() {
       isDragging = false;
     });
+  }
+
+  function showInPageToast(message) {
+    try {
+      var existing = document.getElementById("ai-study-toast-banner");
+      if (existing) existing.remove();
+      var toast = document.createElement("div");
+      toast.id = "ai-study-toast-banner";
+      toast.style.cssText = "position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:700;z-index:2147483647;box-shadow:0 12px 36px rgba(0,0,0,0.35);border:1px solid #4f46e5;display:flex;align-items:center;gap:10px;font-family:system-ui,-apple-system,sans-serif;";
+      toast.innerHTML = "<span>" + message + "</span><button style='background:transparent;border:0;color:#cbd5e1;cursor:pointer;font-weight:bold;margin-left:12px;font-size:16px;'>✕</button>";
+      toast.querySelector("button").onclick = function() { toast.remove(); };
+      document.body.appendChild(toast);
+      setTimeout(function() {
+        if (toast && toast.parentElement) toast.remove();
+      }, 7000);
+    } catch (_) {}
   }
 
   function setHudStatus(text, showSpinner) {

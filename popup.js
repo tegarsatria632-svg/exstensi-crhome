@@ -869,9 +869,6 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
     const nextCheck = await sendMessageWithTimeout(tab.id, { type: "DETECT_NEXT_STATE" }, 2000);
     if (nextCheck && nextCheck.isFinalSubmit) {
       setStatus("🛑 Soal terakhir sudah dijawab & tersimpan! Silakan periksa jawaban & kumpulkan kuis secara manual.", false);
-      setTimeout(() => {
-        alert("🛑 Ini adalah nomor terakhir kuis!\nSoal telah berhasil dijawab & tersimpan permanen.\nAI dilarang keras mengklik tombol Kumpulkan/Selesai.\nSilakan periksa jawaban Anda dan kumpulkan kuis secara manual.");
-      }, 300);
       return;
     }
   }
@@ -886,9 +883,6 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
     setStatus("", false);
   } else if (nextRes && nextRes.isFinalSubmit) {
     setStatus("🛑 Soal terakhir sudah dijawab & tersimpan! Silakan periksa jawaban & kumpulkan secara manual.", false);
-    setTimeout(() => {
-      alert("🛑 Ini adalah nomor terakhir kuis!\nSoal telah berhasil dijawab & tersimpan permanen.\nAI dilarang keras mengklik tombol Kumpulkan/Selesai.\nSilakan periksa jawaban Anda dan kumpulkan kuis secara manual.");
-    }, 300);
   } else {
     setTimeout(() => setStatus("", false), 1000);
   }
