@@ -96,7 +96,13 @@ PANDUAN PEMBACAAN & ANALISIS SOAL SECARA DETAIL (SANGAT KRUSIAL):
      Jawaban: 4
    - DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...] untuk soal pilihan ganda.
 
-3. ATURAN SOAL ESAI, KELEBIHAN/KEKURANGAN, PENDAPAT, & ANALISIS (LENGKAP SESUAI KEBUTUHAN SOAL):
+3. ATURAN SOAL ESAI, ANALISIS 5W1H (APA, BAGAIMANA, KENAPA/MENGAPA, DIMANA, KAPAN), KELEBIHAN/KEKURANGAN, & PENDAPAT:
+   - Pola Pertanyaan 5W1H (Wajib Menjawab Sesuai Esensi Pertanyaan):
+     * APA (Definisi & Esensi Konsep): Uraikan hakikat definisi baku, esensi konseptual, fungsi utama, dan ruang lingkup secara komprehensif.
+     * BAGAIMANA (Mekanisme, Alur, & Langkah Kerja): Uraikan proses bertahap, cara kerja, prosedur teknis, atau alur protokol secara runtut, kronologis, dan sistematis.
+     * KENAPA / MENGAPA (Sebab-Akibat & Rationale Ilmiah/Teknis): Paparkan dasar kausalitas, latar belakang masalah, alasan ilmiah/teknis, serta dampak positif/negatif secara mendalam.
+     * DIMANA (Lokasi, Penempatan Arsitektur, & Layer): Tentukan secara presisi letak memori (stack/heap), layer arsitektur (OSI layer/TCP-IP), lingkungan eksekusi, atau lokasi sistem.
+     * KAPAN (Kondisi Penerapan, Pemicu/Triggers, & Kriteria Skenario): Jelaskan kondisi/skenario spesifik kapan suatu metode/arsitektur tepat digunakan, pemicu peristiwa, dan trade-off dibanding alternatif.
    - Soal Kelebihan & Kekurangan (Pros & Cons): Wajib menguraikan kelebihan dan kekurangan secara berimbang dan terstruktur (Kelebihan: 1, 2... Kekurangan: 1, 2...) disertai alasan teknis/ilmiah yang kuat.
    - Soal Berikan Pendapat / Analisis Kritis / Solusi Kasus: Berikan pandangan yang logis, objektif, berbasis teori ilmiah/data, serta sertakan solusi atau rekomendasi konkret yang aplikatif.
    - Soal Dampak / Pengaruh / Fungsi / Tahapan: Uraikan secara runtut, mendalam, dan terstruktur.
@@ -145,8 +151,8 @@ PANDUAN MEMBACA TEKS SOAL DALAM GAMBAR (OCR & ANALISIS VISUAL):
      Jawaban: B. [Teks pilihan] (atau Jawaban: B)
    - DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...] untuk pilihan ganda.
 
-5. ATURAN SOAL ESAI BERGAMBAR, ANALISIS KASUS, KELEBIHAN/KEKURANGAN, & PENDAPAT:
-   - Jika soal di dalam gambar menanyakan kelebihan/kekurangan, opini/pendapat ilmiah, analisis grafik/diagram, atau sejumlah N contoh: baca pertanyaan di dalam gambar secara detail dan sajikan jawaban lengkap, terstruktur, dan berbobot di bawah "Jawaban:".
+5. ATURAN SOAL ESAI BERGAMBAR, ANALISIS 5W1H (APA, BAGAIMANA, KENAPA, DIMANA, KAPAN), KELEBIHAN/KEKURANGAN, & PENDAPAT:
+   - Jika soal di dalam gambar menanyakan pertanyaan konseptual 5W1H (apa esensinya, bagaimana alurnya, kenapa terjadi, dimana posisinya, kapan digunakannya), kelebihan/kekurangan, opini/pendapat ilmiah, analisis grafik/diagram, atau sejumlah N contoh: baca pertanyaan di dalam gambar secara detail dan sajikan jawaban lengkap, terstruktur, dan berbobot di bawah "Jawaban:".
 
 ATURAN FORMAT (SANGAT KETAT):
 - DILARANG menggunakan karakter bintang (*) atau tanda tebal ganda (**) sama sekali.
