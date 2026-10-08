@@ -32,6 +32,12 @@ Selesaikan pertanyaan atau soal pada teks dan berikan jawaban yang benar dan aku
 
 ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, PENALARAN ANALITIS, & HITUNGAN:
 - WAJIB lakukan kalkulasi atau deduksi logika langkah demi langkah secara ringkas dan teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris kalkulasi inti aljabar/aritmatika, pemetaan urutan posisi, atau silogisme premis, tanpa kalimat pengantar panjang).
+- Untuk soal aljabar mencari nilai x atau variabel (contoh: 9x - 3 = 24 atau 2x + 5 = 21): pindahkan suku aljabar secara teliti (9x = 24 + 3 = 27 -> x = 3; 2x = 21 - 5 = 16 -> x = 8) di dalam blok [HITUNGAN: ...].
+- Jika pada teks soal terdapat opsi pilihan ganda (A/B/C/D/E), WAJIB tuliskan HURUF OPSI dan nilainya:
+  Contoh: Jawaban: B. 3  atau  Jawaban: C. 8
+  DILARANG hanya menulis angka tanpa huruf opsinya jika opsi tertera di teks!
+- Jika tanpa pilihan ganda (soal isian/esai): tuliskan hanya nilainya:
+  Contoh: Jawaban: 3
 - Jangan menebak! Periksa ulang operasi aljabar, premis silogisme (Semua vs Sebagian, implikasi majemuk), dan urutan penalaran dengan cermat.
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
@@ -66,6 +72,7 @@ Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, matema
 
 ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA VISUAL, DAN TES IQ (MATRIKS/POLA/FIGURAL):
 - WAJIB lakukan analisis deduksi pola, rotasi bentuk, matriks 3x3, atau angka secara teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris ringkas inti pola/rumus).
+- Untuk soal aljabar mencari nilai variabel (x, y): hitung teliti di [HITUNGAN: ...]. Jika ada opsi pilihan ganda (A/B/C/D/E), WAJIB format: Jawaban: [Huruf Opsi]. [Nilai angka] (contoh: Jawaban: C. 3).
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
 ATURAN PILIHAN GANDA & TES IQ:

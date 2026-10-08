@@ -32,6 +32,12 @@ Selesaikan pertanyaan atau soal pada teks dan berikan jawaban yang benar dan aku
 
 ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA, PENALARAN ANALITIS, & HITUNGAN:
 - WAJIB lakukan kalkulasi atau deduksi logika langkah demi langkah secara ringkas dan teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris kalkulasi inti aljabar/aritmatika, pemetaan urutan posisi, atau silogisme premis, tanpa kalimat pengantar panjang).
+- Untuk soal aljabar mencari nilai x atau variabel (contoh: 9x - 3 = 24 atau 2x + 5 = 21): pindahkan suku aljabar secara teliti (9x = 24 + 3 = 27 -> x = 3; 2x = 21 - 5 = 16 -> x = 8) di dalam blok [HITUNGAN: ...].
+- Jika pada teks soal terdapat opsi pilihan ganda (A/B/C/D/E), WAJIB tuliskan HURUF OPSI dan nilainya:
+  Contoh: Jawaban: B. 3  atau  Jawaban: C. 8
+  DILARANG hanya menulis angka tanpa huruf opsinya jika opsi tertera di teks!
+- Jika tanpa pilihan ganda (soal isian/esai): tuliskan hanya nilainya:
+  Contoh: Jawaban: 3
 - Jangan menebak! Periksa ulang operasi aljabar, premis silogisme (Semua vs Sebagian, implikasi majemuk), dan urutan penalaran dengan cermat.
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
@@ -67,6 +73,7 @@ Periksa gambar ini (soal ujian bergambar, diagram, tabel, matriks tes IQ, matema
 
 ATURAN KHUSUS SOAL MATEMATIKA, LOGIKA VISUAL, DAN TES IQ (MATRIKS/POLA/FIGURAL):
 - WAJIB lakukan analisis deduksi pola, rotasi bentuk, matriks 3x3, atau angka secara teliti di dalam blok tertutup [HITUNGAN: ...] (cukup 1-4 baris ringkas inti pola/rumus).
+- Untuk soal aljabar mencari nilai variabel (x, y): hitung teliti di [HITUNGAN: ...]. Jika ada opsi pilihan ganda (A/B/C/D/E), WAJIB format: Jawaban: [Huruf Opsi]. [Nilai angka] (contoh: Jawaban: C. 3).
 - Setelah blok [HITUNGAN: ...], tuliskan kunci jawaban akhir di baris paling bawah.
 
 ATURAN PILIHAN GANDA & TES IQ:
@@ -623,11 +630,11 @@ function extractAnswerInfo(text) {
   let letter = null;
   let targetText = "";
 
-  // 3. Deteksi pola huruf / angka opsi: "Jawaban: C. Jakarta", "Kunci Jawaban: C", "Kunci: (C)", "Opsi: 4", "Jawaban: 4"
-  const kwRegex = /^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*[\(\[]?([A-H1-9])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
-  const directLetterRegex = /^[\(\[]?([A-H1-9])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
+  // 3. Deteksi pola huruf pilihan (A-I): contoh "Jawaban: C. 3", "Jawaban: B. x = 8", "Kunci: C", "(B) 25"
+  const kwLetterRegex = /^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*[\(\[]?([A-I])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
+  const directLetterRegex = /^[\(\[]?([A-I])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
 
-  const mKw = strippedLine.match(kwRegex);
+  const mKw = strippedLine.match(kwLetterRegex);
   if (mKw && mKw[1]) {
     letter = mKw[1].toUpperCase();
     targetText = (mKw[2] || "").trim();
@@ -639,7 +646,7 @@ function extractAnswerInfo(text) {
     }
   }
 
-  // 4. Jika bukan huruf tapi teks langsung / angka matematika (contoh: "Jawaban: -4", "Jawaban: Rp 80.000", "Jawaban: 200", "Jawaban: Strongly Agree")
+  // 4. Jika bukan huruf A-I tapi teks langsung / angka matematika (contoh: "Jawaban: 3", "Jawaban: x = 3", "Jawaban: -4", "Jawaban: Rp 80.000")
   if (!letter || !targetText) {
     const textMatch = strippedLine.match(/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)?(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*(.+)$/i);
     if (textMatch && textMatch[1]) {

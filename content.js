@@ -333,7 +333,7 @@
 
   function stripLetterPrefix(text) {
     if (!text) return "";
-    return text.trim().replace(/^[\(\[]?[A-H1-8][\)\.\:\-\s\]\}]+\s*/i, "").trim();
+    return text.trim().replace(/^[\(\[]?[A-I1-9][\)\.\:\-\s\]\}]+\s*/i, "").trim();
   }
 
   function letterToIndex(letter) {
@@ -359,10 +359,21 @@
     var upperLetter = (letter || "").toString().trim().toUpperCase();
     var rawTarget = (snippet || "").trim();
     var cleanSnippet = cleanText(rawTarget);
-    var letterIndex = upperLetter ? letterToIndex(upperLetter) : -1;
+
+    // Ekstraksi nilai angka murni jika target berupa "x = 3", "nilai x = 3", "-4", "3", "8", atau desimal
+    var numMatch = rawTarget.match(/^(?:(?:nilai\s*)?[a-z]\s*=\s*)?(-?\d+(?:[\.,]\d+)?)$/i);
+    var pureNum = numMatch ? numMatch[1].trim() : "";
+
+    // Jika upperLetter ternyata berupa angka murni (misal: "3" dari "Jawaban: 3"), jadikan pureNum jika belum ada
+    if (!pureNum && /^-?\d+$/.test(upperLetter)) {
+      pureNum = upperLetter;
+    }
+
+    var isRealLetter = upperLetter && /^[A-Z]$/.test(upperLetter);
+    var letterIndex = isRealLetter ? letterToIndex(upperLetter) : -1;
     var numStr = letterIndex >= 0 ? String(letterIndex + 1) : "";
 
-    if (!upperLetter && !cleanSnippet) return null;
+    if (!upperLetter && !cleanSnippet && !pureNum) return null;
 
     // Filter seluruh kandidat elemen opsi di halaman (abaikan HUD dan tombol submit/finish ujian)
     var candidateOptions = Array.from(document.querySelectorAll(
@@ -374,32 +385,38 @@
       return el.children.length <= 15;
     });
 
-    // --- TIER 1: MATCH LENGKAP: HURUF DAN TEKS OPSI COCOK SEKALIGUS (100% PRESISI) ---
-    // Contoh: "C. Jakarta" saat jawaban C dan teks Jakarta
-    if (upperLetter && cleanSnippet && cleanSnippet.length >= 2) {
+    // --- TIER 1: MATCH LENGKAP: HURUF DAN TEKS/ANGKA OPSI COCOK SEKALIGUS (100% PRESISI) ---
+    // Contoh: "C. 3" saat jawaban C dan nilai x = 3, atau "C. Jakarta"
+    if (isRealLetter && (cleanSnippet || pureNum)) {
       for (var i = 0; i < candidateOptions.length; i++) {
         var el = candidateOptions[i];
         var elText = (el.textContent || el.innerText || el.value || "").trim();
         var elClean = cleanText(elText);
-        if (matchesLetterPrefix(elText, upperLetter) && elClean.includes(cleanSnippet)) {
+        var matchText = (cleanSnippet && elClean.includes(cleanSnippet)) || (pureNum && (elClean.includes(pureNum) || new RegExp('\\b' + pureNum + '\\b').test(elClean)));
+        if (matchesLetterPrefix(elText, upperLetter) && matchText) {
           var res1 = activateOption(el);
           if (res1) return elText.slice(0, 50);
         }
       }
     }
 
-    // --- TIER 2: MATCH TEKS PERSIS (EXACT MATCH ATAU TEKS SETELAH HURUF DIBUANG) ---
-    // Contoh: "Strongly Agree", "Jakarta", "Au", atau "Jupiter"
-    if (cleanSnippet && cleanSnippet.length >= 2) {
+    // --- TIER 2: MATCH TEKS PERSIS ATAU NILAI ANGKA PERSIS (MENDUKUNG ANGKA 1 DIGIT SEPERTI '3', '8', '7') ---
+    // Contoh: "3" cocok persis dengan opsi "C. 3" atau opsi "3"
+    if (cleanSnippet || pureNum) {
       for (var j = 0; j < candidateOptions.length; j++) {
         var opt = candidateOptions[j];
         var raw = (opt.textContent || opt.innerText || opt.value || "").trim();
         var c = cleanText(raw);
         var stripped = cleanText(stripLetterPrefix(raw));
 
-        if (c === cleanSnippet || stripped === cleanSnippet || (cleanSnippet.length >= 4 && stripped.startsWith(cleanSnippet))) {
+        if (c === cleanSnippet || stripped === cleanSnippet || (pureNum && (c === pureNum || stripped === pureNum))) {
           var res2 = activateOption(opt);
           if (res2) return raw.slice(0, 50);
+        }
+
+        if (cleanSnippet.length >= 4 && stripped.startsWith(cleanSnippet)) {
+          var res2b = activateOption(opt);
+          if (res2b) return raw.slice(0, 50);
         }
       }
     }
@@ -417,25 +434,26 @@
       if (!labelEl) labelEl = input.closest("label") || input.parentElement;
       var labelTxt = labelEl ? (labelEl.textContent || labelEl.innerText || "").trim() : "";
       var cleanLabel = cleanText(labelTxt);
+      var strippedLabel = cleanText(stripLetterPrefix(labelTxt));
 
       // 3a. Value input sesuai huruf (value="C" / value="c" / data-value="C")
-      if (upperLetter && val === upperLetter) {
+      if (isRealLetter && val === upperLetter) {
         var targetCard1 = input.closest(".option-item, [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], label, [role='button']") || input;
         var res3a = activateOption(targetCard1);
         if (res3a) return labelTxt || ("Opsi " + upperLetter);
       }
 
-      // 3b. Label radio cocok dengan huruf awalan & teks
-      if (upperLetter && matchesLetterPrefix(labelTxt, upperLetter)) {
-        if (!cleanSnippet || cleanLabel.includes(cleanSnippet)) {
+      // 3b. Label radio cocok dengan huruf awalan & teks/angka
+      if (isRealLetter && matchesLetterPrefix(labelTxt, upperLetter)) {
+        if (!cleanSnippet || cleanLabel.includes(cleanSnippet) || (pureNum && cleanLabel.includes(pureNum))) {
           var targetCard2 = input.closest(".option-item, [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], label, [role='button']") || labelEl || input;
           var res3b = activateOption(targetCard2);
           if (res3b) return labelTxt.slice(0, 50);
         }
       }
 
-      // 3c. Label radio cocok dengan teks jawaban
-      if (cleanSnippet && cleanSnippet.length >= 3 && cleanLabel.includes(cleanSnippet)) {
+      // 3c. Label radio cocok dengan teks jawaban atau angka murni
+      if ((cleanSnippet && cleanLabel.includes(cleanSnippet)) || (pureNum && (strippedLabel === pureNum || cleanLabel === pureNum))) {
         var targetCard3 = input.closest(".option-item, [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], label, [role='button']") || labelEl || input;
         var res3c = activateOption(targetCard3);
         if (res3c) return labelTxt.slice(0, 50);
@@ -449,14 +467,27 @@
       }
     }
 
-    // --- TIER 4: OPSI DENGAN AWALAN HURUF (A. ..., B) ..., (C)) ---
-    if (upperLetter) {
+    // --- TIER 4: OPSI DENGAN AWALAN HURUF (A. ..., B) ..., (C)) HANYA JIKA HURUF A-Z ASLI ---
+    if (isRealLetter) {
       for (var l = 0; l < candidateOptions.length; l++) {
         var cand = candidateOptions[l];
         var cText = (cand.textContent || cand.innerText || cand.value || "").trim();
         if (matchesLetterPrefix(cText, upperLetter)) {
           var res4 = activateOption(cand);
           if (res4) return cText.slice(0, 50);
+        }
+      }
+    }
+
+    // --- TIER 4b: NILAI ANGKA MURNI DI DALAM OPSI DENGAN WORD-BOUNDARY (Untuk soal nilai x = angka) ---
+    if (pureNum) {
+      for (var n = 0; n < candidateOptions.length; n++) {
+        var candNum = candidateOptions[n];
+        var candRaw = (candNum.textContent || candNum.innerText || candNum.value || "").trim();
+        var candStripped = cleanText(stripLetterPrefix(candRaw));
+        if (candStripped === pureNum || new RegExp('\\b' + pureNum + '\\b').test(candStripped)) {
+          var res4b = activateOption(candNum);
+          if (res4b) return candRaw.slice(0, 50);
         }
       }
     }
@@ -1105,11 +1136,11 @@
     var letter = null;
     var targetText = "";
 
-    // 3. Deteksi pola huruf / angka opsi: "Jawaban: C. Jakarta", "Kunci Jawaban: C", "Kunci: (C)", "Opsi: 4", "Jawaban: 4"
-    var kwRegex = /^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*[\(\[]?([A-H1-9])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
-    var directLetterRegex = /^[\(\[]?([A-H1-9])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
+    // 3. Deteksi pola huruf pilihan (A-I): contoh "Jawaban: C. 3", "Jawaban: B. x = 8", "Kunci: C", "(B) 25"
+    var kwLetterRegex = /^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*[\(\[]?([A-I])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
+    var directLetterRegex = /^[\(\[]?([A-I])[\)\]]?(?:[\.\:\)\-\s\]\}]\s*(.*)|$)/i;
 
-    var mKw = strippedLine.match(kwRegex);
+    var mKw = strippedLine.match(kwLetterRegex);
     if (mKw && mKw[1]) {
       letter = mKw[1].toUpperCase();
       targetText = (mKw[2] || "").trim();
@@ -1121,7 +1152,7 @@
       }
     }
 
-    // 4. Jika bukan huruf tapi teks langsung / angka matematika (contoh: "Jawaban: -4", "Jawaban: Rp 80.000", "Jawaban: 200", "Jawaban: Strongly Agree")
+    // 4. Jika bukan huruf A-I tapi teks langsung / angka matematika (contoh: "Jawaban: 3", "Jawaban: x = 3", "Jawaban: -4", "Jawaban: Rp 80.000")
     if (!letter || !targetText) {
       var textMatch = strippedLine.match(/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)?(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]?\s*(.+)$/i);
       if (textMatch && textMatch[1]) {
