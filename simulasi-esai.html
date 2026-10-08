@@ -313,7 +313,8 @@
       font-size: 13.5px;
     }
 
-    .eval-table th, .eval-table td {
+    .eval-table th,
+    .eval-table td {
       padding: 12px 14px;
       border-bottom: 1px solid #e2e8f0;
       vertical-align: top;
@@ -362,6 +363,7 @@
       border-radius: 8px;
       cursor: pointer;
     }
+
     .btn-restart:hover {
       background: #4338ca;
     }
@@ -409,7 +411,8 @@
           <span class="label">SKOR TOTAL</span>
         </div>
         <h2 class="score-summary-title" id="evalTitle">Evaluasi Ujian Informatika</h2>
-        <p class="score-summary-desc" id="evalDesc">Hasil penilaian otomatis berdasarkan kriteria kata kunci dan ketepatan konsep:</p>
+        <p class="score-summary-desc" id="evalDesc">Hasil penilaian otomatis berdasarkan kriteria kata kunci dan
+          ketepatan konsep:</p>
 
         <table class="eval-table">
           <thead>
@@ -441,7 +444,7 @@
         text: "Sebutkan struktur data linier yang beroperasi dengan prinsip Last In First Out (LIFO), di mana elemen terakhir yang dimasukkan adalah elemen pertama yang dikeluarkan!",
         placeholder: "Tuliskan nama struktur data di sini...",
         points: 20,
-        evaluate: function(answer) {
+        evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
           const low = answer.toLowerCase().trim();
           if (low.includes("stack") || low.includes("tumpukan")) {
@@ -458,7 +461,7 @@
         text: "Apa kepanjangan dari protokol komunikasi web terenkripsi HTTPS yang menggunakan sertifikat SSL/TLS pada port default 443?",
         placeholder: "Tuliskan kepanjangan HTTPS...",
         points: 20,
-        evaluate: function(answer) {
+        evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
           const low = answer.toLowerCase().trim();
           if (low.includes("hypertext") && low.includes("transfer") && low.includes("protocol") && low.includes("secure")) {
@@ -478,7 +481,7 @@
         text: "Jelaskan perbedaan mendasar antara database relasional (SQL) dan database non-relasional (NoSQL) dari segi struktur data dan skemanya, serta sebutkan minimal satu contoh DBMS untuk masing-masing jenis database tersebut!",
         placeholder: "Ketikkan penjelasan perbandingan SQL vs NoSQL dan contoh DBMS-nya...",
         points: 20,
-        evaluate: function(answer) {
+        evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
           const low = answer.toLowerCase();
           let score = 0;
@@ -517,7 +520,7 @@
         text: "Jelaskan secara ringkas pengertian dari 4 pilar utama dalam Pemrograman Berorientasi Objek (OOP): Encapsulation, Inheritance, Polymorphism, dan Abstraction!",
         placeholder: "Tuliskan penjelasan 4 pilar OOP di sini...",
         points: 20,
-        evaluate: function(answer) {
+        evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
           const low = answer.toLowerCase();
           let count = 0;
@@ -538,7 +541,7 @@
         text: "Jelaskan prinsip dasar serangan SQL Injection (SQLi) dan bagaimana teknik terbaik yang direkomendasikan untuk mencegah kerentanan tersebut pada kode aplikasi web!",
         placeholder: "Ketikkan penjelasan SQL Injection dan pencegahannya...",
         points: 20,
-        evaluate: function(answer) {
+        evaluate: function (answer) {
           if (!answer) return { score: 0, feedback: "Tidak dijawab" };
           const low = answer.toLowerCase();
           let score = 0;
