@@ -318,7 +318,22 @@
     return patterns.some(function(p) { return p.test(lower); });
   }
 
-  // === 4. HELPER TEKS & HURUF PILIHAN GANDA ===
+  // === 4. HELPER TEKS & ELEMEN KELAS (AMAN DARI SVG ANIMATED STRING) ===
+  function getElementClassName(el) {
+    if (!el) return "";
+    try {
+      if (typeof el.className === "string") return el.className;
+      if (el.className && typeof el.className.baseVal === "string") return el.className.baseVal;
+      if (el.getAttribute) {
+        var attr = el.getAttribute("class");
+        if (typeof attr === "string") return attr;
+      }
+      return String(el.className || "");
+    } catch (_) {
+      return "";
+    }
+  }
+
   function cleanText(t) {
     return (t || "").toLowerCase().replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
   }
@@ -467,15 +482,59 @@
 
     // --- TIER 6: URUTAN INDEX KARTU (Fallback cerdas untuk kuis bergambar, matriks IQ, atau opsi tanpa huruf) ---
     if (letterIndex >= 0) {
+      // 6a. Khusus Tes IQ / Soal Bergambar: Cari container di dekat judul "Choose your answer" / opsi bergambar
+      var answerHeading = Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, p, span, div, b")).find(function(el) {
+        if (!isElementVisible(el) || isHudElement(el)) return false;
+        var t = (el.textContent || "").trim().toLowerCase();
+        return t === "choose your answer:" || t === "choose your answer" || t === "select answer" || t === "pilihan jawaban:" || t.includes("choose your answer");
+      });
+
+      if (answerHeading) {
+        var parentBox = answerHeading.parentElement || document.body;
+        // Cari container yang membungkus kartu-kartu jawaban di dekat judul ini
+        var cardGroups = Array.from(parentBox.querySelectorAll("div, section, ul")).filter(function(g) {
+          if (!isElementVisible(g) || isHudElement(g) || g.contains(answerHeading)) return false;
+          var directCards = Array.from(g.children).filter(function(ch) {
+            if (!isElementVisible(ch) || isHudElement(ch)) return false;
+            var r = ch.getBoundingClientRect();
+            return r.width >= 35 && r.height >= 35 && (ch.querySelector("img, svg, canvas") || ch.tagName === "IMG" || ch.tagName === "SVG");
+          });
+          return directCards.length >= 2 && directCards.length <= 16;
+        });
+
+        if (cardGroups.length > 0) {
+          cardGroups.sort(function(a, b) { return b.children.length - a.children.length; });
+          var bestGroup = cardGroups[0];
+          var visualCards = Array.from(bestGroup.children).filter(function(ch) {
+            return isElementVisible(ch) && !isHudElement(ch);
+          });
+
+          // Urutkan kartu secara natural (atas ke bawah, lalu kiri ke kanan)
+          visualCards.sort(function(a, b) {
+            var ra = a.getBoundingClientRect();
+            var rb = b.getBoundingClientRect();
+            if (Math.abs(ra.top - rb.top) > 25) return ra.top - rb.top;
+            return ra.left - rb.left;
+          });
+
+          if (letterIndex < visualCards.length) {
+            var iqCard = visualCards[letterIndex];
+            var resIq = activateOption(iqCard);
+            if (resIq) return "Kartu IQ ke-" + (letterIndex + 1) + " (" + upperLetter + ")";
+          }
+        }
+      }
+
+      // 6b. Pencarian Universal Kontainer Pilihan Ganda & Grid Opsi
       var containers = Array.from(document.querySelectorAll(
-        "[role='radiogroup'], fieldset, [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], [class*='soal' i], [class*='quiz' i], [class*='question' i], [class*='matrix' i], [class*='grid' i], ul, ol, form, div"
+        "[role='radiogroup'], fieldset, [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], [class*='soal' i], [class*='quiz' i], [class*='question' i], [class*='matrix' i], [class*='grid' i], ul, ol, form, div, section"
       )).filter(function(c) {
         if (!isElementVisible(c) || isHudElement(c)) return false;
-        var classId = `${c.className || ""} ${c.id || ""}`.toLowerCase();
-        if (classId.includes("nav") || classId.includes("header") || classId.includes("footer") || classId.includes("menu") || classId.includes("tool") || classId.includes("dot") || classId.includes("pagination") || classId.includes("pager") || classId.includes("indicator")) return false;
+        var classId = `${getElementClassName(c)} ${c.id || ""}`.toLowerCase();
+        if (classId.includes("nav") || classId.includes("header") || classId.includes("footer") || classId.includes("menu") || classId.includes("tool") || classId.includes("pagination") || classId.includes("pager") || classId.includes("indicator")) return false;
 
         var hasDots = Array.from(c.children).some(function(child) {
-          var chClass = (child.className || "").toLowerCase();
+          var chClass = getElementClassName(child).toLowerCase();
           return chClass.includes("dot") || chClass.includes("page");
         });
         if (hasDots) return false;
@@ -485,22 +544,25 @@
           var style = window.getComputedStyle ? window.getComputedStyle(child) : {};
           return child.tagName === "BUTTON" || child.tagName === "LI" || child.tagName === "LABEL" ||
             child.tagName === "A" || child.getAttribute("role") === "button" || child.getAttribute("role") === "radio" ||
-            style.cursor === "pointer" || child.querySelector("input[type='radio'], input[type='checkbox'], img, svg, [role='radio']");
+            style.cursor === "pointer" || child.querySelector("input[type='radio'], input[type='checkbox'], img, svg, [role='radio'], canvas") ||
+            child.tagName === "IMG" || child.tagName === "SVG" || child.tagName === "CANVAS";
         });
 
-        return children.length >= 2 && children.length <= 10;
+        return children.length >= 2 && children.length <= 16;
       });
 
-      // Beri bobot lebih tinggi pada kontainer yang memiliki kata kunci 'option'/'choice'/'answer' atau ada radio/button
+      // Beri bobot lebih tinggi pada kontainer yang memiliki kartu gambar / ada kata kunci pilihan
       containers.sort(function(a, b) {
         var scoreA = 0;
         var scoreB = 0;
-        var idClassA = `${a.className || ""} ${a.id || ""}`.toLowerCase();
-        var idClassB = `${b.className || ""} ${b.id || ""}`.toLowerCase();
+        var idClassA = `${getElementClassName(a)} ${a.id || ""}`.toLowerCase();
+        var idClassB = `${getElementClassName(b)} ${b.id || ""}`.toLowerCase();
         if (idClassA.includes("option") || idClassA.includes("choice") || idClassA.includes("answer") || idClassA.includes("pilihan")) scoreA += 10;
         if (idClassB.includes("option") || idClassB.includes("choice") || idClassB.includes("answer") || idClassB.includes("pilihan")) scoreB += 10;
         if (a.querySelector("input[type='radio'], [role='radio']")) scoreA += 8;
         if (b.querySelector("input[type='radio'], [role='radio']")) scoreB += 8;
+        if (a.querySelector("img, svg, canvas")) scoreA += 12;
+        if (b.querySelector("img, svg, canvas")) scoreB += 12;
         return scoreB - scoreA;
       });
 
@@ -511,7 +573,8 @@
           var style = window.getComputedStyle ? window.getComputedStyle(child) : {};
           return child.tagName === "BUTTON" || child.tagName === "LI" || child.tagName === "LABEL" ||
             child.tagName === "A" || child.getAttribute("role") === "button" || child.getAttribute("role") === "radio" ||
-            style.cursor === "pointer" || child.querySelector("input[type='radio'], input[type='checkbox'], img, svg, [role='radio']");
+            style.cursor === "pointer" || child.querySelector("input[type='radio'], input[type='checkbox'], img, svg, [role='radio'], canvas") ||
+            child.tagName === "IMG" || child.tagName === "SVG" || child.tagName === "CANVAS";
         });
 
         if (grpChildren.length >= 2 && letterIndex < grpChildren.length) {
@@ -715,7 +778,7 @@
       var text = (btn.textContent || btn.innerText || btn.value || "").trim();
       var aria = (btn.getAttribute("aria-label") || "").trim().toLowerCase();
       var title = (btn.getAttribute("title") || "").trim().toLowerCase();
-      var classId = `${btn.className || ""} ${btn.id || ""}`.toLowerCase();
+      var classId = `${getElementClassName(btn)} ${btn.id || ""}`.toLowerCase();
       var innerHtml = btn.innerHTML ? btn.innerHTML.toLowerCase() : "";
 
       if (isForbiddenButton(text) || isForbiddenButton(aria) || isForbiddenButton(title) || isForbiddenButton(btn.id || "")) {
