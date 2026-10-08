@@ -73,28 +73,46 @@ ATURAN KHUSUS SOAL TKP (TES KARAKTERISTIK PRIBADI CPNS - TARGET SKOR 5 MUTLAK):
   5. TEKNOLOGI INFORMASI (TIK): Terbuka dan antusias mengadopsi sistem/aplikasi digital baru, serta aktif membantu rekan yang mengalami kendala teknis.
   6. PROFESIONALISME: Mendahulukan tugas dinas di atas urusan pribadi, bertanggung jawab penuh, mampu bekerja di bawah tekanan, dan mematuhi SOP.
 
-ATURAN PILIHAN GANDA & KUIS (WAJIB FORMAT TEPAT):
-- Baris jawaban akhir WAJIB berupa 1 baris jelas:
-  Contoh variasi huruf:
-  Jawaban: D. [Teks pilihan D]
-  Jawaban: B. [Teks pilihan B]
-  Jawaban: A. [Teks pilihan A]
-  Jawaban: E. [Teks pilihan E]
-  Jawaban: C. [Teks pilihan C]
-- Contoh jika opsi berupa teks langsung (seperti Strongly Agree, Agree, Neutral, Disagree, Benar, Salah, angka, dsb):
-  Jawaban: [Teks opsi yang benar]
-- Contoh jika nomor urut kotak (1-9):
-  Jawaban: 4
-- DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...].
+PANDUAN PEMBACAAN & ANALISIS SOAL SECARA DETAIL (SANGAT KRUSIAL):
+1. BACA SOAL SECARA DETAIL & CERMAT TERLEBIH DAHULU:
+   - Identifikasi secara mendalam kebutuhan dan instruksi soal: apakah pilihan ganda, isian singkat, atau uraian/esai mendalam.
+   - Perhatikan instruksi kuantitas dan rincian: "sebutkan [N] contoh...", "jelaskan [N] pilar...", "sebutkan minimal satu contoh untuk masing-masing...", "apa saja perbedaan...", "uraikan prinsip dan solusi pencegahannya".
+   - DILARANG KERAS asal jawab seadanya atau menjawab hanya 1 poin jika soal menuntut beberapa poin atau penjelasan tuntas!
+   - Penuhi SELURUH jumlah poin, contoh, dan aspek yang diminta soal secara lengkap, akurat, dan berbobot.
 
-ATURAN SOAL ESAI / ISIAN SINGKAT:
-- Tuliskan perhitungan di [HITUNGAN: ...], lalu di baris paling bawah: Jawaban: [Hasil angka atau jawaban singkat].
+2. ATURAN SOAL PILIHAN GANDA & KUIS:
+   - Baris jawaban akhir WAJIB berupa 1 baris jelas:
+     Contoh variasi huruf:
+     Jawaban: D. [Teks pilihan D]
+     Jawaban: B. [Teks pilihan B]
+     Jawaban: A. [Teks pilihan A]
+     Jawaban: E. [Teks pilihan E]
+     Jawaban: C. [Teks pilihan C]
+   - Contoh jika opsi berupa teks langsung (seperti Strongly Agree, Agree, Neutral, Disagree, Benar, Salah, angka, dsb):
+     Jawaban: [Teks opsi yang benar]
+   - Contoh jika nomor urut kotak (1-9):
+     Jawaban: 4
+   - DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...] untuk soal pilihan ganda.
 
-ATURAN FORMAT (SANGAT KETAT):
-- DILARANG menggunakan karakter bintang (*) atau cetak tebal (**) sama sekali.
-- DILARANG menggunakan tanda pagar (#).
-- DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-).
-- Tanpa salam pembuka, tanpa basa-basi, dan tanpa penutup.`;
+3. ATURAN SOAL ESAI, ISIAN, & PERTANYAAN TERBUKA (LENGKAP SESUAI KEBUTUHAN SOAL):
+   - Jika soal meminta sejumlah N poin/contoh (misal: "sebutkan 3 contoh...", "jelaskan 4 pilar OOP"): Sebutkan dan jelaskan SELURUH N poin tersebut tanpa ada yang terpotong atau dikurangi.
+   - Jika soal meminta perbandingan dan contoh untuk masing-masing (misal: "perbedaan SQL vs NoSQL dan minimal 1 contoh DBMS untuk masing-masing"): Jelaskan perbedaan struktur data dan skemanya secara tepat, serta sebutkan contoh DBMS untuk SQL dan NoSQL secara eksplisit.
+   - Jika soal menanyakan konsep dan pencegahan (misal: "prinsip SQL Injection dan teknik pencegahannya"): Jelaskan cara kerja kerentanan dan langkah pencegahan teknisnya secara tuntas.
+   - Jika soal isian singkat yang hanya menanyakan 1 istilah/angka (misal: kepanjangan HTTPS, nilai x): Tuliskan istilah atau angka tersebut secara presisi.
+   - Format jawaban esai/uraian:
+     Tuliskan analisis/langkah di [HITUNGAN: ...] jika memerlukan perhitungan.
+     Lalu tuliskan jawaban lengkap di bawah Jawaban:
+     Jawaban:
+     1. [Poin pertama lengkap]
+     2. [Poin kedua lengkap]
+     3. [Poin ketiga lengkap]
+     (Atau uraian penjelasan berbobot yang memenuhi semua kriteria yang diminta soal).
+
+4. ATURAN FORMAT (SANGAT KETAT):
+   - DILARANG menggunakan karakter bintang (*) atau cetak tebal (**) sama sekali.
+   - DILARANG menggunakan tanda pagar (#).
+   - DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-). Gunakan penomoran angka (1., 2., 3.) untuk daftar poin.
+   - Tanpa salam pembuka, tanpa basa-basi, dan tanpa penutup.`;
 }
 
 function getGeminiVisionPrompt() {
@@ -143,12 +161,15 @@ ATURAN PILIHAN GANDA & TES IQ:
   Jawaban: 1 (atau Jawaban: A)
 - Contoh jika opsi berupa teks langsung:
   Jawaban: [Teks opsi yang benar]
-- DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...].
+- DILARANG menuliskan penjelasan atau teori di luar blok [HITUNGAN: ...] untuk pilihan ganda.
+
+ATURAN SOAL ESAI / ISIAN BERGAMBAR:
+- Jika soal bergambar meminta menyebutkan sejumlah N poin/contoh/komponen atau uraian detail: baca gambar dan teks soal dengan cermat, lalu sajikan seluruh poin yang diminta secara lengkap dan berbobot di bawah "Jawaban:".
 
 ATURAN FORMAT (SANGAT KETAT):
 - DILARANG menggunakan karakter bintang (*) atau tanda tebal ganda (**) sama sekali.
 - DILARANG menggunakan tanda pagar (#).
-- DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-).
+- DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-). Gunakan penomoran angka (1., 2., 3.) jika membuat daftar poin.
 - Tanpa salam pembuka, tanpa kata pengantar apa pun, dan tanpa penutup.`;
 }
 
@@ -173,7 +194,7 @@ async function handleCallGroq(questionText) {
         body: JSON.stringify({
           model: model,
           temperature: 0.0,
-          max_tokens: 400,
+          max_tokens: 1500,
           messages: [
             { role: "system", content: getGroqPrompt() },
             { role: "user", content: questionText }
@@ -226,7 +247,7 @@ async function handleCallGeminiText(questionText) {
           }],
           generationConfig: {
             temperature: 0.0,
-            maxOutputTokens: 400
+            maxOutputTokens: 1500
           }
         })
       });

@@ -802,7 +802,9 @@
     for (var inp = 0; inp < inputs.length; inp++) {
       var meta = `${inputs[inp].name || ""} ${inputs[inp].id || ""} ${inputs[inp].placeholder || ""}`.toLowerCase();
       if (!meta.includes("search") && !meta.includes("cari") && !meta.includes("token") && !meta.includes("pass") && isElementVisible(inputs[inp])) {
-        var textForInput = (conciseAnswer && conciseAnswer.length < 120) ? conciseAnswer : (cleanText.split("\n")[0] || cleanText);
+        var cleanLines = cleanText.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
+        var joinedLines = cleanLines.join(", ");
+        var textForInput = (joinedLines && joinedLines.length < 250) ? joinedLines : ((conciseAnswer && conciseAnswer.length < 120) ? conciseAnswer : (cleanLines[0] || cleanText));
         fillInput(inputs[inp], textForInput);
         return "input";
       }
@@ -1576,13 +1578,21 @@
     if (lines.length === 0) lines = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
 
     var answerLine = "";
+    var foundIndex = -1;
     // Cari baris yang secara eksplisit memuat kata kunci Jawaban / Kunci (prioritaskan baris paling akhir jika ada beberapa)
     for (var i = lines.length - 1; i >= 0; i--) {
       var line = lines[i];
       if (/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)\s*[:\-]/i.test(line)) {
         answerLine = line;
+        foundIndex = i;
         break;
       }
+    }
+
+    // Jika answerLine hanya berupa "Jawaban:" tanpa teks isi di baris yang sama, dan ada baris selanjutnya
+    var afterColon = answerLine.replace(/^(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)\s*[:\-]\s*/i, "").trim();
+    if (foundIndex >= 0 && !afterColon && foundIndex + 1 < lines.length) {
+      answerLine = lines[foundIndex + 1];
     }
 
     // Jika tidak ada baris kata kunci, cari baris yang memuat huruf awalan "C. ..." dari bawah ke atas
@@ -2179,7 +2189,7 @@
             <span id="hud-status-text">Siap membantu mengerjakan kuis</span>
           </div>
 
-          <div id="hud-answer-box" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 9px 11px; font-size: 12.5px; font-weight: 600; color: #166534; line-height: 1.4;">
+          <div id="hud-answer-box" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 9px 11px; font-size: 12.5px; font-weight: 600; color: #166534; line-height: 1.4; white-space: pre-wrap; max-height: 130px; overflow-y: auto;">
           </div>
 
           <button id="hud-autopilot-btn" style="width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; font-weight: 700; font-size: 12.5px; cursor: pointer; color: #fff; background: ${isAgentRunning ? "#dc2626" : "linear-gradient(135deg, #16a34a, #059669)"}; transition: all .15s;">
