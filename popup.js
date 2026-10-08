@@ -972,7 +972,7 @@ btnGroq.addEventListener("click", async () => {
   }
 });
 
-// === 2. OPENROUTER (DEEPSEEK CHAT) - Perangkum Halaman Web & Dokumen ===
+// === 2. OPENROUTER (DEEPSEEK CHAT) - Perangkum Halaman Web & Dokumen (dengan fallback Groq) ===
 btnOpenRouter.addEventListener("click", async () => {
   setBusy(true);
   result.style.display = "none";
@@ -982,35 +982,68 @@ btnOpenRouter.addEventListener("click", async () => {
     setStatus("Membaca halaman...");
     const pageInfo = await getActivePageInfo();
     const activeORKey = getApiKey("OPENROUTER_API_KEY");
-    if (!activeORKey) {
-      showResult("⚠️ API Key OpenRouter belum dikonfigurasi.\nSilakan salin file config.example.js menjadi config.js dan masukkan API Key OpenRouter Anda.", true);
+    const activeGroqKey = getApiKey("GROQ_API_KEY");
+
+    let summaryText = null;
+
+    if (activeORKey) {
+      try {
+        setStatus("Merangkum halaman web dengan DeepSeek...");
+        const res = await fetch(OPENROUTER_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${activeORKey}`
+          },
+          body: JSON.stringify({
+            model: OPENROUTER_MODEL,
+            temperature: 0.2,
+            max_tokens: 3500,
+            messages: [
+              { role: "system", content: getWebSummaryPrompt() },
+              { role: "user", content: pageInfo.text }
+            ]
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          summaryText = data.choices?.[0]?.message?.content;
+        }
+      } catch (_) { }
+    }
+
+    if (!summaryText && activeGroqKey) {
+      setStatus("Mengalihkan rangkuman ke cadangan (Groq)...");
+      const resGroq = await fetch(GROQ_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${activeGroqKey}`
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          temperature: 0.2,
+          max_tokens: 3500,
+          messages: [
+            { role: "system", content: getWebSummaryPrompt() },
+            { role: "user", content: pageInfo.text }
+          ]
+        })
+      });
+
+      if (resGroq.ok) {
+        const dataGroq = await resGroq.json();
+        summaryText = dataGroq.choices?.[0]?.message?.content;
+      }
+    }
+
+    if (!summaryText) {
+      showResult("⚠️ Gagal merangkum. Pastikan API Key OpenRouter atau Groq sudah dikonfigurasi di config.js.", true);
       return;
     }
 
-    setStatus("Merangkum halaman web dengan DeepSeek...");
-
-    const res = await fetch(OPENROUTER_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${activeORKey}`
-      },
-      body: JSON.stringify({
-        model: OPENROUTER_MODEL,
-        temperature: 0.2,
-        max_tokens: 3500,
-        messages: [
-          { role: "system", content: getWebSummaryPrompt() },
-          { role: "user", content: pageInfo.text }
-        ]
-      })
-    });
-
-    if (res.status === 429) throw new Error("Rate limit OpenRouter tercapai. Tunggu beberapa detik.");
-    if (!res.ok) throw new Error(`OpenRouter error ${res.status}: ${(await res.text()).slice(0, 200)}`);
-
-    const data = await res.json();
-    showResult(data.choices?.[0]?.message?.content || "Tidak ada respons.");
+    showResult(summaryText);
   } catch (e) {
     showResult(e.message, true);
   } finally {
