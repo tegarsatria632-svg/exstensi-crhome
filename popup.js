@@ -190,7 +190,7 @@ function _0x_guard_popup_wm() {
       }
     });
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
-  } catch (_) {}
+  } catch (_) { }
 
   setInterval(() => {
     const sigEl = document.querySelector(".app-sys-sig");
@@ -409,7 +409,7 @@ async function restoreTabState() {
           if (chrome.runtime?.lastError) { /* ignore */ }
         });
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   try {
@@ -423,7 +423,7 @@ async function restoreTabState() {
         }
       }
     });
-  } catch (_) {}
+  } catch (_) { }
 }
 
 function setStatus(text, showSpinner = true) {
@@ -465,7 +465,7 @@ async function ensureContentScriptReady(tabId) {
     });
 
     if (pingRes && pingRes.pong) return true;
-  } catch (_) {}
+  } catch (_) { }
 
   try {
     if (typeof chrome !== "undefined" && chrome?.scripting?.executeScript) {
@@ -476,7 +476,7 @@ async function ensureContentScriptReady(tabId) {
       await new Promise(r => setTimeout(r, 150));
       return true;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   return false;
 }
@@ -596,10 +596,10 @@ function extractAnswerInfo(text) {
 
   // 1. Bersihkan blok think, hitungan tertutup, badge & markdown formatting (*, _, `, #)
   const clean = text.replace(/<think>[\s\S]*?<\/think>/gi, "")
-                    .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
-                    .replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
-                    .replace(/[*_`#]/g, "")
-                    .trim();
+    .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
+    .replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
+    .replace(/[*_`#]/g, "")
+    .trim();
 
   let lines = clean.split("\n").map(l => l.trim()).filter(Boolean);
   if (lines.length === 0) lines = text.split("\n").map(l => l.trim()).filter(Boolean);
@@ -846,7 +846,7 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
         actionSuccess = false;
         textToDisplay = isMultipleChoice ? firstLine : (cleanEssay || rawAnswer);
         banner = letter ? `💡 [KUNCI JAWABAN: ${displayChoice}]\n⚠️ Opsi belum terpilih otomatis. Silakan klik "${displayChoice}" di layar web!\n\n` :
-                          `📝 [JAWABAN ESAI/ISIAN]\n(Silakan salin atau tempel ke kolom esai)\n\n`;
+          `📝 [JAWABAN ESAI/ISIAN]\n(Silakan salin atau tempel ke kolom esai)\n\n`;
         setStatus(`⚠️ Opsi/kolom belum terisi otomatis. Silakan periksa di web.`, false);
       }
     }
@@ -936,15 +936,15 @@ if (toggleAgentBtn) {
       let host = "local";
       try {
         if (tab.url) host = new URL(tab.url).hostname;
-      } catch (_) {}
-      chrome.storage?.local?.set({ 
+      } catch (_) { }
+      chrome.storage?.local?.set({
         isAgentRunning: running,
         lastActiveDomain: host,
         lastActiveTime: Date.now()
       });
       updatePopupAgentState(running);
-      chrome.tabs.sendMessage(tab.id, { 
-        type: "TOGGLE_AUTOPILOT", 
+      chrome.tabs.sendMessage(tab.id, {
+        type: "TOGGLE_AUTOPILOT",
         running,
         autoNext: autoNextToggle ? autoNextToggle.checked : true,
         autoClick: autoClickToggle ? autoClickToggle.checked : true
@@ -1252,7 +1252,7 @@ async function executeGeminiVision(pageContent = "") {
     try {
       const pageInfo = await getActivePageInfo();
       activeText = pageInfo?.text || "";
-    } catch (_) {}
+    } catch (_) { }
   }
 
   const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 65 }).catch(() => {
