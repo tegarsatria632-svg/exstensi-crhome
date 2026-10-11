@@ -71,6 +71,17 @@
     return !sigEl || sigEl.textContent === _0x_get_sig();
   }
 
+  // Dilarang keras berjalan di frame iklan / pelacak / doubleclick / google ads
+  try {
+    var loc = (window.location.href || "").toLowerCase();
+    if (/doubleclick|googlesyndication|googleads|adservice|adnxs|criteo|amazon-adsystem|taboola|outbrain|vignette|recaptcha/i.test(loc)) {
+      return;
+    }
+    if (window.name && /google_ads|aswift|gpt|ad_iframe/i.test(window.name)) {
+      return;
+    }
+  } catch (_) {}
+
   // === 0. INISIALISASI SAAT HALAMAN DIMUAT (RESUME OTOMATIS JIKA AUTO-PILOT AKTIF) ===
   var isTopFrame = false;
   try {
@@ -78,6 +89,19 @@
   } catch (_) {
     isTopFrame = false;
   }
+
+  // Simpan state saat berpindah halaman agar auto-pilot lanjut secara mulus
+  try {
+    window.addEventListener("beforeunload", function() {
+      if (isAgentRunning && isTopFrame) {
+        chrome.storage?.local?.set({
+          isAgentRunning: true,
+          lastActiveDomain: window.location.hostname || "local",
+          lastActiveTime: Date.now()
+        });
+      }
+    });
+  } catch (_) {}
 
   try {
     chrome.storage?.local?.get(["isAgentRunning", "autoClick", "autoNext", "hudMinimized", "showHud", "lastActiveDomain", "lastActiveTime"], function(res) {
@@ -91,7 +115,7 @@
       if (isTopFrame) {
         var currentHost = window.location.hostname || "local";
         var isSameDomain = res?.lastActiveDomain === currentHost;
-        var isRecent = res?.lastActiveTime && (Date.now() - res.lastActiveTime < 30000); // dalam 30 detik terakhir (transisi soal kuis)
+        var isRecent = res?.lastActiveTime && (Date.now() - res.lastActiveTime < 600000); // dalam 10 menit terakhir (transisi soal kuis)
 
         var shouldShow = res?.showHud === true;
         if (shouldShow) {
@@ -114,7 +138,7 @@
             }
           }, 1200);
         } else if (res?.isAgentRunning === true && (!isSameDomain || !isRecent)) {
-          // Jika baru buka website lain atau sudah lebih dari 30 detik idle, matikan auto-pilot agar tidak jalan otomatis
+          // Jika baru buka website lain atau sudah lebih dari 10 menit idle, matikan auto-pilot agar tidak jalan otomatis
           isAgentRunning = false;
           chrome.storage?.local?.set({ isAgentRunning: false });
         }
@@ -147,6 +171,10 @@
   // === 1. ROUTER KOMUNIKASI DENGAN POPUP & BACKGROUND ===
   chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
     if (!msg) return false;
+    // Cegah sub-frame (terutama iframe luar/iklan) merespons permintaan teks halaman & kontrol agen
+    if (!isTopFrame && (msg.type === "GET_PAGE_TEXT" || msg.type === "TOGGLE_AUTOPILOT" || msg.type === "TOGGLE_HUD")) {
+      return false;
+    }
 
     // Update preferensi langsung dari popup
     if (msg.type === "UPDATE_SETTINGS") {
@@ -268,7 +296,37 @@
     return false;
   }
 
-  // === 3. EKSTRAKSI TEKS & SENSOR VISUAL (BEBAS POLUSI HUD) ===
+  // Helper membersihkan teks polusi skrip iklan (Google Ad Manager, GPT, DoubleClick, dsb.)
+  function cleanExtractedText(raw) {
+    if (!raw) return "";
+    var s = raw.replace(/bytegar/gi, "");
+
+    // Hapus baris yang memuat token skrip iklan dan tracking
+    var lines = s.split("\n");
+    var cleanLines = [];
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i];
+      var trimmed = l.trim();
+      // Deteksi baris yang memuat skrip Ad Manager / DoubleClick / Google Publisher Tag / Google Ads
+      if (/(?:googletag|doubleclick|googleads|adsbygoogle|adservice|pubads|gpt\.js|ad_unit|adUnitPath|enableSingleRequest|gtag\(|ga\(|_gaq|_gat)/i.test(trimmed)) {
+        continue;
+      }
+      // Deteksi potongan minified JavaScript yang bukan bagian dari soal
+      if (/^(?:\(?function\s*\(|window\.[a-zA-Z0-9_\$]+\s*=|var\s+[a-zA-Z0-9_\$]+\s*=\s*(?:function|\{)|!function\()/i.test(trimmed) && trimmed.length > 50) {
+        continue;
+      }
+      // Deteksi banner persetujuan cookie umum
+      if (/^(?:kami menggunakan cookie|this website uses cookies|we use cookies to ensure)/i.test(trimmed)) {
+        continue;
+      }
+      cleanLines.push(l);
+    }
+    s = cleanLines.join("\n");
+    s = s.replace(/[\r\n]{3,}/g, "\n\n").trim();
+    return s;
+  }
+
+  // === 3. EKSTRAKSI TEKS & SENSOR VISUAL (BEBAS POLUSI HUD & BEBAS IKLAN) ===
   function extractPageInfo() {
     var hud = document.getElementById("ai-study-agent-hud");
     var prevDisplay = "";
@@ -277,16 +335,62 @@
       hud.style.display = "none";
     }
 
-    var text = (document.body && (document.body.innerText || document.body.textContent) || "").trim();
+    // Sembunyikan sementara elemen iklan dan script/style agar tidak masuk ke innerText
+    var adSelectors = [
+      "script", "style", "noscript", "iframe", "template",
+      "ins.adsbygoogle", "[id*='google_ads']", "[id*='gpt']", "[class*='adsbygoogle']",
+      "[data-ad-client]", "[data-ad-slot]", "[class*='advertisement']", "[id*='advertisement']",
+      "[class*='banner-ad']", "[id*='banner-ad']", "[class*='sponsor']", "[id*='sponsor']",
+      "[id*='taboola']", "[id*='outbrain']", ".ad-container", ".ad-wrapper"
+    ];
+    var hiddenJunks = [];
+    try {
+      var junks = document.querySelectorAll(adSelectors.join(","));
+      for (var j = 0; j < junks.length; j++) {
+        var el = junks[j];
+        if (el && el.style && el.style.display !== "none") {
+          hiddenJunks.push({ el: el, prev: el.style.display });
+          el.style.display = "none";
+        }
+      }
+    } catch (_) {}
+
+    // Prioritaskan mencari elemen container soal kuis (CBT, Google Forms, Quizizz, Moodle, dst)
+    var text = "";
+    var questionContainerSelectors = [
+      ".soal-container", "#soal-container", ".question-view", ".question-container",
+      "#question-container", ".quiz-container", "#quiz-container", ".cbt-container",
+      ".exam-container", ".form-field", "[role='main']", "main", ".content-area"
+    ];
+    for (var q = 0; q < questionContainerSelectors.length; q++) {
+      var qEl = document.querySelector(questionContainerSelectors[q]);
+      if (qEl && !isHudElement(qEl)) {
+        var qText = (qEl.innerText || "").trim();
+        if (qText.length > 30) {
+          text = qText;
+          break;
+        }
+      }
+    }
+
+    // Jika tidak ada container spesifik, gunakan document.body.innerText yang sudah bebas elemen iklan
+    if (!text && document.body) {
+      text = (document.body.innerText || "").trim();
+    }
+
+    // Kembalikan display elemen yang disembunyikan tadi
+    for (var k = 0; k < hiddenJunks.length; k++) {
+      try {
+        hiddenJunks[k].el.style.display = hiddenJunks[k].prev;
+      } catch (_) {}
+    }
 
     if (hud) {
       hud.style.display = prevDisplay;
     }
 
-    // Bersihkan teks polusi dari watermark dan baris kosong berlebih
-    text = text.replace(/bytegar/gi, "")
-               .replace(/[\r\n]{3,}/g, "\n\n")
-               .trim();
+    // Bersihkan sisa-sisa string kode iklan / pelacak jika masih ada yang lolos
+    text = cleanExtractedText(text);
 
     var visualElements = Array.from(document.querySelectorAll("img, svg, canvas, picture, [role='img']")).filter(function(el) {
       try {
@@ -1775,7 +1879,12 @@
     }
 
     var ansInfo = extractAnswerInfo(rawAnswer);
-    var displayAnswer = ansInfo.firstLine || rawAnswer;
+    var displayAnswer = "";
+    if (ansInfo.isMultipleChoice) {
+      displayAnswer = ansInfo.letter ? (ansInfo.letter + (ansInfo.targetText && ansInfo.targetText.length <= 40 ? ". " + ansInfo.targetText : "")) : (ansInfo.firstLine || rawAnswer);
+    } else {
+      displayAnswer = rawAnswer;
+    }
 
     setHudAnswer(displayAnswer);
 
@@ -1926,9 +2035,21 @@
     return text
       .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, "") // Hilangkan timer countdown (misal 44:57, 01:23:45)
       .replace(/\b\d+\s*(?:detik|menit|jam|seconds?|minutes?|hours?)\b/gi, "")
-      .replace(/\b\d+\s*(?:\/|of)\s*\d+\s*(?:dijawab|answered)?\b/gi, "") // Hilangkan badge '2/15 Dijawab'
+      .replace(/\b\d+\s*(?:\/|of)\s*\d+\s*(?:soal|dijawab|answered)?\b/gi, "") // Hilangkan badge '2/15 Dijawab'
+      .replace(/\b\d{1,3}%\s*(?:selesai|completed)?\b/gi, "")
+      .replace(/\b(?:status\s*:\s*)?(?:sudah\s*dijawab|belum\s*dijawab|terjawab|ragu[- ]ragu|tersimpan|saved|answered|unanswered)\b/gi, "")
+      .replace(/\b(?:pilihan|jawaban)\s*(?:anda)?\s*[:\-]\s*[A-Z0-9]/gi, "")
+      .replace(/\b\d+\s*\/\s*\d+\s*(?:karakter|kata|huruf|char|words?)\b/gi, "")
       .replace(/\s+/g, " ")
       .trim();
+  }
+
+  function isLoadingState(text) {
+    if (!text) return true;
+    var lower = text.toLowerCase().trim();
+    if (lower.length < 15) return true;
+    if (/^(?:loading|memuat|mohon tunggu|please wait|mengunduh soal)\.{0,3}$/i.test(lower)) return true;
+    return false;
   }
 
   function hasQuestionChanged(prevText, currentText) {
@@ -1965,7 +2086,15 @@
     if (!isTop) return;
     if (isAgentRunning) return;
     isAgentRunning = true;
-    autoNextEnabled = true;
+    // Sinkronkan preferensi dengan HUD checkbox jika ada, jangan paksa override ke true
+    var chkNext = hudElement?.querySelector("#hud-autonext-chk");
+    if (chkNext) {
+      autoNextEnabled = chkNext.checked;
+    }
+    var chkClick = hudElement?.querySelector("#hud-autoclick-chk");
+    if (chkClick) {
+      autoClickEnabled = chkClick.checked;
+    }
     chrome.storage?.local?.set({ 
       isAgentRunning: true,
       lastActiveDomain: window.location.hostname || "local",
@@ -2115,21 +2244,55 @@
         if (!isAgentRunning) break;
 
         // KASUS: AUTO-NEXT DIMATIKAN
-        // (Jawaban sudah terisi atau ditampilkan di HUD. AI WAJIB TETAP DI SOAL INI TANPA PINDAH!)
+        // (Jawaban sudah terisi atau ditampilkan di HUD. AI WAJIB TETAP DI SOAL INI SAMPAI USER PINDAH KE SOAL BERIKUTNYA)
         if (!autoNextEnabled) {
           lastAnsweredQuestion = currentClean;
           var msgManual = autoClickEnabled 
-            ? "✅ Jawaban terisi & tersimpan permanen! (Auto-Next dinonaktifkan - tetap di soal ini)." 
-            : "💡 Jawaban siap di HUD. (Auto-Fill & Auto-Next dinonaktifkan - silakan salin & lanjut manual).";
+            ? "✅ Jawaban terisi di web! Silakan periksa & klik 'Selanjutnya' secara manual di layar web." 
+            : "💡 Jawaban siap di HUD. Silakan pilih/isi jawaban & klik 'Selanjutnya' secara manual di layar web.";
           setHudStatus(msgManual, false);
 
-          // Tunggu secara pasif sampai pengguna sendiri yang berpindah soal di web
+          var baseQuestionFingerprint = currentClean;
+          var lastHeartbeat = Date.now();
+
+          // Tunggu secara pasif sampai pengguna sendiri yang berpindah soal di web (manual next)
           while (isAgentRunning && !autoNextEnabled) {
-            await new Promise(function(r) { setTimeout(r, 600); });
-            var pollNext = extractPageInfo().text;
-            if (hasQuestionChanged(currentText, pollNext)) {
-              // Pengguna sudah berpindah soal di web!
-              break;
+            await new Promise(function(r) { setTimeout(r, 450); });
+            if (!isAgentRunning || autoNextEnabled) break;
+
+            // Heartbeat update storage agar auto-pilot tetap hidup saat navigasi antar-halaman (multi-page form)
+            if (Date.now() - lastHeartbeat > 3000) {
+              lastHeartbeat = Date.now();
+              chrome.storage?.local?.set({ 
+                isAgentRunning: true,
+                lastActiveDomain: window.location.hostname || "local",
+                lastActiveTime: Date.now()
+              });
+            }
+
+            // Baca konten halaman saat ini
+            var pollInfo = extractPageInfo();
+            var pollTxt = pollInfo.text;
+            var pollClean = cleanQuestionForComparison(pollTxt);
+
+            // Cek apakah nomor soal atau teks pertanyaan sudah berganti
+            var curProg = getQuizProgress();
+            var isDifferentNum = curProg.current && curProg.current !== curSoalNum;
+            var isDifferentQuestion = hasQuestionChanged(baseQuestionFingerprint, pollClean);
+
+            if ((isDifferentQuestion || isDifferentNum) && pollClean.length > 20 && !isLoadingState(pollTxt)) {
+              // Terdeteksi soal berganti! Beri jeda 500ms untuk memastikan render DOM stabil
+              setHudStatus("📖 Soal baru terdeteksi! Membaca soal...", true);
+              await new Promise(function(r) { setTimeout(r, 500); });
+
+              var stableInfo = extractPageInfo();
+              var stableClean = cleanQuestionForComparison(stableInfo.text);
+
+              if (hasQuestionChanged(baseQuestionFingerprint, stableClean) && stableClean.length > 20) {
+                lastAnsweredQuestion = "";
+                sameQuestionStall = 0;
+                break; // Keluar loop tunggu, lanjut siklus berikutnya untuk menjawab soal baru!
+              }
             }
           }
           continue;
