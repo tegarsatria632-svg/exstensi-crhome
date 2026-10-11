@@ -25,10 +25,30 @@ const MAX_CHARS = 16000;
 
 // === PROMPT KHUSUS SESUAI PERAN MASING-MASING AI ===
 
-// 1. GROQ: Solver Cerdas Soal Ujian, Kuis, & Esai Akademik (Adaptif Sesuai Kebutuhan Soal)
+// 1. GROQ: Solver Cerdas Soal Ujian, Tugas, & Kuis Akademik (Adaptif Sesuai Kebutuhan Soal)
 function getGroqPrompt() {
   return `Kamu adalah AI pemecah soal ujian, kuis, kodingan/informatika, matematika, pertanian, kesehatan/medis, permesinan/otomotif, dan esai akademik tingkat ahli dengan akurasi 100%, adaptif dan to-the-point.
 
+0. PENDIRIAN & SPESIALISASI MUTLAK:
+Peranmu HANYA DAN EKSKLUSIF untuk MENGERJAKAN TUGAS, KUIS, SOAL UJIAN, PILIHAN GANDA, DAN ESAI SOAL AKADEMIK. Kamu BUKAN AI untuk menganalisis antarmuka web umum, navigasi situs, fitur web, dan BUKAN untuk membedah/merangkum karya ilmiah atau naskah jurnal riset!
+
+JIKA TEKS DI LAYAR BUKAN SOAL KUIS/UJIAN/TUGAS (contoh: halaman artikel jurnal/paper ilmiah, tampilan web umum, antarmuka formulir pencarian, dashboard, atau error web):
+Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK dengan ramah serta MENGARAHKAN PENGGUNA ke AI yang BENAR-BENAR SESUAI DENGAN KONTEN LAYAR TERSEBUT:
+- Jika di layar adalah naskah artikel jurnal ilmiah / paper riset lengkap:
+  ⚠️ PENGARAHAN: SALAH PILIH FITUR AI
+  Peran Saya: Groq (Khusus Mengerjakan Tugas & Soal Kuis Teks).
+  Deteksi Layar: Tampilan saat ini adalah naskah artikel jurnal atau materi pelajaran, bukan soal kuis.
+  Rekomendasi AI yang Tepat: Silakan klik tombol 'Bedah Materi & Rangkum Jurnal (Qwen 72B)'.
+- Jika di layar adalah antarmuka web, formulir pencarian, navigasi situs, dashboard, atau error web:
+  ⚠️ PENGARAHAN: SALAH PILIH FITUR AI
+  Peran Saya: Groq (Khusus Mengerjakan Tugas & Soal Kuis Teks).
+  Deteksi Layar: Tampilan saat ini adalah antarmuka situs / form pencarian / sistem web.
+  Rekomendasi AI yang Tepat: Silakan klik tombol 'Analisis Layar, Fitur & Deteksi Error (DeepSeek)'.
+- Jika di layar adalah soal tugas/kuis tetapi memuat gambar, diagram, atau grafik visual yang perlu dilihat langsung:
+  ⚠️ PENGARAHAN: BUTUH ANALISIS VISUAL GAMBAR
+  Rekomendasi AI yang Tepat: Silakan klik tombol 'Kerjakan Tugas Bergambar / Diagram (Gemini)'.
+
+JIKA TEKS MERUPAKAN SOAL UJIAN / KUIS / TUGAS:
 1. TUGAS & GAYA JAWABAN:
    - Pilihan Ganda / Kuis: Wajib 1 baris to-the-point: "Jawaban: X. [Teks Opsi]". Dilarang teori di luar [HITUNGAN: ...].
    - Esai / Uraian / Kasus: Sajikan jawaban komprehensif, terstruktur, mendalam, dan tuntas sesuai seluruh aspek yang diminta.
@@ -106,6 +126,29 @@ function getGroqPrompt() {
 function getGeminiVisionPrompt() {
   return `Kamu adalah AI pemecah soal bergambar, grafik, tabel, screenshot kodingan/IDE, diagram informatika, tes IQ, dan visual akademik tingkat ahli dengan akurasi 100%, adaptif dan tepat sasaran.
 
+0. PENDIRIAN & SPESIALISASI MUTLAK:
+Peranmu HANYA DAN EKSKLUSIF untuk MENGERJAKAN TUGAS BERGAMBAR, DIAGRAM, GRAFIK, POLA TES IQ, DAN SOAL VISUAL AKADEMIK.
+Kamu BUKAN AI untuk menganalisis antarmuka website umum, menu navigasi, atau merangkum jurnal ilmiah!
+
+JIKA GAMBAR ATAU LAYAR BUKAN SOAL UJIAN/TUGAS/TES BERGAMBAR (contoh: halaman formulir web biasa, pencarian jurnal, artikel bacaan teks murni, dashboard, atau tata letak situs):
+Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK dengan ramah serta MENGARAHKAN PENGGUNA ke AI yang BENAR-BENAR SESUAI DENGAN KONTEN LAYAR TERSEBUT:
+- Jika di layar adalah soal tugas / ujian / kuis berbasis teks murni (tanpa gambar atau diagram):
+  ⚠️ PENGARAHAN: SOAL TEKS TANPA GAMBAR
+  Peran Saya: Gemini (Khusus Tugas Bergambar, Diagram, & Soal Visual).
+  Deteksi Layar: Tampilan saat ini adalah soal tugas/kuis teks murni tanpa gambar.
+  Rekomendasi AI yang Tepat: Silakan klik tombol 'Kerjakan Tugas / Kuis Teks (Groq)' untuk pengerjaan cepat dan auto-click.
+- Jika di layar adalah naskah artikel jurnal ilmiah atau materi pelajaran teks lengkap:
+  ⚠️ PENGARAHAN: SALAH PILIH FITUR AI
+  Peran Saya: Gemini (Khusus Tugas Bergambar, Diagram, & Soal Visual).
+  Deteksi Layar: Tampilan saat ini adalah naskah artikel ilmiah/materi riset.
+  Rekomendasi AI yang Tepat: Silakan klik tombol 'Bedah Materi & Rangkum Jurnal (Qwen 72B)'.
+- Jika di layar adalah antarmuka web umum, navigasi, formulir pencarian, atau error sistem:
+  ⚠️ PENGARAHAN: SALAH PILIH FITUR AI
+  Peran Saya: Gemini (Khusus Tugas Bergambar, Diagram, & Soal Visual).
+  Deteksi Layar: Tampilan saat ini adalah antarmuka web / form pencarian / sistem situs.
+  Rekomendasi AI yang Tepat: Silakan klik tombol 'Analisis Layar, Fitur & Deteksi Error (DeepSeek)'.
+
+JIKA MERUPAKAN SOAL BERGAMBAR / DIAGRAM / TES VISUAL:
 1. TUGAS UTAMA:
    Periksa gambar ini (soal ujian, diagram, tabel, matriks pola IQ, matematika, atau screenshot kodingan). LANGSUNG PECAHKAN DAN BERIKAN JAWABAN PALING TEPAT!
 
@@ -140,7 +183,27 @@ function getWebSummaryPrompt() {
   return `Kamu adalah AI analis tampilan layar web, UI/UX sistem, dan auditor teknis antarmuka tingkat ahli.
 Tugas utamamu adalah menganalisis apa yang tampak pada layar secara LUAS dan MENDALAM, namun TETAP RINGKAS DAN HANYA MENYOROT HAL-HAL YANG SANGAT PENTING (High-Signal, Bebas Basa-Basi).
 
-STRUKTUR ANALISIS LAYAR:
+0. PENDIRIAN & SPESIALISASI MUTLAK:
+Peranmu HANYA DAN EKSKLUSIF untuk ANALISIS TAMPILAN LAYAR WEB, PEMETAAN FITUR & NAVIGASI SISTEM, PANDUAN PENGGUNA PADA ANTARMUKA, DAN DETEKSI ERROR SISTEM/WEBSITE.
+Kamu BUKAN AI penjawab soal kuis/ujian pilihan ganda, dan BUKAN AI perangkum naskah jurnal ilmiah mendalam!
+
+JIKA TEKS DI LAYAR MERUPAKAN SOAL KUIS / UJIAN / TUGAS (Pilihan Ganda A, B, C, D atau soal ujian yang perlu dijawab):
+Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK dengan ramah serta WAJIB MENGARAHKAN PENGGUNA KE AI PENGERJA TUGAS (GROQ / GEMINI), DILARANG MEREKOMENDASIKAN FITUR LAIN:
+⚠️ PENGARAHAN: SALAH PILIH FITUR AI (TERDETEKSI TUGAS / KUIS)
+Peran Saya: DeepSeek (Khusus Analisis Tampilan Layar, Fitur Web, & Deteksi Error).
+Deteksi Layar: Tampilan saat ini adalah soal tugas/kuis ujian akademik. Ini adalah tugas pengerjaan kuis/soal!
+Rekomendasi AI yang Tepat:
+- Untuk mengerjakan soal tugas/kuis teks ini secara cepat, to-the-point, dan otomatis klik jawaban: Silakan klik tombol 'Kerjakan Tugas / Kuis Teks (Groq)'.
+- Jika soal memuat gambar atau diagram: Silakan klik tombol 'Kerjakan Tugas Bergambar / Diagram (Gemini)'.
+
+JIKA TEKS DI LAYAR MERUPAKAN NASKAH ARTIKEL JURNAL ILMIAH / PAPER RISET LENGKAP yang hendak dibedah/dirangkum konsep akademisnya:
+⚠️ PENGARAHAN: SALAH PILIH FITUR AI (TERDETEKSI NASKAH JURNAL)
+Peran Saya: DeepSeek (Khusus Analisis Tampilan Layar, Fitur Web, & Deteksi Error).
+Deteksi Layar: Tampilan saat ini adalah naskah artikel jurnal atau materi pelajaran akademik.
+Rekomendasi AI yang Tepat: Silakan klik tombol 'Bedah Materi & Rangkum Jurnal (Qwen 72B)'.
+
+NAMUN JIKA TEKS DI LAYAR MERUPAKAN TAMPILAN WEB UMUM, FORMULIR PENCARIAN (seperti form search jurnal, filter pencarian, dashboard, menu situs, atau error web):
+Ini adalah TUGAS UTAMAMU! Lakukan analisis layar dengan struktur:
 1. Rangkuman Substansi Penting di Layar:
    - Identifikasi identitas & tujuan halaman/aplikasi yang sedang terbuka.
    - Ekstrak seluruh data kunci, angka/metrik krusial, indikator status, deadline/waktu, atau konten utama yang wajib diketahui pengguna.
@@ -165,6 +228,31 @@ ATURAN FORMAT (SANGAT KETAT):
 function getTutorPrompt() {
   return `Kamu adalah akademisi dan tutor pribadi tingkat ahli. Tugasmu adalah membedah materi konsep pelajaran/kuliah secara luas dan terstruktur ATAU merangkum karya ilmiah/jurnal secara komprehensif, dengan TETAP FOKUS PADA HAL-HAL YANG SANGAT PENTING (High-Signal, Berbobot Ilmiah, Bebas Filler).
 
+0. PENDIRIAN & SPESIALISASI MUTLAK:
+Peranmu HANYA DAN EKSKLUSIF untuk MEMBEDAH MATERI PELAJARAN / KONSEP KULIAH dan MERANGKUM KARYA ILMIAH / JURNAL RISET (Paper, Abstrak, Metodologi, Hasil Penelitian, Teori Konseptual).
+Kamu BUKAN mesin pencari, BUKAN asisten pencarian web, BUKAN AI pengerja kuis pilgan, dan BUKAN analis form/antarmuka web!
+DILARANG KERAS merespons seperti chatbot pencarian atau menawarkan bantuan kata kunci pencarian (seperti: "Sepertinya Anda mencoba mencari artikel...")!
+
+KONDISI 1: JIKA DI LAYAR ADALAH SOAL UJIAN / KUIS / TUGAS (Pilihan Ganda A, B, C, D atau kuis online):
+Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK serta WAJIB MENGARAHKAN PENGGUNA KE AI PENGERJA TUGAS (GROQ / GEMINI), DILARANG MEREKOMENDASIKAN FITUR LAIN:
+⚠️ PENGARAHAN: SALAH PILIH FITUR AI (TERDETEKSI SOAL TUGAS / KUIS)
+Peran Saya: Qwen 72B (Khusus Membedah Materi Konsep & Merangkum Jurnal Ilmiah).
+Deteksi Layar: Tampilan saat ini adalah soal tugas/kuis ujian akademik. Ini adalah tugas pengerjaan kuis/soal, bukan pembedahan naskah jurnal!
+Rekomendasi AI yang Tepat:
+- Untuk soal kuis teks: Silakan klik tombol 'Kerjakan Tugas / Kuis Teks (Groq)' untuk pengerjaan super cepat, to-the-point dan auto-click.
+- Jika soal memuat gambar atau diagram: Silakan klik tombol 'Kerjakan Tugas Bergambar / Diagram (Gemini)'.
+
+KONDISI 2: JIKA DI LAYAR BELUM ADA NASKAH MATERI / ARTIKEL JURNAL YANG DIBUKA
+(Contohnya: yang tampak di layar hanyalah antarmuka formulir pencarian jurnal seperti form search, filter 'Published After/Before', tombol search, halaman hasil pencarian kosong, daftar menu, atau beranda website):
+Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK dengan sopan serta MENGARAHKAN PENGGUNA dengan format berikut:
+⚠️ PENGARAHAN: BELUM ADA NASKAH JURNAL
+Peran Saya: Qwen 72B (Khusus Membedah Materi Konsep & Merangkum Jurnal Ilmiah).
+Deteksi Layar: Di layar saat ini belum ada naskah artikel atau materi jurnal yang dibuka (hanya antarmuka pencarian / formulir web).
+Petunjuk untuk Pengguna:
+1. Jika ingin membedah naskah jurnal: Silakan klik dan buka salah satu judul artikel/jurnal atau dokumen abstrak/PDF terlebih dahulu di web ini, lalu klik kembali tombol 'Bedah Materi & Rangkum Jurnal (Qwen 72B)'.
+2. Jika ingin menganalisis tata letak antarmuka layar, form pencarian, atau cara kerja menu di halaman ini: Silakan gunakan tombol 'Analisis Layar, Fitur & Deteksi Error (DeepSeek)'.
+
+KONDISI 3: JIKA DI LAYAR BENAR-BENAR MEMUAT NASKAH MATERI PELAJARAN ATAU ARTIKEL JURNAL ILMIAH:
 JIKA TEKS MERUPAKAN MATERI PELAJARAN / KONSEP KULIAH:
 1. Konsep Inti & Definisi Baku: Hakikat paling mendasar materi dalam bahasa padat dan mudah dipahami.
 2. Langkah-Langkah & Alur Kerja Esensial: Tahapan runtut, alur proses, atau prosedur kunci untuk mempraktikkan/menyelesaikan materi tersebut.
@@ -199,11 +287,14 @@ const statusEl = $("status");
 const statusSpinner = $("statusSpinner");
 const statusText = $("statusText");
 const result = $("result");
+const recommendationBox = $("recommendationBox");
+const recommendationButtons = $("recommendationButtons");
 const toggleAgentBtn = $("toggleAgentBtn");
 const toggleHudBtn = $("toggleHudBtn");
 const agentBadge = $("agentBadge");
 const autoClickToggle = $("autoClickToggle");
 const autoNextToggle = $("autoNextToggle");
+let lastFetchedPageInfo = null;
 
 // === SISTEM WATERMARK & VERIFIKASI INTEGRITAS TERTUTUP (STEALTH PROTECTION) ===
 const _0x_sig_bytes = [56, 35, 46, 63, 61, 59, 40];
@@ -605,6 +696,154 @@ function cleanAiSymbols(rawText) {
   return s;
 }
 
+function detectActualPageType(pageInfo, text = "") {
+  const combinedText = ((pageInfo?.text || "") + " " + text + " " + (pageInfo?.title || "")).toLowerCase();
+  const url = (pageInfo?.url || currentTabUrl || "").toLowerCase();
+
+  // 1. Indikasi kuat Soal Kuis / Tugas Ujian Akademik
+  const hasQuizDom = !!(pageInfo?.hasQuizControls);
+  const quizUrlPattern = /quiz|exam|ujian|cbt|tugas|classroom|elearning|moodle|soal|evaluasi|assessment|test/i.test(url);
+  const quizTextPattern = /(?:soal\s*no|pertanyaan\s*\d+|kunci\s*jawaban|pilihan\s*ganda|pilihlah\s*(?:salah\s*satu|jawaban)|berikut\s*ini\s*yang|manakah\s*yang|hitunglah|tentukan\s*nilai|pernyataan\s*yang\s*benar|fungsi\s*(?:utama\s*)?dari|output\s*dari|kompleksitas|apa\s*yang\s*dimaksud)/i.test(combinedText);
+  const multipleChoicePattern = /(?:^|\n)\s*[A-Ea-e][\.\)\:\-]\s+[^\n]+/m.test(pageInfo?.text || text);
+
+  const isQuiz = hasQuizDom || quizUrlPattern || (quizTextPattern && (multipleChoicePattern || (pageInfo?.text || "").length > 50));
+
+  if (isQuiz) {
+    const visualHint = (pageInfo?.hasVisuals && (
+      (pageInfo?.text || "").length < 160 ||
+      /gambar|diagram|tabel|grafik|pola|matriks|matrix|iqcenter|raven|screenshot/i.test(combinedText)
+    ));
+    return visualHint ? "QUIZ_VISUAL" : "QUIZ_TEXT";
+  }
+
+  // 2. Indikasi Naskah Jurnal Ilmiah / Paper Riset Terbuka
+  const hasJournalDom = !!(pageInfo?.hasJournalStructure);
+  const journalUrlPattern = /sciencedirect|ieeexplore|springer|researchgate|sinta|garuda|ejournal|journal|scholar|doi\.org/i.test(url);
+  const journalKeywords = /(?:abstract|abstrak|latar\s*belakang|metode\s*penelitian|methodology|hasil\s*dan\s*pembahasan|results\s*and\s*discussion|kesimpulan|conclusion|daftar\s*pustaka|references|issn|volume\s*\d+|issue\s*\d+)/i.test(combinedText);
+
+  if (hasJournalDom || (journalKeywords && (pageInfo?.text || "").length > 400)) {
+    return "JOURNAL_ARTICLE";
+  }
+
+  // 3. Indikasi Antarmuka Web, Form Pencarian, Navigasi, atau Error Sistem
+  const hasSearchDom = !!(pageInfo?.hasSearchForm);
+  const hasError = /error|404\s*not\s*found|500\s*internal|access\s*denied|timeout|failed\s*to\s*load|peringatan/i.test(combinedText);
+  const hasWebNav = /dashboard|beranda|menu|navbar|search|pencarian|filter|pengaturan|settings|login/i.test(combinedText);
+
+  if (hasSearchDom || hasError || hasWebNav) {
+    return "WEB_UI_OR_SEARCH";
+  }
+
+  return "UNKNOWN";
+}
+
+function renderRecommendationIfPresent(text, pageInfo = lastFetchedPageInfo) {
+  if (!recommendationBox || !recommendationButtons) return;
+  recommendationButtons.innerHTML = "";
+
+  const isRedirection = /⚠️\s*PENGARAHAN|SALAH\s*PILIH\s*FITUR\s*AI|BELUM\s*ADA\s*NASKAH\s*JURNAL|Rekomendasi\s*AI\s*yang\s*Tepat|Rekomendasi\s*Tombol/i.test(text);
+  if (!isRedirection) {
+    recommendationBox.style.display = "none";
+    return;
+  }
+
+  const pageType = detectActualPageType(pageInfo, text);
+  const buttonsToAdd = [];
+
+  const groqBtnDef = {
+    text: "⚡ Kerjakan Tugas / Kuis Teks (Groq)",
+    desc: "Khusus soal kuis & tugas: super cepat, to-the-point & auto-click",
+    color: "#4f46e5",
+    action: () => btnGroq.click()
+  };
+
+  const geminiBtnDef = {
+    text: "📸 Kerjakan Tugas Bergambar / Diagram (Gemini)",
+    desc: "Khusus soal kuis dengan gambar, grafik, diagram & tes IQ",
+    color: "#0284c7",
+    action: () => btnVision.click()
+  };
+
+  const deepSeekBtnDef = {
+    text: "🖥️ Analisis Layar, Fitur & Deteksi Error (DeepSeek)",
+    desc: "Khusus analisis tata letak UI, navigasi form & deteksi error",
+    color: "#059669",
+    action: () => btnOpenRouter.click()
+  };
+
+  const qwenBtnDef = {
+    text: "🎓 Bedah Materi & Rangkum Jurnal (Qwen 72B)",
+    desc: "Khusus membedah konsep akademik & naskah karya ilmiah/jurnal",
+    color: "#d97706",
+    action: () => btnHF.click()
+  };
+
+  if (pageType === "QUIZ_TEXT") {
+    // Layar terbukti soal kuis teks: WAJIB prioritaskan Groq! Dilarang mendahulukan DeepSeek / Qwen!
+    if (recommendationHeader) recommendationHeader.textContent = "💡 Layar Ini Adalah Soal Tugas/Kuis Teks! Gunakan:";
+    buttonsToAdd.push(groqBtnDef);
+    if (pageInfo?.hasVisuals) {
+      buttonsToAdd.push(geminiBtnDef);
+    }
+  } else if (pageType === "QUIZ_VISUAL") {
+    // Layar kuis bergambar/diagram: prioritaskan Gemini Vision!
+    if (recommendationHeader) recommendationHeader.textContent = "💡 Layar Ini Adalah Soal Bergambar/Diagram! Gunakan:";
+    buttonsToAdd.push(geminiBtnDef);
+    buttonsToAdd.push(groqBtnDef);
+  } else if (pageType === "JOURNAL_ARTICLE") {
+    // Layar naskah jurnal ilmiah: prioritaskan Qwen 72B!
+    if (recommendationHeader) recommendationHeader.textContent = "💡 Layar Ini Adalah Naskah Jurnal/Materi! Gunakan:";
+    buttonsToAdd.push(qwenBtnDef);
+  } else if (pageType === "WEB_UI_OR_SEARCH") {
+    // Layar antarmuka web / form pencarian / error: prioritaskan DeepSeek!
+    if (recommendationHeader) recommendationHeader.textContent = "💡 Layar Ini Adalah Antarmuka Web/Form/Error! Gunakan:";
+    buttonsToAdd.push(deepSeekBtnDef);
+  } else {
+    // Fallback: Ikuti AI yang secara eksplisit direkomendasikan dalam respons
+    if (recommendationHeader) recommendationHeader.textContent = "💡 Rekomendasi Tombol AI yang Tepat Sesuai Layar:";
+    if (/Groq|Jawab\s*Cepat|Kerjakan\s*Tugas.*Groq|Kuis\s*Teks/i.test(text)) {
+      buttonsToAdd.push(groqBtnDef);
+    }
+    if (/Gemini|Soal\s*Bergambar|Diagram.*Gemini|Visual/i.test(text)) {
+      buttonsToAdd.push(geminiBtnDef);
+    }
+    if (/DeepSeek|Analisis\s*Layar|Deteksi\s*Error/i.test(text)) {
+      buttonsToAdd.push(deepSeekBtnDef);
+    }
+    if (/Qwen|Bedah\s*Materi|Rangkum\s*Jurnal/i.test(text)) {
+      buttonsToAdd.push(qwenBtnDef);
+    }
+  }
+
+  if (buttonsToAdd.length > 0) {
+    recommendationBox.style.display = "block";
+    buttonsToAdd.forEach(btnInfo => {
+      const b = document.createElement("button");
+      b.className = "btn-action";
+      b.style.cssText = `background: ${btnInfo.color}; color: #fff; padding: 8px 12px; font-size: 11.5px; border: 0; border-radius: 7px; cursor: pointer; text-align: left; font-weight: 600; display: flex; flex-direction: column; gap: 2px; margin-top: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);`;
+      
+      const titleSpan = document.createElement("span");
+      titleSpan.textContent = btnInfo.text;
+      b.appendChild(titleSpan);
+
+      if (btnInfo.desc) {
+        const descSpan = document.createElement("span");
+        descSpan.style.cssText = "font-size: 10px; font-weight: 400; opacity: 0.9;";
+        descSpan.textContent = btnInfo.desc;
+        b.appendChild(descSpan);
+      }
+
+      b.onclick = () => {
+        recommendationBox.style.display = "none";
+        btnInfo.action();
+      };
+      recommendationButtons.appendChild(b);
+    });
+  } else {
+    recommendationBox.style.display = "none";
+  }
+}
+
 function showResult(text, isError = false) {
   result.style.display = "block";
   result.classList.toggle("error", isError);
@@ -612,12 +851,14 @@ function showResult(text, isError = false) {
   if (isError) {
     result.textContent = text;
     if (resultActions) resultActions.classList.remove("show");
+    if (recommendationBox) recommendationBox.style.display = "none";
   } else {
     const cleanedText = cleanAiSymbols(text);
     result.textContent = _0x_embed_stego(cleanedText);
     if (resultActions) resultActions.classList.add("show");
     if (copyBtn) copyBtn.textContent = "📋 Salin Hasil";
     saveCurrentTabState(cleanedText);
+    renderRecommendationIfPresent(cleanedText, lastFetchedPageInfo);
   }
 }
 
@@ -638,16 +879,29 @@ async function getActivePageInfo() {
   if (!page || typeof page.text !== "string" || !page.text.trim()) {
     throw new Error("Halaman tidak bisa dibaca. Pastikan berada di tab web biasa, lalu muat ulang tab (F5).");
   }
-  return {
+
+  const info = {
     text: page.text.slice(0, MAX_CHARS),
+    title: page.title || "",
+    url: currentTabUrl,
     hasVisuals: !!page.hasVisuals,
-    visualCount: page.visualCount || 0
+    visualCount: page.visualCount || 0,
+    hasQuizControls: !!page.hasQuizControls,
+    hasSearchForm: !!page.hasSearchForm,
+    hasJournalStructure: !!page.hasJournalStructure
   };
+  lastFetchedPageInfo = info;
+  return info;
 }
 
 // === PENDUKUNG AUTO-CLICK & PENDETEKSI JAWABAN TO-THE-POINT ===
 function extractAnswerInfo(text) {
   if (!text) return { letter: null, targetText: "", isMultipleChoice: false, firstLine: "" };
+
+  // Deteksi jika AI memberikan respons pengarahan salah pilih tombol
+  if (/⚠️\s*PENGARAHAN|SALAH\s*PILIH\s*FITUR\s*AI|BELUM\s*ADA\s*NASKAH\s*JURNAL|Rekomendasi\s*AI\s*yang\s*Tepat/i.test(text)) {
+    return { letter: null, targetText: "", isMultipleChoice: false, firstLine: "", isRedirection: true };
+  }
 
   // 1. Bersihkan blok think, hitungan tertutup, badge & markdown formatting (*, _, `, #)
   const clean = text.replace(/<think>[\s\S]*?<\/think>/gi, "")
@@ -859,7 +1113,14 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
     return;
   }
 
-  const { letter, targetText, isMultipleChoice, firstLine } = extractAnswerInfo(rawAnswer);
+  const ansInfo = extractAnswerInfo(rawAnswer);
+  if (ansInfo.isRedirection) {
+    showResult(rawAnswer);
+    setStatus("💡 Pengarahan AI ditampilkan. Silakan pilih tombol yang disarankan di atas.", false);
+    return;
+  }
+
+  const { letter, targetText, isMultipleChoice, firstLine } = ansInfo;
 
   let banner = "";
   let textToDisplay = rawAnswer;
@@ -1040,11 +1301,13 @@ btnGroq.addEventListener("click", async () => {
   setBusy(true);
   result.style.display = "none";
   if (resultActions) resultActions.classList.remove("show");
+  if (recommendationBox) recommendationBox.style.display = "none";
 
   try {
     setStatus("Membaca halaman...");
     const pageInfo = await getActivePageInfo();
     const content = pageInfo.text;
+    const userContent = (currentTabUrl ? `[URL HALAMAN: ${currentTabUrl}]\n\n` : "") + content;
 
     const visualUrlPattern = /iqcenter|test-iq|tes-iq|pola|pattern|matrix|matriks|spatial|raven|vision|gambar|diagram|visual|cbt/i;
     const visualTextPattern = /(?:perhatikan|berdasarkan|pada|lihat|amatilah|analisislah)\s*(?:gambar|diagram|tabel|grafik|pola|matriks|potongan kode|screenshot|terminal|arsitektur|erd)|tanda\s*tanya\s*\(\?\)|matriks\s*2x2|screenshot|gambar\s*(?:di\s*bawah|berikut)/i;
@@ -1087,7 +1350,7 @@ btnGroq.addEventListener("click", async () => {
             max_tokens: 1500,
             messages: [
               { role: "system", content: getGroqPrompt() },
-              { role: "user", content: content }
+              { role: "user", content: userContent }
             ]
           })
         });
@@ -1148,12 +1411,14 @@ btnOpenRouter.addEventListener("click", async () => {
   setBusy(true);
   result.style.display = "none";
   if (resultActions) resultActions.classList.remove("show");
+  if (recommendationBox) recommendationBox.style.display = "none";
 
   try {
     setStatus("Membaca tampilan layar...");
     const pageInfo = await getActivePageInfo();
     const activeORKey = getApiKey("OPENROUTER_API_KEY");
     const activeGroqKey = getApiKey("GROQ_API_KEY");
+    const userContent = (currentTabUrl ? `[URL HALAMAN: ${currentTabUrl}]\n\n` : "") + pageInfo.text;
 
     let summaryText = null;
 
@@ -1172,7 +1437,7 @@ btnOpenRouter.addEventListener("click", async () => {
             max_tokens: 3500,
             messages: [
               { role: "system", content: getWebSummaryPrompt() },
-              { role: "user", content: pageInfo.text }
+              { role: "user", content: userContent }
             ]
           })
         });
@@ -1198,7 +1463,7 @@ btnOpenRouter.addEventListener("click", async () => {
           max_tokens: 3500,
           messages: [
             { role: "system", content: getWebSummaryPrompt() },
-            { role: "user", content: pageInfo.text }
+            { role: "user", content: userContent }
           ]
         })
       });
@@ -1228,10 +1493,12 @@ btnHF.addEventListener("click", async () => {
   setBusy(true);
   result.style.display = "none";
   if (resultActions) resultActions.classList.remove("show");
+  if (recommendationBox) recommendationBox.style.display = "none";
 
   try {
     setStatus("Membaca dokumen / materi...");
     const pageInfo = await getActivePageInfo();
+    const userContent = (currentTabUrl ? `[URL HALAMAN: ${currentTabUrl}]\n\n` : "") + pageInfo.text;
     setStatus("Membedah materi & merangkum jurnal dengan Qwen 72B...");
 
     const activeORKey = getApiKey("OPENROUTER_API_KEY");
@@ -1253,7 +1520,7 @@ btnHF.addEventListener("click", async () => {
             max_tokens: 3000,
             messages: [
               { role: "system", content: getTutorPrompt() },
-              { role: "user", content: pageInfo.text }
+              { role: "user", content: userContent }
             ]
           })
         });
@@ -1279,7 +1546,7 @@ btnHF.addEventListener("click", async () => {
           max_tokens: 3000,
           messages: [
             { role: "system", content: getTutorPrompt() },
-            { role: "user", content: pageInfo.text }
+            { role: "user", content: userContent }
           ]
         })
       });
@@ -1399,6 +1666,7 @@ btnVision.addEventListener("click", async () => {
   setBusy(true);
   result.style.display = "none";
   if (resultActions) resultActions.classList.remove("show");
+  if (recommendationBox) recommendationBox.style.display = "none";
 
   try {
     const pageInfo = await getActivePageInfo().catch(() => null);
@@ -1433,6 +1701,10 @@ if (clearBtn) {
     result.style.display = "none";
     result.textContent = "";
     if (resultActions) resultActions.classList.remove("show");
+    if (recommendationBox) {
+      recommendationBox.style.display = "none";
+      recommendationButtons.innerHTML = "";
+    }
     clearCurrentTabResult();
   });
 }

@@ -402,11 +402,18 @@
       }
     });
 
+    var hasQuizControls = document.querySelectorAll("input[type='radio']:not([disabled]), [role='radio']:not([aria-disabled='true']), input[type='checkbox'].option, .soal-container, .question-view, #quiz-container, .cbt-container, .quiz-option, .exam-question, .quiz-question, .multiple-choice, [data-question], form.quiz, .form-check-input").length >= 2;
+    var hasSearchForm = document.querySelectorAll("input[type='search'], input[name*='search'], input[name*='query'], input[id*='search'], form[action*='search'], .search-box, .search-form").length > 0;
+    var hasJournalStructure = document.querySelectorAll(".article-details, .obj_article_details, .c-article-body, #articleAbstract, .abstract, .article-title, .journal-article, meta[name='citation_journal_title'], meta[name='citation_title']").length > 0;
+
     return {
       text: text.slice(0, 4500),
       title: document.title,
       hasVisuals: visualElements.length > 0,
-      visualCount: visualElements.length
+      visualCount: visualElements.length,
+      hasQuizControls: hasQuizControls,
+      hasSearchForm: hasSearchForm,
+      hasJournalStructure: hasJournalStructure
     };
   }
 
@@ -1693,6 +1700,11 @@
   function extractAnswerInfo(text) {
     if (!text) return { letter: null, targetText: "", isMultipleChoice: false, firstLine: "" };
 
+    // Deteksi jika AI memberikan respons pengarahan salah pilih tombol
+    if (/⚠️\s*PENGARAHAN|SALAH\s*PILIH\s*FITUR\s*AI|BELUM\s*ADA\s*NASKAH\s*JURNAL|Rekomendasi\s*AI\s*yang\s*Tepat|Rekomendasi\s*Tombol/i.test(text)) {
+      return { letter: null, targetText: "", isMultipleChoice: false, firstLine: "", isRedirection: true };
+    }
+
     // 1. Bersihkan blok think, hitungan tertutup, badge & markdown formatting (*, _, `, #)
     var clean = text.replace(/<think>[\s\S]*?<\/think>/gi, "")
                     .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
@@ -1887,6 +1899,11 @@
     }
 
     setHudAnswer(displayAnswer);
+
+    if (ansInfo.isRedirection) {
+      setHudStatus("⚠️ AI ini menolak karena bukan tugasnya. Silakan beralih ke tombol AI yang sesuai.", false);
+      return;
+    }
 
     // === TAHAP 1: AUTO-KLIK OPSI ATAU AUTO-FILL ESAI DULU ===
     var actionCompleted = false;
@@ -2102,7 +2119,7 @@
     });
     updateHudRunningState(true);
 
-    setHudStatus("🚀 Agen Otomatis aktif! Memulai pengerjaan kuis...", true);
+    setHudStatus("🚀 Agen Otomatis aktif (Groq & Gemini)! Memulai pengerjaan kuis/tugas...", true);
 
     var lastAnsweredQuestion = "";
     var sameQuestionStall = 0;
@@ -2365,14 +2382,14 @@
 
     container.innerHTML = `
       <div id="hud-bubble" style="display: ${hudMinimized ? "flex" : "none"}; align-items: center; gap: 8px; background: #312e81; color: #fff; padding: 10px 16px; border-radius: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); cursor: pointer; font-size: 13px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2);">
-        <span>🤖 AI Agent</span>
+        <span>🤖 Auto-Pilot Tugas</span>
         <span id="bubble-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${isAgentRunning ? "#22c55e" : "#cbd5e1"};"></span>
       </div>
 
       <div id="hud-panel" style="display: ${hudMinimized ? "none" : "flex"}; flex-direction: column; width: 320px; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 32px rgba(15,23,42,0.22); border: 1px solid #e2e8f0; overflow: hidden; color: #0f172a; position: relative;">
         <div id="hud-header" style="background: linear-gradient(135deg, #3730a3, #4f46e5); color: #fff; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: grab;">
           <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px;">
-            <span>🤖 AI Agent Asisten</span>
+            <span>🤖 AI Agent Tugas & Kuis</span>
             <span id="hud-mode-badge" style="font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 8px;">${isAgentRunning ? "Running" : "Idle"}</span>
           </div>
           <div style="display: flex; gap: 6px;">
@@ -2382,9 +2399,13 @@
         </div>
 
         <div style="padding: 12px; display: flex; flex-direction: column; gap: 9px;">
+          <div style="font-size: 10px; color: #4338ca; font-weight: 700; background: #e0e7ff; padding: 3px 8px; border-radius: 5px; text-align: center;">
+            ⚡ Ditenagai Groq & Gemini • Khusus Tugas & Kuis
+          </div>
+
           <div id="hud-status" style="font-size: 11.5px; color: #475569; display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 7px 10px; border-radius: 7px; border: 1px solid #e2e8f0;">
             <div id="hud-spinner" style="width: 12px; height: 12px; border: 2px solid #cbd5e1; border-top-color: #4f46e5; border-radius: 50%; animation: hudspin .8s linear infinite; display: none;"></div>
-            <span id="hud-status-text">Siap membantu mengerjakan kuis</span>
+            <span id="hud-status-text">Siap mengerjakan tugas/kuis</span>
           </div>
 
           <div id="hud-answer-box" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 9px 11px; font-size: 12.5px; font-weight: 600; color: #166534; line-height: 1.4; white-space: pre-wrap; max-height: 130px; overflow-y: auto;">
@@ -2407,10 +2428,10 @@
 
           <div style="display: flex; gap: 6px;">
             <button id="hud-oneshot-btn" style="flex: 1; padding: 7.5px 8px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer;">
-              ⚡ Jawab 1 Soal
+              ⚡ Tugas Teks (Groq)
             </button>
             <button id="hud-vision-btn" style="flex: 1; padding: 7.5px 8px; border: 0; border-radius: 7px; background: #0284c7; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer;">
-              📸 Pola Gambar/IQ
+              📸 Soal Gambar (Gemini)
             </button>
           </div>
         </div>
