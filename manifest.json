@@ -1,14 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Asisten Belajar AI (Multi-Model & AI Agent)",
-  "version": "1.4.0",
-  "description": "Asisten belajar AI dan agen pemecah soal otomatis (Groq, Gemini Vision, DeepSeek, Qwen 72B).",
+  "version": "1.5.0",
+  "description": "Asisten belajar AI serbaguna: Auto-Pilot kuis, rekam suara Zoom & mic, ketik teks manual, kirim file (Groq, Gemini, DeepSeek, Whisper).",
   "permissions": [
     "activeTab",
     "storage",
     "scripting",
     "sidePanel",
-    "clipboardWrite"
+    "clipboardWrite",
+    "tabCapture",
+    "offscreen"
   ],
   "host_permissions": [
     "<all_urls>",

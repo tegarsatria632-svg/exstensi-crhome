@@ -177,6 +177,70 @@ JIKA MERUPAKAN SOAL BERGAMBAR / DIAGRAM / TES VISUAL:
    - DILARANG KERAS merespons atau menganalisis banner iklan, Google Ad Manager, atau pelacak luar. Fokus HANYA pada materi soal kuis/ujian.`;
 }
 
+// === FUNGSI PEMBERSIH SEMUA SIMBOL KHAS AI (*, #, `, _, bullet) ===
+function cleanAiSymbols(rawText) {
+  if (!rawText || typeof rawText !== "string") return "";
+  let s = rawText;
+
+  // 1. Hapus tag <think>...</think> (DeepSeek R1 / Qwen)
+  s = s.replace(/<think>[\s\S]*?<\/think>/gi, "");
+
+  // 2. Hapus blok scratchpad AI
+  s = s.replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "");
+
+  // 3. Headers markdown: # H1, ## H2, ### H3
+  s = s.replace(/^\s*#{1,6}\s+/gm, "");
+
+  // 4. Blockquotes & Horizontal rules
+  s = s.replace(/^\s*>\s*/gm, "");
+  s = s.replace(/^\s*[-_=]{3,}\s*$/gm, "");
+
+  // 5. Code blocks & backticks
+  s = s.replace(/`{3,}[a-zA-Z]*\n?([\s\S]*?)`{3,}/g, "$1");
+  s = s.replace(/`([^`]+)`/g, "$1");
+  s = s.replace(/`/g, "");
+
+  // 6. Strikethrough
+  s = s.replace(/~~(.*?)~~/g, "$1");
+
+  // 7. Bullet lists: ubah menjadi penomoran atau strip bersih
+  let listCounter = 1;
+  s = s.split("\n").map(line => {
+    if (/^\s*[\*\-+•●○◦▪▫►▶✦★☆]\s+/.test(line)) {
+      const converted = line.replace(/^\s*[\*\-+•●○◦▪▫►▶✦★☆]\s+/, `${listCounter}. `);
+      listCounter++;
+      return converted;
+    } else {
+      listCounter = 1;
+      return line;
+    }
+  }).join("\n");
+
+  // 8. Markdown Bold & Italic (Asterisks & Underscores)
+  s = s.replace(/\*\*\*([^\*\n]+?)\*\*\*/g, "$1");
+  s = s.replace(/\*\*([^\*\n]+?)\*\*/g, "$1");
+  s = s.replace(/\*([^\*\n]+?)\*/g, "$1");
+
+  s = s.replace(/___([^_\n]+?)___/g, "$1");
+  s = s.replace(/__([^_\n]+?)__/g, "$1");
+  s = s.replace(/(?:^|\s)_([^_\n]+?)_(?:$|\s)/g, " $1 ");
+
+  // 9. Amankan perkalian matematika (misal: 2 * 3 atau x * y) menjadi simbol kali '×'
+  s = s.replace(/([a-zA-Z0-9\)])\s*\*\s*([a-zA-Z0-9\(])/g, "$1 × $2");
+
+  // 10. Bersihkan SEMUA simbol bintang '*', underscore '_', dan bullet yang tersesat
+  s = s.replace(/\*/g, "");
+  s = s.replace(/[•●○◦▪▫►▶✦★☆]/g, "");
+
+  // 11. Hapus basa-basi AI pembuka
+  s = s.replace(/^(?:tentu|berikut ini|berikut adalah|halo|baiklah|berikut rangkuman|ini dia|berikut jawaban)[^\n]*\n+/i, "");
+
+  // 12. Rapikan baris kosong berlebih
+  s = s.replace(/\n{3,}/g, "\n\n").trim();
+
+  return s;
+}
+
 const GROQ_MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"];
 
 // Eksekusi Panggilan Groq (Dengan Auto-Fallback Antar-Model jika 429)
@@ -215,7 +279,8 @@ async function handleCallGroq(questionText) {
       }
 
       const data = await res.json();
-      return data.choices?.[0]?.message?.content || "";
+      const rawAns = data.choices?.[0]?.message?.content || "";
+      return cleanAiSymbols(rawAns);
     } catch (e) {
       lastError = e;
       if (model === GROQ_MODELS[GROQ_MODELS.length - 1]) {
@@ -229,7 +294,7 @@ async function handleCallGroq(questionText) {
   if (activeGeminiKey) {
     try {
       const geminiAnswer = await handleCallGeminiText(questionText);
-      if (geminiAnswer) return geminiAnswer;
+      if (geminiAnswer) return cleanAiSymbols(geminiAnswer);
     } catch (_) { }
   }
 
@@ -364,5 +429,405 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true; // asynchronous response
   }
 
+  // Panggilan Ketik Teks Manual (Groq / Qwen 72B / DeepSeek) dari Web Panel
+  if (msg.type === "EXECUTE_MANUAL_TEXT") {
+    handleExecuteManualText(msg.text || "", msg.modelChoice || "groq")
+      .then(answer => sendResponse({ success: true, answer }))
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    return true;
+  }
+
+  // Perekaman Audio dari Web Panel (Offscreen)
+  if (msg.type === "START_HUD_RECORDING") {
+    (async () => {
+      try {
+        await ensureOffscreenDocumentExists();
+        let streamId = null;
+        if (msg.source === "tab") {
+          const targetTabId = msg.targetTabId || (sender.tab ? sender.tab.id : null);
+          if (!targetTabId) throw new Error("ID Tab aktif tidak ditemukan.");
+          streamId = await new Promise((resolve, reject) => {
+            chrome.tabCapture.getMediaStreamId({ targetTabId }, (sid) => {
+              if (chrome.runtime?.lastError) reject(new Error(chrome.runtime.lastError.message));
+              else resolve(sid);
+            });
+          });
+        }
+        const startRes = await chrome.runtime.sendMessage({
+          target: "offscreen",
+          type: "START_OFFSCREEN_RECORDING",
+          source: msg.source || "mic",
+          streamId: streamId,
+          enableFilter: msg.enableFilter !== false
+        });
+        sendResponse(startRes || { success: true });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+    })();
+    return true;
+  }
+
+  if (msg.type === "STOP_HUD_RECORDING") {
+    (async () => {
+      try {
+        const stopRes = await chrome.runtime.sendMessage({
+          target: "offscreen",
+          type: "STOP_OFFSCREEN_RECORDING"
+        });
+        sendResponse(stopRes);
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+    })();
+    return true;
+  }
+
+  // Proses Audio dengan Groq Whisper & AI dari Web Panel
+  if (msg.type === "PROCESS_AUDIO_AI") {
+    handleProcessAudioAi(msg.audioDataUrl, msg.taskMode || "answer")
+      .then(result => sendResponse({ success: true, answer: result.answer, transcript: result.transcript }))
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    return true;
+  }
+
+  // Proses File (Gambar/PDF/Audio/Teks) dari Web Panel
+  if (msg.type === "PROCESS_FILE_AI") {
+    handleProcessFileAi(msg)
+      .then(answer => sendResponse({ success: true, answer }))
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    return true;
+  }
+
+  // Ambil MediaStreamId untuk tabCapture audio (Offscreen)
+  if (msg.type === "GET_TAB_STREAM_ID") {
+    const targetTabId = msg.targetTabId || (sender.tab ? sender.tab.id : null);
+    if (!targetTabId) {
+      sendResponse({ success: false, error: "targetTabId tidak ditemukan" });
+      return false;
+    }
+    try {
+      chrome.tabCapture.getMediaStreamId({ targetTabId }, (streamId) => {
+        if (chrome.runtime?.lastError) {
+          sendResponse({ success: false, error: chrome.runtime.lastError.message });
+        } else {
+          sendResponse({ success: true, streamId });
+        }
+      });
+    } catch (e) {
+      sendResponse({ success: false, error: e.message });
+    }
+    return true;
+  }
+
   return false;
 });
+
+// Helper Offscreen Document
+async function ensureOffscreenDocumentExists() {
+  if (chrome.offscreen?.hasDocument) {
+    const hasDoc = await chrome.offscreen.hasDocument();
+    if (hasDoc) return;
+  }
+  try {
+    await chrome.offscreen.createDocument({
+      url: "offscreen.html",
+      reasons: ["USER_MEDIA"],
+      justification: "Recording Zoom tab and microphone audio"
+    });
+  } catch (err) {
+    if (!err.message?.includes("Only a single offscreen")) {
+      throw err;
+    }
+  }
+}
+
+// === PANGGILAN TEKS UMUM DENGAN PROMPT FLEKSIBEL ===
+async function handleCallGroqWithPrompt(userContent, systemPrompt) {
+  const activeGroqKey = getApiKey("GROQ_API_KEY");
+  let lastError = null;
+
+  if (activeGroqKey) {
+    for (const model of GROQ_MODELS) {
+      try {
+        const res = await fetch(GROQ_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${activeGroqKey}`
+          },
+          body: JSON.stringify({
+            model: model,
+            temperature: 0.1,
+            max_tokens: 2500,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userContent }
+            ]
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const ans = data.choices?.[0]?.message?.content;
+          if (ans) return ans;
+        } else if (res.status === 429) {
+          continue;
+        }
+      } catch (e) {
+        lastError = e;
+      }
+    }
+  }
+
+  // Fallback ke Gemini
+  const activeGeminiKey = getApiKey("GEMINI_API_KEY");
+  if (activeGeminiKey) {
+    for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `${systemPrompt}\n\nKONTEN / PERTANYAAN:\n${userContent}` }] }]
+          })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (ans) return ans;
+        }
+      } catch (_) { }
+    }
+  }
+
+  throw lastError || new Error("Gagal menghubungi Groq & Gemini.");
+}
+
+async function handleExecuteManualText(text, modelChoice = "groq") {
+  const systemPrompt = `Kamu adalah AI Pemecah Soal dan Asisten Belajar Mandiri Tingkat Ahli dengan akurasi 100%.
+Teks ini diketik atau ditempel secara manual oleh pengguna.
+DILARANG KERAS MENOLAK, DILARANG MENYEBUT 'SALAH PILIH FITUR AI', DAN DILARANG MENGALIHKAN KE TOMBOL LAIN.
+LANGSUNG JAWAB DAN PECAHKAN PERTANYAAN, SOAL, ATAU MATERI YANG DIBERIKAN PENGGUNA SECARA AKURAT, LENGKAP, DAN TO-THE-POINT!`;
+
+  if (modelChoice === "groq") {
+    return await handleCallGroqWithPrompt(text, systemPrompt);
+  } else if (modelChoice === "qwen") {
+    const activeORKey = getApiKey("OPENROUTER_API_KEY");
+    const activeGroqKey = getApiKey("GROQ_API_KEY");
+
+    if (activeORKey) {
+      try {
+        const res = await fetch(OPENROUTER_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeORKey}` },
+          body: JSON.stringify({
+            model: TUTOR_MODEL_OPENROUTER,
+            temperature: 0.2,
+            max_tokens: 3000,
+            messages: [{ role: "system", content: systemPrompt }, { role: "user", content: text }]
+          })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const ans = d.choices?.[0]?.message?.content;
+          if (ans) return ans;
+        }
+      } catch (_) { }
+    }
+
+    if (activeGroqKey) {
+      try {
+        const res = await fetch(GROQ_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeGroqKey}` },
+          body: JSON.stringify({
+            model: TUTOR_MODEL_GROQ,
+            temperature: 0.2,
+            max_tokens: 3000,
+            messages: [{ role: "system", content: systemPrompt }, { role: "user", content: text }]
+          })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const ans = d.choices?.[0]?.message?.content;
+          if (ans) return ans;
+        }
+      } catch (_) { }
+    }
+
+    return await handleCallGroqWithPrompt(text, systemPrompt);
+  } else if (modelChoice === "deepseek") {
+    const activeORKey = getApiKey("OPENROUTER_API_KEY");
+    if (activeORKey) {
+      try {
+        const res = await fetch(OPENROUTER_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeORKey}` },
+          body: JSON.stringify({
+            model: OPENROUTER_MODEL,
+            temperature: 0.2,
+            max_tokens: 3500,
+            messages: [{ role: "system", content: systemPrompt }, { role: "user", content: text }]
+          })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const ans = d.choices?.[0]?.message?.content;
+          if (ans) return ans;
+        }
+      } catch (_) { }
+    }
+    return await handleCallGroqWithPrompt(text, systemPrompt);
+  }
+
+  return await handleCallGroqWithPrompt(text, systemPrompt);
+}
+
+async function handleProcessAudioAi(audioDataUrl, taskMode = "answer") {
+  if (!audioDataUrl) throw new Error("Data audio tidak ditemukan.");
+  const activeGroqKey = getApiKey("GROQ_API_KEY");
+  const activeGeminiKey = getApiKey("GEMINI_API_KEY");
+
+  const base64Data = audioDataUrl.split(",")[1];
+  const mimeType = audioDataUrl.split(",")[0].split(":")[1].split(";")[0] || "audio/webm";
+
+  let transcript = "";
+
+  if (activeGroqKey) {
+    try {
+      const binaryStr = atob(base64Data);
+      const len = binaryStr.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      const audioBlob = new Blob([bytes], { type: mimeType });
+
+      const formData = new FormData();
+      formData.append("file", audioBlob, "recording.webm");
+      formData.append("model", "whisper-large-v3-turbo");
+      formData.append("response_format", "json");
+
+      const wRes = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${activeGroqKey}` },
+        body: formData
+      });
+      if (wRes.ok) {
+        const wData = await wRes.json();
+        transcript = wData.text || "";
+      }
+    } catch (_) { }
+  }
+
+  const promptDirective = taskMode === "summary"
+    ? `Kamu adalah AI Perangkum Pembicaraan, Perkuliahan, dan Meeting. DILARANG MENOLAK. Rangkum seluruh poin penting secara terstruktur (Ringkasan Utama, Poin Pembahasan Kunci, Kesimpulan).`
+    : `Kamu adalah AI Pemecah Soal dan Asisten Belajar Mandiri dengan akurasi 100%. DILARANG MENOLAK. Langsung jawab dan pecahkan soal/pertanyaan yang disampaikan dalam audio secara akurat dan to-the-point!`;
+
+  if (transcript) {
+    const userPrompt = `${promptDirective}\n\nTRANSKRIP AUDIO:\n"${transcript}"`;
+    const ans = await handleCallGroqWithPrompt(userPrompt, promptDirective);
+    return {
+      transcript,
+      answer: taskMode === "summary"
+        ? `📝 [TRANSKRIP PEMBICARAAN]:\n"${transcript}"\n\n═════════════════════════════════════\n📋 [RANGKUMAN AI]:\n${ans}`
+        : `🎙️ [TRANSKRIP SOAL AUDIO]:\n"${transcript}"\n\n═════════════════════════════════════\n🎯 [JAWABAN AI]:\n${ans}`
+    };
+  }
+
+  // Fallback Gemini Audio
+  if (activeGeminiKey) {
+    const parts = [
+      { text: promptDirective },
+      { inline_data: { mime_type: mimeType, data: base64Data } }
+    ];
+    for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts }] })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (ans) return { transcript: "(Diproses langsung oleh Gemini Multimodal Audio)", answer: ans };
+        }
+      } catch (_) { }
+    }
+  }
+
+  throw new Error("Gagal mentranskripsi atau memproses rekaman audio.");
+}
+
+async function handleProcessFileAi({ fileName, fileType, fileDataUrl, isSummary = false, customPrompt = "" }) {
+  if (!fileDataUrl) throw new Error("Data file tidak ditemukan.");
+  const activeGeminiKey = getApiKey("GEMINI_API_KEY");
+
+  const base64Data = fileDataUrl.split(",")[1];
+  const mime = fileType || (fileDataUrl.split(",")[0].split(":")[1].split(";")[0]) || "text/plain";
+
+  const filePrompt = isSummary
+    ? `Kamu adalah AI Akademik Ahli Perangkum Dokumen dan Materi. File ini diunggah secara sengaja oleh pengguna. DILARANG KERAS MENOLAK! Rangkum seluruh isi file secara lengkap: 1. Ringkasan Utama, 2. Poin Kunci, 3. Kesimpulan.${customPrompt ? `\nInstruksi Khusus: ${customPrompt}` : ""}`
+    : `Kamu adalah AI Pemecah Soal dan Analis Dokumen Ahli dengan akurasi 100%. File ini diunggah secara sengaja oleh pengguna. DILARANG KERAS MENOLAK! Langsung pecahkan dan berikan jawaban tepat untuk seluruh isi file ini: 1. Pilihan Ganda (Tuliskan huruf opsi & teks), 2. Esai/Hitungan/Kode.${customPrompt ? `\nInstruksi Khusus: ${customPrompt}` : ""}`;
+
+  // 1. Gambar
+  if (mime.startsWith("image/")) {
+    if (!activeGeminiKey) throw new Error("API Key Gemini diperlukan untuk menganalisis gambar.");
+    const parts = [
+      { text: filePrompt },
+      { inline_data: { mime_type: mime, data: base64Data } }
+    ];
+    for (const model of GEMINI_MODELS) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts }] })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (ans) return ans;
+        }
+      } catch (_) { }
+    }
+    throw new Error("Gagal menganalisis gambar dengan Gemini.");
+  }
+
+  // 2. Dokumen PDF
+  if (mime === "application/pdf" || fileName?.endsWith(".pdf")) {
+    if (!activeGeminiKey) throw new Error("API Key Gemini diperlukan untuk membaca PDF.");
+    const parts = [
+      { text: filePrompt },
+      { inline_data: { mime_type: "application/pdf", data: base64Data } }
+    ];
+    for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts }] })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (ans) return ans;
+        }
+      } catch (_) { }
+    }
+    throw new Error("Gagal membaca dokumen PDF.");
+  }
+
+  // 3. Audio
+  if (mime.startsWith("audio/")) {
+    const audioRes = await handleProcessAudioAi(fileDataUrl, isSummary ? "summary" : "answer");
+    return audioRes.answer;
+  }
+
+  // 4. Teks / Dokumen Kode
+  const textContent = atob(base64Data);
+  const prompt = `${filePrompt}\n\nKONTEN FILE "${fileName || "dokumen"}":\n${textContent.slice(0, 16000)}`;
+  return await handleCallGroqWithPrompt(prompt, filePrompt);
+}

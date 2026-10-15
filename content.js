@@ -280,13 +280,99 @@
 
     // Tampilkan / Sembunyikan Panel HUD
     if (msg.type === "TOGGLE_HUD") {
-      toggleHudVisibility();
+      toggleHudVisibility(msg.activeTab);
       sendResponse({ success: true });
       return false;
     }
 
+    // Ubah Tab Menu Aktif di Panel Web
+    if (msg.type === "SET_HUD_TAB") {
+      if (msg.activeTab) {
+        switchHudTab(msg.activeTab);
+      }
+      sendResponse({ success: true });
+      return false;
+    }
+
+    // Perekaman Mikrofon Langsung di Tab Web (Bebas Hambatan Izin Popup)
+    if (msg.type === "START_TAB_MIC_RECORDING") {
+      startContentMicRecording()
+        .then(function() { sendResponse({ success: true }); })
+        .catch(function(err) { sendResponse({ success: false, error: err.message }); });
+      return true;
+    }
+
+    if (msg.type === "STOP_TAB_MIC_RECORDING") {
+      stopContentMicRecording()
+        .then(function(data) { sendResponse({ success: true, audioDataUrl: data.audioDataUrl, mimeType: data.mimeType }); })
+        .catch(function(err) { sendResponse({ success: false, error: err.message }); });
+      return true;
+    }
+
     return false;
   });
+
+  // Helper Perekaman Mikrofon di Tab Web
+  var contentMicRecorder = null;
+  var contentMicChunks = [];
+  var contentMicStream = null;
+
+  function startContentMicRecording() {
+    return new Promise(function(resolve, reject) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        return reject(new Error("Browser tidak mendukung getUserMedia di halaman ini."));
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(stream) {
+          contentMicStream = stream;
+          contentMicChunks = [];
+          var mimeType = "audio/webm;codecs=opus";
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+          }
+          contentMicRecorder = new MediaRecorder(stream, mimeType ? { mimeType: mimeType } : {});
+          contentMicRecorder.ondataavailable = function(e) {
+            if (e.data && e.data.size > 0) contentMicChunks.push(e.data);
+          };
+          contentMicRecorder.start(250);
+          resolve(true);
+        })
+        .catch(function(err) {
+          reject(err);
+        });
+    });
+  }
+
+  function stopContentMicRecording() {
+    return new Promise(function(resolve, reject) {
+      if (!contentMicRecorder || contentMicRecorder.state === "inactive") {
+        if (contentMicStream) {
+          try { contentMicStream.getTracks().forEach(function(t) { t.stop(); }); } catch (_) {}
+        }
+        return reject(new Error("Tidak ada perekaman mikrofon aktif di tab"));
+      }
+
+      contentMicRecorder.onstop = function() {
+        var mimeType = contentMicRecorder.mimeType || "audio/webm";
+        var blob = new Blob(contentMicChunks, { type: mimeType });
+        var reader = new FileReader();
+        reader.onloadend = function() {
+          if (contentMicStream) {
+            try { contentMicStream.getTracks().forEach(function(t) { t.stop(); }); } catch (_) {}
+          }
+          resolve({ audioDataUrl: reader.result, mimeType: mimeType });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      };
+
+      try {
+        contentMicRecorder.stop();
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
 
   // === 2. HELPER ISOLASI HUD DARI ELEMENT HALAMAN ===
   function isHudElement(el) {
@@ -857,21 +943,83 @@
     return choices.length >= 2;
   }
 
+  // === FUNGSI PEMBERSIH SEMUA SIMBOL KHAS AI (*, #, `, _, bullet) ===
+  function cleanAiSymbols(rawText) {
+    if (!rawText || typeof rawText !== "string") return "";
+    var s = rawText;
+
+    // 1. Hapus tag <think>...</think> (DeepSeek R1 / Qwen)
+    s = s.replace(/<think>[\s\S]*?<\/think>/gi, "");
+
+    // 2. Hapus blok scratchpad AI
+    s = s.replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "");
+
+    // 3. Headers markdown: # H1, ## H2, ### H3
+    s = s.replace(/^\s*#{1,6}\s+/gm, "");
+
+    // 4. Blockquotes & Horizontal rules
+    s = s.replace(/^\s*>\s*/gm, "");
+    s = s.replace(/^\s*[-_=]{3,}\s*$/gm, "");
+
+    // 5. Code blocks & backticks
+    s = s.replace(/`{3,}[a-zA-Z]*\n?([\s\S]*?)`{3,}/g, "$1");
+    s = s.replace(/`([^`]+)`/g, "$1");
+    s = s.replace(/`/g, "");
+
+    // 6. Strikethrough
+    s = s.replace(/~~(.*?)~~/g, "$1");
+
+    // 7. Bullet lists: ubah menjadi penomoran atau strip bersih
+    var listCounter = 1;
+    s = s.split("\n").map(function(line) {
+      if (/^\s*[\*\-+•●○◦▪▫►▶✦★☆]\s+/.test(line)) {
+        var converted = line.replace(/^\s*[\*\-+•●○◦▪▫►▶✦★☆]\s+/, listCounter + ". ");
+        listCounter++;
+        return converted;
+      } else {
+        listCounter = 1;
+        return line;
+      }
+    }).join("\n");
+
+    // 8. Markdown Bold & Italic (Asterisks & Underscores)
+    s = s.replace(/\*\*\*([^\*\n]+?)\*\*\*/g, "$1");
+    s = s.replace(/\*\*([^\*\n]+?)\*\*/g, "$1");
+    s = s.replace(/\*([^\*\n]+?)\*/g, "$1");
+
+    s = s.replace(/___([^_\n]+?)___/g, "$1");
+    s = s.replace(/__([^_\n]+?)__/g, "$1");
+    s = s.replace(/(?:^|\s)_([^_\n]+?)_(?:$|\s)/g, " $1 ");
+
+    // 9. Amankan perkalian matematika (misal: 2 * 3 atau x * y) menjadi simbol kali '×'
+    s = s.replace(/([a-zA-Z0-9\)])\s*\*\s*([a-zA-Z0-9\(])/g, "$1 × $2");
+
+    // 10. Bersihkan SEMUA simbol bintang '*', underscore '_', dan bullet yang tersesat
+    s = s.replace(/\*/g, "");
+    s = s.replace(/[•●○◦▪▫►▶✦★☆]/g, "");
+
+    // 11. Hapus basa-basi AI pembuka
+    s = s.replace(/^(?:tentu|berikut ini|berikut adalah|halo|baiklah|berikut rangkuman|ini dia|berikut jawaban)[^\n]*\n+/i, "");
+
+    // 12. Rapikan baris kosong berlebih
+    s = s.replace(/\n{3,}/g, "\n\n").trim();
+
+    return s;
+  }
+
   function findAndFillEssay(rawText) {
     if (!rawText) return null;
     
-    // 1. Bersihkan think block, hitungan tertutup, badge, dan prefix kunci/jawaban dengan regex multiline (/gim)
-    var cleanText = rawText
-      .replace(/<think>[\s\S]*?<\/think>/gi, "")
-      .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
+    // 1. Bersihkan think block, hitungan tertutup, badge, simbol asterisk, dan prefix kunci/jawaban
+    var cleanText = cleanAiSymbols(rawText)
       .replace(/^(?:🎯|✍️|💡|📝)\s*\[[^\]]+\]\s*/gim, "")
       .replace(/^\s*(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)(?:\s*(?:yang benar|yang tepat)?\s*(?:adalah|yaitu)?)?\s*[:\-]\s*/gim, "")
-      .replace(/[*_`#]/g, "")
       .trim();
 
     var ansInfo = extractAnswerInfo(rawText);
     var conciseAnswer = (ansInfo.targetText || ansInfo.firstLine || "").replace(/^\s*(?:kunci\s*jawaban|kunci|jawaban(?:nya)?|opsi|pilihan)\s*[:\-]\s*/i, "").trim();
     if (!conciseAnswer) conciseAnswer = cleanText.split("\n")[0].trim();
+    conciseAnswer = cleanAiSymbols(conciseAnswer);
 
     // 2. Prioritas 1: Textarea aktif (untuk soal esai / uraian panjang)
     var textareas = Array.from(document.querySelectorAll("textarea:not([disabled]):not([readonly])")).filter(function(ta) {
@@ -1893,9 +2041,9 @@
     var ansInfo = extractAnswerInfo(rawAnswer);
     var displayAnswer = "";
     if (ansInfo.isMultipleChoice) {
-      displayAnswer = ansInfo.letter ? (ansInfo.letter + (ansInfo.targetText && ansInfo.targetText.length <= 40 ? ". " + ansInfo.targetText : "")) : (ansInfo.firstLine || rawAnswer);
+      displayAnswer = ansInfo.letter ? (ansInfo.letter + (ansInfo.targetText && ansInfo.targetText.length <= 40 ? ". " + ansInfo.targetText : "")) : (ansInfo.firstLine || cleanAiSymbols(rawAnswer));
     } else {
-      displayAnswer = rawAnswer;
+      displayAnswer = cleanAiSymbols(rawAnswer);
     }
 
     setHudAnswer(displayAnswer);
@@ -2382,58 +2530,130 @@
 
     container.innerHTML = `
       <div id="hud-bubble" style="display: ${hudMinimized ? "flex" : "none"}; align-items: center; gap: 8px; background: #312e81; color: #fff; padding: 10px 16px; border-radius: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); cursor: pointer; font-size: 13px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2);">
-        <span>🤖 Auto-Pilot Tugas</span>
+        <span id="hud-bubble-text">🤖 Asisten Belajar AI</span>
         <span id="bubble-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${isAgentRunning ? "#22c55e" : "#cbd5e1"};"></span>
       </div>
 
-      <div id="hud-panel" style="display: ${hudMinimized ? "none" : "flex"}; flex-direction: column; width: 320px; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 32px rgba(15,23,42,0.22); border: 1px solid #e2e8f0; overflow: hidden; color: #0f172a; position: relative;">
-        <div id="hud-header" style="background: linear-gradient(135deg, #3730a3, #4f46e5); color: #fff; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: grab;">
-          <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px;">
-            <span>🤖 AI Agent Tugas & Kuis</span>
-            <span id="hud-mode-badge" style="font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 8px;">${isAgentRunning ? "Running" : "Idle"}</span>
+      <div id="hud-panel" style="display: ${hudMinimized ? "none" : "flex"}; flex-direction: column; width: 330px; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 32px rgba(15,23,42,0.22); border: 1px solid #e2e8f0; overflow: hidden; color: #0f172a; position: relative;">
+        <div id="hud-header" style="background: linear-gradient(135deg, #3730a3, #4f46e5); color: #fff; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; cursor: grab;">
+          <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12.5px;">
+            <span>📚 Asisten Belajar AI</span>
+            <span id="hud-mode-badge" style="font-size: 9.5px; background: rgba(255,255,255,0.22); padding: 2px 6px; border-radius: 6px;">Layar Web</span>
           </div>
-          <div style="display: flex; gap: 6px;">
+          <div style="display: flex; gap: 4px;">
             <button id="hud-min-btn" style="background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 14px; padding: 0 4px;" title="Perkecil">_</button>
             <button id="hud-close-btn" style="background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 14px; padding: 0 4px;" title="Tutup">×</button>
           </div>
         </div>
 
-        <div style="padding: 12px; display: flex; flex-direction: column; gap: 9px;">
-          <div style="font-size: 10px; color: #4338ca; font-weight: 700; background: #e0e7ff; padding: 3px 8px; border-radius: 5px; text-align: center;">
-            ⚡ Ditenagai Groq & Gemini • Khusus Tugas & Kuis
-          </div>
+        <!-- Tab Bar Navigasi Mini di Panel Web -->
+        <div id="hud-nav-tabs" style="display: flex; gap: 3px; background: #e2e8f0; padding: 3px; border-radius: 8px; margin: 8px 10px 0;">
+          <button id="hud-tab-btn-screen" class="hud-nav-btn active" data-tab="screen" style="flex: 1; padding: 5px 2px; font-size: 10px; font-weight: 700; border: 0; border-radius: 6px; background: #4f46e5; color: #fff; cursor: pointer; transition: all .15s;">⚡ Layar</button>
+          <button id="hud-tab-btn-audio" class="hud-nav-btn" data-tab="audio" style="flex: 1; padding: 5px 2px; font-size: 10px; font-weight: 600; border: 0; border-radius: 6px; background: transparent; color: #475569; cursor: pointer; transition: all .15s;">🎙️ Suara</button>
+          <button id="hud-tab-btn-text" class="hud-nav-btn" data-tab="text" style="flex: 1; padding: 5px 2px; font-size: 10px; font-weight: 600; border: 0; border-radius: 6px; background: transparent; color: #475569; cursor: pointer; transition: all .15s;">✍️ Teks</button>
+          <button id="hud-tab-btn-file" class="hud-nav-btn" data-tab="file" style="flex: 1; padding: 5px 2px; font-size: 10px; font-weight: 600; border: 0; border-radius: 6px; background: transparent; color: #475569; cursor: pointer; transition: all .15s;">📁 File</button>
+        </div>
 
-          <div id="hud-status" style="font-size: 11.5px; color: #475569; display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 7px 10px; border-radius: 7px; border: 1px solid #e2e8f0;">
-            <div id="hud-spinner" style="width: 12px; height: 12px; border: 2px solid #cbd5e1; border-top-color: #4f46e5; border-radius: 50%; animation: hudspin .8s linear infinite; display: none;"></div>
-            <span id="hud-status-text">Siap mengerjakan tugas/kuis</span>
-          </div>
+        <div style="padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px;">
 
-          <div id="hud-answer-box" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 9px 11px; font-size: 12.5px; font-weight: 600; color: #166534; line-height: 1.4; white-space: pre-wrap; max-height: 130px; overflow-y: auto;">
-          </div>
-
-          <button id="hud-autopilot-btn" style="width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; font-weight: 700; font-size: 12.5px; cursor: pointer; color: #fff; background: ${isAgentRunning ? "#dc2626" : "linear-gradient(135deg, #16a34a, #059669)"}; transition: all .15s;">
-            ${isAgentRunning ? "⏹️ Hentikan Agen (Stop)" : "▶️ Jalankan Otomatis (Sampai Selesai)"}
-          </button>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #475569; background: #f8fafc; padding: 5px 8px; border-radius: 7px; border: 1px solid #e2e8f0;">
-            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-              <input type="checkbox" id="hud-autoclick-chk" ${autoClickEnabled ? "checked" : ""} style="accent-color: #4f46e5; cursor: pointer;">
-              <span>🎯 Auto-Fill</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-              <input type="checkbox" id="hud-autonext-chk" ${autoNextEnabled ? "checked" : ""} style="accent-color: #4f46e5; cursor: pointer;">
-              <span>⏩ Auto-Next</span>
-            </label>
-          </div>
-
-          <div style="display: flex; gap: 6px;">
-            <button id="hud-oneshot-btn" style="flex: 1; padding: 7.5px 8px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer;">
-              ⚡ Tugas Teks (Groq)
+          <!-- PANE 1: LAYAR WEB & AUTO-PILOT -->
+          <div id="hud-pane-screen" class="hud-tab-pane" style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-size: 10px; color: #4338ca; font-weight: 700; background: #e0e7ff; padding: 3px 8px; border-radius: 5px; text-align: center;">
+              ⚡ Ditenagai Groq & Gemini • Khusus Tugas & Kuis
+            </div>
+            <button id="hud-autopilot-btn" style="width: 100%; padding: 8.5px 12px; border: 0; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; color: #fff; background: ${isAgentRunning ? "#dc2626" : "linear-gradient(135deg, #16a34a, #059669)"}; transition: all .15s;">
+              ${isAgentRunning ? "⏹️ Hentikan Agen (Stop)" : "▶️ Jalankan Otomatis (Sampai Selesai)"}
             </button>
-            <button id="hud-vision-btn" style="flex: 1; padding: 7.5px 8px; border: 0; border-radius: 7px; background: #0284c7; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer;">
-              📸 Soal Gambar (Gemini)
-            </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; color: #475569; background: #f8fafc; padding: 5px 8px; border-radius: 7px; border: 1px solid #e2e8f0;">
+              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                <input type="checkbox" id="hud-autoclick-chk" ${autoClickEnabled ? "checked" : ""} style="accent-color: #4f46e5; cursor: pointer;">
+                <span>🎯 Auto-Fill</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                <input type="checkbox" id="hud-autonext-chk" ${autoNextEnabled ? "checked" : ""} style="accent-color: #4f46e5; cursor: pointer;">
+                <span>⏩ Auto-Next</span>
+              </label>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button id="hud-oneshot-btn" style="flex: 1; padding: 7px 6px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10.5px; font-weight: 600; cursor: pointer;">
+                ⚡ Tugas Teks (Groq)
+              </button>
+              <button id="hud-vision-btn" style="flex: 1; padding: 7px 6px; border: 0; border-radius: 7px; background: #0284c7; color: #fff; font-size: 10.5px; font-weight: 600; cursor: pointer;">
+                📸 Soal Gambar (Gemini)
+              </button>
+            </div>
           </div>
+
+          <!-- PANE 2: REKAM SUARA -->
+          <div id="hud-pane-audio" class="hud-tab-pane" style="display: none; flex-direction: column; gap: 7px;">
+            <div style="display: flex; gap: 4px; background: #f1f5f9; padding: 2px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              <button id="hud-audio-src-mic" style="flex: 1; padding: 4.5px 4px; font-size: 10px; font-weight: 700; border: 0; border-radius: 5px; background: #4f46e5; color: #fff; cursor: pointer;">🎙️ Mikrofon</button>
+              <button id="hud-audio-src-tab" style="flex: 1; padding: 4.5px 4px; font-size: 10px; font-weight: 600; border: 0; border-radius: 5px; background: transparent; color: #475569; cursor: pointer;">🌐 Tab Web (Zoom/Video)</button>
+            </div>
+            <div style="font-size: 9.5px; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 7px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
+              <span>🛡️ Filter Jernih & Noise Reduction</span>
+              <span style="font-weight: 700; color: #15803d;">AKTIF</span>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span id="hud-record-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+                <span id="hud-record-status" style="font-size: 10.5px; font-weight: 600; color: #334155;">Siap Merekam</span>
+              </div>
+              <div id="hud-record-timer" style="font-family: monospace; font-size: 12px; font-weight: 700; color: #1e1b4b;">00:00</div>
+            </div>
+            <button id="hud-record-btn" style="width: 100%; padding: 8px 10px; border: 0; border-radius: 7px; background: #dc2626; color: #fff; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+              🎙️ Mulai Rekam Audio
+            </button>
+            <audio id="hud-audio-playback" controls style="display: none; width: 100%; height: 30px; margin-top: 2px;"></audio>
+            <div id="hud-audio-actions" style="display: none; gap: 6px;">
+              <button id="hud-audio-answer-btn" style="flex: 1; padding: 7px 5px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">🎯 Jawab Soal</button>
+              <button id="hud-audio-summary-btn" style="flex: 1; padding: 7px 5px; border: 0; border-radius: 7px; background: #0284c7; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">📝 Rangkum Audio</button>
+            </div>
+          </div>
+
+          <!-- PANE 3: KETIK TEKS MANUAL -->
+          <div id="hud-pane-text" class="hud-tab-pane" style="display: none; flex-direction: column; gap: 7px;">
+            <textarea id="hud-text-input" placeholder="Ketik atau tempel soal / esai / pertanyaan di sini..." style="width: 100%; height: 70px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 7px; font-size: 11px; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #64748b;">
+              <span id="hud-text-count">0 karakter</span>
+              <div style="display: flex; gap: 4px;">
+                <button id="hud-btn-paste" style="padding: 2.5px 6px; font-size: 9.5px; border: 1px solid #cbd5e1; border-radius: 5px; background: #f8fafc; cursor: pointer;">📋 Tempel</button>
+                <button id="hud-btn-clear-text" style="padding: 2.5px 6px; font-size: 9.5px; border: 1px solid #fecaca; border-radius: 5px; background: #fef2f2; color: #b91c1c; cursor: pointer;">🗑️ Hapus</button>
+              </div>
+            </div>
+            <div style="display: flex; gap: 5px;">
+              <button id="hud-text-groq-btn" style="flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;">⚡ Groq</button>
+              <button id="hud-text-qwen-btn" style="flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: #d97706; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;">🎓 Qwen 72B</button>
+              <button id="hud-text-deepseek-btn" style="flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: #059669; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;">🔍 DeepSeek</button>
+            </div>
+          </div>
+
+          <!-- PANE 4: KIRIM FILE -->
+          <div id="hud-pane-file" class="hud-tab-pane" style="display: none; flex-direction: column; gap: 7px;">
+            <input type="file" id="hud-file-input" style="display: none;">
+            <div id="hud-file-dropzone" style="border: 1.5px dashed #cbd5e1; border-radius: 8px; padding: 9px; text-align: center; cursor: pointer; background: #f8fafc; font-size: 10.5px; color: #475569; line-height: 1.3;">
+              📁 Klik untuk pilih file (Gambar/PDF/Audio/Teks)
+            </div>
+            <div id="hud-file-preview" style="display: none; align-items: center; justify-content: space-between; background: #e0e7ff; padding: 5px 8px; border-radius: 6px; font-size: 10.5px; color: #3730a3;">
+              <span id="hud-file-name" style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;"></span>
+              <button id="hud-btn-remove-file" style="border: 0; background: #fee2e2; color: #b91c1c; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px;">✕</button>
+            </div>
+            <input id="hud-file-prompt" placeholder="Instruksi tambahan (opsional)..." style="width: 100%; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 10.5px; box-sizing: border-box;">
+            <div style="display: flex; gap: 6px;">
+              <button id="hud-file-solve-btn" style="flex: 1; padding: 7px 6px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">🎯 Pecahkan File</button>
+              <button id="hud-file-summary-btn" style="flex: 1; padding: 7px 6px; border: 0; border-radius: 7px; background: #0284c7; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">📝 Rangkum File</button>
+            </div>
+          </div>
+
+          <!-- AREA STATUS & HASIL -->
+          <div id="hud-status" style="font-size: 11px; color: #475569; display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 6px 9px; border-radius: 7px; border: 1px solid #e2e8f0;">
+            <div id="hud-spinner" style="width: 11px; height: 11px; border: 2px solid #cbd5e1; border-top-color: #4f46e5; border-radius: 50%; animation: hudspin .8s linear infinite; display: none;"></div>
+            <span id="hud-status-text">Siap membantu belajar</span>
+          </div>
+
+          <div id="hud-answer-box" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 600; color: #166534; line-height: 1.45; white-space: pre-wrap; max-height: 140px; overflow-y: auto;">
+          </div>
+          <button id="hud-copy-btn" style="display: none; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155; font-size: 10px; font-weight: 600; cursor: pointer; align-self: flex-end;">📋 Salin Jawaban</button>
         </div>
       </div>
     `;
@@ -2443,8 +2663,9 @@
       styleEl.id = "ai-agent-hud-styles";
       styleEl.textContent = `
         @keyframes hudspin { to { transform: rotate(360deg); } }
-        #hud-autopilot-btn:hover { opacity: 0.93; }
-        #hud-autopilot-btn:active { transform: scale(0.99); }
+        #hud-autopilot-btn:hover, #hud-record-btn:hover { opacity: 0.93; }
+        #hud-autopilot-btn:active, #hud-record-btn:active { transform: scale(0.99); }
+        .hud-nav-btn:hover { opacity: 0.85; }
       `;
       document.head.appendChild(styleEl);
     }
@@ -2457,6 +2678,17 @@
     if (panel) _0x_guard_wm(panel);
     var minBtn = container.querySelector("#hud-min-btn");
     var closeBtn = container.querySelector("#hud-close-btn");
+
+    // Navigasi Tab
+    var navBtns = container.querySelectorAll(".hud-nav-btn");
+    navBtns.forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var tabKey = btn.getAttribute("data-tab");
+        switchHudTab(tabKey);
+      });
+    });
+
+    // Kontrol Layar Web & Auto-Pilot
     var autoPilotBtn = container.querySelector("#hud-autopilot-btn");
     var oneShotBtn = container.querySelector("#hud-oneshot-btn");
     var visionBtn = container.querySelector("#hud-vision-btn");
@@ -2474,25 +2706,6 @@
       if (!autoNextEnabled) {
         setHudStatus("⏩ Auto-Next dinonaktifkan.", false);
       }
-    });
-
-    bubble?.addEventListener("click", function() {
-      hudMinimized = false;
-      bubble.style.display = "none";
-      panel.style.display = "flex";
-      chrome.storage?.local?.set({ hudMinimized: false });
-    });
-
-    minBtn?.addEventListener("click", function() {
-      hudMinimized = true;
-      panel.style.display = "none";
-      bubble.style.display = "flex";
-      chrome.storage?.local?.set({ hudMinimized: true });
-    });
-
-    closeBtn?.addEventListener("click", function() {
-      container.style.display = "none";
-      chrome.storage?.local?.set({ showHud: false });
     });
 
     autoPilotBtn?.addEventListener("click", function() {
@@ -2521,8 +2734,333 @@
       }
     });
 
+    // Kontrol Rekam Suara
+    var hudAudioSrcMic = container.querySelector("#hud-audio-src-mic");
+    var hudAudioSrcTab = container.querySelector("#hud-audio-src-tab");
+    var hudRecordBtn = container.querySelector("#hud-record-btn");
+    var hudRecordDot = container.querySelector("#hud-record-dot");
+    var hudRecordStatus = container.querySelector("#hud-record-status");
+    var hudRecordTimerEl = container.querySelector("#hud-record-timer");
+    var hudAudioPlayback = container.querySelector("#hud-audio-playback");
+    var hudAudioActions = container.querySelector("#hud-audio-actions");
+    var hudAudioAnswerBtn = container.querySelector("#hud-audio-answer-btn");
+    var hudAudioSummaryBtn = container.querySelector("#hud-audio-summary-btn");
+
+    var hudActiveAudioSource = "mic";
+    var hudIsAudioRecording = false;
+    var hudAudioTimerInterval = null;
+    var hudAudioSeconds = 0;
+    var hudLastAudioUrl = null;
+
+    hudAudioSrcMic?.addEventListener("click", function() {
+      if (hudIsAudioRecording) return;
+      hudActiveAudioSource = "mic";
+      hudAudioSrcMic.style.background = "#4f46e5";
+      hudAudioSrcMic.style.color = "#fff";
+      hudAudioSrcTab.style.background = "transparent";
+      hudAudioSrcTab.style.color = "#475569";
+      if (hudRecordStatus) hudRecordStatus.textContent = "Siap Rekam Mikrofon";
+    });
+
+    hudAudioSrcTab?.addEventListener("click", function() {
+      if (hudIsAudioRecording) return;
+      hudActiveAudioSource = "tab";
+      hudAudioSrcTab.style.background = "#4f46e5";
+      hudAudioSrcTab.style.color = "#fff";
+      hudAudioSrcMic.style.background = "transparent";
+      hudAudioSrcMic.style.color = "#475569";
+      if (hudRecordStatus) hudRecordStatus.textContent = "Siap Rekam Tab Web";
+    });
+
+    hudRecordBtn?.addEventListener("click", async function() {
+      if (!hudIsAudioRecording) {
+        // Mulai Merekam
+        setHudStatus("Menyiapkan perekam audio...", true);
+        chrome.runtime.sendMessage({
+          type: "START_HUD_RECORDING",
+          source: hudActiveAudioSource,
+          enableFilter: true
+        }, function(res) {
+          if (chrome.runtime?.lastError || !res || !res.success) {
+            setHudStatus("⚠️ Gagal mulai rekam: " + (chrome.runtime?.lastError?.message || res?.error || "Error"), false);
+            return;
+          }
+          hudIsAudioRecording = true;
+          setHudStatus("", false);
+          hudRecordBtn.innerHTML = "<span>⏹️ Berhenti Merekam Audio</span>";
+          hudRecordBtn.style.background = "#b91c1c";
+          if (hudRecordDot) hudRecordDot.style.background = "#dc2626";
+          if (hudRecordStatus) hudRecordStatus.textContent = "🔴 Merekam berjalan...";
+          if (hudAudioPlayback) hudAudioPlayback.style.display = "none";
+          if (hudAudioActions) hudAudioActions.style.display = "none";
+
+          hudAudioSeconds = 0;
+          if (hudRecordTimerEl) hudRecordTimerEl.textContent = "00:00";
+          clearInterval(hudAudioTimerInterval);
+          hudAudioTimerInterval = setInterval(function() {
+            hudAudioSeconds++;
+            var m = Math.floor(hudAudioSeconds / 60).toString().padStart(2, "0");
+            var s = (hudAudioSeconds % 60).toString().padStart(2, "0");
+            if (hudRecordTimerEl) hudRecordTimerEl.textContent = m + ":" + s;
+          }, 1000);
+        });
+      } else {
+        // Berhenti Merekam
+        setHudStatus("Menyimpan rekaman audio...", true);
+        clearInterval(hudAudioTimerInterval);
+        hudRecordBtn.innerHTML = "<span>🎙️ Mulai Rekam Audio</span>";
+        hudRecordBtn.style.background = "#dc2626";
+        if (hudRecordDot) hudRecordDot.style.background = "#94a3b8";
+        if (hudRecordStatus) hudRecordStatus.textContent = "⏳ Memproses rekaman...";
+
+        chrome.runtime.sendMessage({ type: "STOP_HUD_RECORDING" }, function(res) {
+          hudIsAudioRecording = false;
+          setHudStatus("", false);
+          if (chrome.runtime?.lastError || !res || !res.success || !res.audioDataUrl) {
+            setHudStatus("⚠️ Gagal mengambil rekaman audio.", false);
+            return;
+          }
+          hudLastAudioUrl = res.audioDataUrl;
+          if (hudRecordStatus) hudRecordStatus.textContent = "✅ Rekaman siap";
+          if (hudAudioPlayback) {
+            hudAudioPlayback.src = res.audioDataUrl;
+            hudAudioPlayback.style.display = "block";
+          }
+          if (hudAudioActions) {
+            hudAudioActions.style.display = "flex";
+          }
+        });
+      }
+    });
+
+    async function processHudAudio(taskMode) {
+      if (!hudLastAudioUrl) {
+        setHudStatus("⚠️ Rekam audio terlebih dahulu.", false);
+        return;
+      }
+      setHudStatus("⏳ Mentranskripsi & memproses audio dengan AI...", true);
+      chrome.runtime.sendMessage({
+        type: "PROCESS_AUDIO_AI",
+        audioDataUrl: hudLastAudioUrl,
+        taskMode: taskMode
+      }, function(res) {
+        setHudStatus("", false);
+        if (chrome.runtime?.lastError || !res || !res.success) {
+          setHudStatus("⚠️ " + (chrome.runtime?.lastError?.message || res?.error || "Gagal memproses audio."), false);
+          return;
+        }
+        setHudAnswer(res.answer);
+      });
+    }
+
+    hudAudioAnswerBtn?.addEventListener("click", function() { processHudAudio("answer"); });
+    hudAudioSummaryBtn?.addEventListener("click", function() { processHudAudio("summary"); });
+
+    // Kontrol Ketik Teks Manual
+    var hudTextInput = container.querySelector("#hud-text-input");
+    var hudTextCount = container.querySelector("#hud-text-count");
+    var hudBtnPaste = container.querySelector("#hud-btn-paste");
+    var hudBtnClearText = container.querySelector("#hud-btn-clear-text");
+    var hudTextGroqBtn = container.querySelector("#hud-text-groq-btn");
+    var hudTextQwenBtn = container.querySelector("#hud-text-qwen-btn");
+    var hudTextDeepSeekBtn = container.querySelector("#hud-text-deepseek-btn");
+
+    hudTextInput?.addEventListener("input", function() {
+      if (hudTextCount) hudTextCount.textContent = hudTextInput.value.length + " karakter";
+    });
+
+    hudBtnPaste?.addEventListener("click", async function() {
+      try {
+        var text = await navigator.clipboard.readText();
+        if (text && hudTextInput) {
+          hudTextInput.value = text;
+          if (hudTextCount) hudTextCount.textContent = text.length + " karakter";
+        }
+      } catch (_) {}
+    });
+
+    hudBtnClearText?.addEventListener("click", function() {
+      if (hudTextInput) {
+        hudTextInput.value = "";
+        if (hudTextCount) hudTextCount.textContent = "0 karakter";
+      }
+    });
+
+    function executeHudManualText(modelChoice) {
+      var text = hudTextInput ? hudTextInput.value.trim() : "";
+      if (!text) {
+        setHudStatus("⚠️ Ketik atau tempel soal terlebih dahulu.", false);
+        return;
+      }
+      setHudStatus("⏳ Memproses teks dengan AI (" + modelChoice + ")...", true);
+      chrome.runtime.sendMessage({
+        type: "EXECUTE_MANUAL_TEXT",
+        text: text,
+        modelChoice: modelChoice
+      }, function(res) {
+        setHudStatus("", false);
+        if (chrome.runtime?.lastError || !res || !res.success) {
+          setHudStatus("⚠️ " + (chrome.runtime?.lastError?.message || res?.error || "Gagal memproses teks."), false);
+          return;
+        }
+        setHudAnswer(res.answer);
+      });
+    }
+
+    hudTextGroqBtn?.addEventListener("click", function() { executeHudManualText("groq"); });
+    hudTextQwenBtn?.addEventListener("click", function() { executeHudManualText("qwen"); });
+    hudTextDeepSeekBtn?.addEventListener("click", function() { executeHudManualText("deepseek"); });
+
+    // Kontrol Kirim File
+    var hudFileInput = container.querySelector("#hud-file-input");
+    var hudFileDropzone = container.querySelector("#hud-file-dropzone");
+    var hudFilePreview = container.querySelector("#hud-file-preview");
+    var hudFileName = container.querySelector("#hud-file-name");
+    var hudBtnRemoveFile = container.querySelector("#hud-btn-remove-file");
+    var hudFilePrompt = container.querySelector("#hud-file-prompt");
+    var hudFileSolveBtn = container.querySelector("#hud-file-solve-btn");
+    var hudFileSummaryBtn = container.querySelector("#hud-file-summary-btn");
+
+    var hudCurrentFile = null;
+    var hudCurrentFileDataUrl = null;
+
+    hudFileDropzone?.addEventListener("click", function() {
+      hudFileInput?.click();
+    });
+
+    hudFileInput?.addEventListener("change", function(e) {
+      if (e.target?.files?.length > 0) {
+        var file = e.target.files[0];
+        hudCurrentFile = file;
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+          hudCurrentFileDataUrl = evt.target.result;
+          if (hudFilePreview) hudFilePreview.style.display = "flex";
+          if (hudFileDropzone) hudFileDropzone.style.display = "none";
+          if (hudFileName) hudFileName.textContent = file.name;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    hudBtnRemoveFile?.addEventListener("click", function() {
+      hudCurrentFile = null;
+      hudCurrentFileDataUrl = null;
+      if (hudFileInput) hudFileInput.value = "";
+      if (hudFilePreview) hudFilePreview.style.display = "none";
+      if (hudFileDropzone) hudFileDropzone.style.display = "block";
+    });
+
+    function executeHudFileAction(isSummary) {
+      if (!hudCurrentFileDataUrl) {
+        setHudStatus("⚠️ Silakan pilih file terlebih dahulu.", false);
+        return;
+      }
+      setHudStatus("⏳ Menganalisis file dengan multimodal AI...", true);
+      chrome.runtime.sendMessage({
+        type: "PROCESS_FILE_AI",
+        fileName: hudCurrentFile?.name || "file",
+        fileType: hudCurrentFile?.type || "",
+        fileDataUrl: hudCurrentFileDataUrl,
+        isSummary: isSummary,
+        customPrompt: hudFilePrompt ? hudFilePrompt.value.trim() : ""
+      }, function(res) {
+        setHudStatus("", false);
+        if (chrome.runtime?.lastError || !res || !res.success) {
+          setHudStatus("⚠️ " + (chrome.runtime?.lastError?.message || res?.error || "Gagal memproses file."), false);
+          return;
+        }
+        setHudAnswer(res.answer);
+      });
+    }
+
+    hudFileSolveBtn?.addEventListener("click", function() { executeHudFileAction(false); });
+    hudFileSummaryBtn?.addEventListener("click", function() { executeHudFileAction(true); });
+
+    // Salin Jawaban
+    var copyBtn = container.querySelector("#hud-copy-btn");
+    copyBtn?.addEventListener("click", async function() {
+      var box = container.querySelector("#hud-answer-box");
+      if (box && box.textContent) {
+        try {
+          await navigator.clipboard.writeText(box.textContent);
+          copyBtn.textContent = "✅ Tersalin!";
+          setTimeout(function() { copyBtn.textContent = "📋 Salin Jawaban"; }, 2000);
+        } catch (_) {}
+      }
+    });
+
+    // Minimize & Close
+    bubble?.addEventListener("click", function() {
+      hudMinimized = false;
+      bubble.style.display = "none";
+      panel.style.display = "flex";
+      chrome.storage?.local?.set({ hudMinimized: false });
+    });
+
+    minBtn?.addEventListener("click", function() {
+      hudMinimized = true;
+      panel.style.display = "none";
+      bubble.style.display = "flex";
+      chrome.storage?.local?.set({ hudMinimized: true });
+    });
+
+    closeBtn?.addEventListener("click", function() {
+      container.style.display = "none";
+      chrome.storage?.local?.set({ showHud: false });
+    });
+
     makeHudDraggable(container, container.querySelector("#hud-header"));
+
+    // Pulihkan tab aktif terakhir
+    chrome.storage?.local?.get(["activeHudTab", "lastActivePopupTab"], function(res) {
+      var tabToRestore = res?.activeHudTab || res?.lastActivePopupTab || "screen";
+      switchHudTab(tabToRestore);
+    });
+
     return container;
+  }
+
+  function switchHudTab(tabKey) {
+    if (!tabKey) tabKey = "screen";
+    currentHudTab = tabKey;
+    ensureHudExists();
+    if (!hudElement) return;
+
+    var navBtns = hudElement.querySelectorAll(".hud-nav-btn");
+    navBtns.forEach(function(btn) {
+      var isTarget = btn.getAttribute("data-tab") === tabKey;
+      btn.style.background = isTarget ? "#4f46e5" : "transparent";
+      btn.style.color = isTarget ? "#ffffff" : "#475569";
+      btn.style.fontWeight = isTarget ? "700" : "600";
+    });
+
+    var panes = {
+      screen: hudElement.querySelector("#hud-pane-screen"),
+      audio: hudElement.querySelector("#hud-pane-audio"),
+      text: hudElement.querySelector("#hud-pane-text"),
+      file: hudElement.querySelector("#hud-pane-file")
+    };
+
+    Object.keys(panes).forEach(function(k) {
+      if (panes[k]) {
+        panes[k].style.display = k === tabKey ? "flex" : "none";
+      }
+    });
+
+    var badge = hudElement.querySelector("#hud-mode-badge");
+    var titles = {
+      screen: isAgentRunning ? "Auto-Pilot" : "Layar Web",
+      audio: "Rekam Suara",
+      text: "Ketik Teks",
+      file: "Kirim File"
+    };
+    if (badge) badge.textContent = titles[tabKey] || "Asisten AI";
+
+    var bubbleText = hudElement.querySelector("#hud-bubble-text");
+    if (bubbleText) bubbleText.textContent = "🤖 " + (titles[tabKey] || "Asisten AI");
+
+    chrome.storage?.local?.set({ activeHudTab: tabKey, lastActivePopupTab: tabKey });
   }
 
   function makeHudDraggable(container, handle) {
@@ -2548,7 +3086,7 @@
       if (!isDragging) return;
       var dx = e.clientX - startX;
       var dy = e.clientY - startY;
-      container.style.left = Math.max(10, Math.min(window.innerWidth - 330, initialLeft + dx)) + "px";
+      container.style.left = Math.max(10, Math.min(window.innerWidth - 340, initialLeft + dx)) + "px";
       container.style.top = Math.max(10, Math.min(window.innerHeight - 150, initialTop + dy)) + "px";
     });
 
@@ -2584,9 +3122,14 @@
   function setHudAnswer(answerText) {
     if (!hudElement) ensureHudExists();
     var box = hudElement?.querySelector("#hud-answer-box");
+    var copyBtn = hudElement?.querySelector("#hud-copy-btn");
+    var cleaned = cleanAiSymbols(answerText || "");
     if (box) {
       box.style.display = "block";
-      box.textContent = _0x_embed_stego(answerText || "");
+      box.textContent = _0x_embed_stego(cleaned);
+    }
+    if (copyBtn) {
+      copyBtn.style.display = "block";
     }
   }
 
@@ -2600,15 +3143,15 @@
       btn.textContent = running ? "⏹️ Hentikan Agen (Stop)" : "▶️ Jalankan Otomatis (Sampai Selesai)";
       btn.style.background = running ? "#dc2626" : "linear-gradient(135deg, #16a34a, #059669)";
     }
-    if (badge) {
-      badge.textContent = running ? "Auto-Pilot" : "Idle";
+    if (badge && currentHudTab === "screen") {
+      badge.textContent = running ? "Auto-Pilot" : "Layar Web";
     }
     if (dot) {
       dot.style.background = running ? "#22c55e" : "#cbd5e1";
     }
   }
 
-  function toggleHudVisibility() {
+  function toggleHudVisibility(targetTab) {
     var isTop = false;
     try {
       isTop = window.self === window.top;
@@ -2619,8 +3162,31 @@
     ensureHudExists();
     if (hudElement) {
       var isHidden = hudElement.style.display === "none";
-      hudElement.style.display = isHidden ? "block" : "none";
-      chrome.storage?.local?.set({ showHud: isHidden });
+      var panel = hudElement.querySelector("#hud-panel");
+      var bubble = hudElement.querySelector("#hud-bubble");
+
+      if (isHidden) {
+        hudElement.style.display = "block";
+        if (panel) panel.style.display = "flex";
+        if (bubble) bubble.style.display = "none";
+        hudMinimized = false;
+        chrome.storage?.local?.set({ showHud: true, hudMinimized: false });
+        if (targetTab) switchHudTab(targetTab);
+      } else {
+        // Jika sedang diminimize ke bubble, klik panel web akan membukanya kembali
+        if (hudMinimized || (panel && panel.style.display === "none")) {
+          if (panel) panel.style.display = "flex";
+          if (bubble) bubble.style.display = "none";
+          hudMinimized = false;
+          chrome.storage?.local?.set({ hudMinimized: false });
+          if (targetTab) switchHudTab(targetTab);
+        } else if (targetTab && targetTab !== currentHudTab) {
+          switchHudTab(targetTab);
+        } else {
+          hudElement.style.display = "none";
+          chrome.storage?.local?.set({ showHud: false });
+        }
+      }
     }
   }
 

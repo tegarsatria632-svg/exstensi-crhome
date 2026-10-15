@@ -29,6 +29,23 @@ Ekstensi Google Chrome modern (**Manifest V3**) yang dirancang untuk asisten bel
 5. **📌 On-Page Floating HUD Widget**
    - Panel kontrol mengambang yang elegan di layar web untuk memantau status pengerjaan secara *real-time* tanpa perlu membuka popup ekstensi.
 
+6. **🎙️ Rekam Suara Mikrofon & Tab Web (Groq Whisper & Gemini Audio)**
+   - **🎙️ Mikrofon Anda**: Merekam suara Anda secara jernih untuk mendikte soal, bertanya ke AI, atau latihan lisan.
+   - **🌐 Suara Tab Web**: Merekam audio pembicara/dosen langsung dari tab browser yang sedang dibuka (seperti Zoom Web di `app.zoom.us`, Google Meet, YouTube, video perkuliahan) tanpa mematikan speaker Anda.
+   - **🛡️ Filter Suara Jernih & Noise Reduction**: Dilengkapi Web Audio DSP Filter real-time (*High-Pass Low-Cut Filter 85Hz*, *Low-Pass Filter 8.2kHz*, *Vocal Presence Clarity EQ 2.5kHz*, *Dynamics Compressor*, dan *Intelligent Noise Gate*) untuk melenyapkan desis, dengung kipas/AC, dan kebisingan sekitar sehingga vokal percakapan terdengar kristal dan akurat untuk AI.
+   - **💾 Anti-Refresh & State Persistence**: Ketika Anda menutup popup dan membukanya kembali, menu aktif, hasil jawaban AI, rekaman audio, teks ketikan, dan pengaturan Anda **tetap tersimpan utuh dan tidak ter-reset/refresh**.
+   - **📌 Panel Samping (Side Panel) & 🗗 Popout**: Panel dapat dipin di bilah samping Chrome atau dibuka sebagai jendela mandiri agar tetap muncul saat Anda multitasking.
+   - **Transkripsi Kilat & Solusi Cerdas**: Ditenagai Groq Whisper (`whisper-large-v3-turbo`) dengan fallback Gemini Audio. Tombol instan: **🎯 Jawab Pertanyaan dari Suara** atau **📝 Rangkum Pembicaraan**.
+
+7. **✍️ Ketik Teks / Soal Manual**
+   - Area pengetikan soal bebas (bisa *paste* soal kuis, kode program, atau topik diskusi dari clipboard).
+   - Eksekusi fleksibel dengan pilihan model: **Groq Solver**, **Qwen 72B Tutor**, atau **DeepSeek Logic Analyzer**.
+
+8. **📁 Kirim & Unggah File Serbaguna (Drag & Drop)**
+   - **Gambar (PNG, JPG, WEBP)**: Dianalisis langsung via Gemini Vision.
+   - **Dokumen PDF & Teks**: Dibaca langsung oleh multimodal AI untuk pemecahan soal atau rangkuman.
+   - **File Audio (MP3, WAV, M4A)**: Ditranskripsi otomatis dan dianalisis oleh AI tanpa saling lempar model.
+
 ---
 
 ## 🚀 Panduan Instalasi Pertama Kali

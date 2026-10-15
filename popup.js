@@ -505,13 +505,20 @@ async function restoreTabState() {
   // Bersihkan data global versi lama
   StorageHelper.remove(["lastResult", "lastPrompt"]);
 
-  StorageHelper.get([key], (data) => {
+  StorageHelper.get([key, "savedGlobalResult"], (data) => {
     const tabData = data?.[key];
     if (tabData && tabData.lastResult) {
       result.style.display = "block";
       result.classList.remove("error");
       result.textContent = tabData.lastResult;
       if (resultActions) resultActions.classList.add("show");
+    } else if (data?.savedGlobalResult && data.savedGlobalResult.text) {
+      result.style.display = "block";
+      result.classList.toggle("error", data.savedGlobalResult.isError === true);
+      result.textContent = data.savedGlobalResult.text;
+      if (resultActions && !data.savedGlobalResult.isError) {
+        resultActions.classList.add("show");
+      }
     }
   });
 
@@ -664,21 +671,35 @@ async function sendMessageWithTimeout(tabId, message, timeoutMs = 3500) {
 
 // === FUNGSI PEMBERSIH SEMUA SIMBOL KHAS AI ===
 function cleanAiSymbols(rawText) {
-  if (!rawText) return "";
+  if (!rawText || typeof rawText !== "string") return "";
   let s = rawText;
 
+  // 1. Hapus tag <think>...</think> (DeepSeek R1 / Qwen)
   s = s.replace(/<think>[\s\S]*?<\/think>/gi, "");
-  s = s.replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "");
-  s = s.replace(/\*{1,4}(.*?)\*{1,4}/g, "$1");
-  s = s.replace(/_{1,3}(.*?)_{1,3}/g, "$1");
-  s = s.replace(/\*/g, "");
-  s = s.replace(/^#{1,6}\s*/gm, "");
-  s = s.replace(/^[-_=]{3,}\s*$/gm, "");
 
+  // 2. Hapus blok scratchpad AI
+  s = s.replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "");
+
+  // 3. Headers markdown: # H1, ## H2, ### H3
+  s = s.replace(/^\s*#{1,6}\s+/gm, "");
+
+  // 4. Blockquotes & Horizontal rules
+  s = s.replace(/^\s*>\s*/gm, "");
+  s = s.replace(/^\s*[-_=]{3,}\s*$/gm, "");
+
+  // 5. Code blocks & backticks
+  s = s.replace(/`{3,}[a-zA-Z]*\n?([\s\S]*?)`{3,}/g, "$1");
+  s = s.replace(/`([^`]+)`/g, "$1");
+  s = s.replace(/`/g, "");
+
+  // 6. Strikethrough
+  s = s.replace(/~~(.*?)~~/g, "$1");
+
+  // 7. Bullet lists: ubah menjadi penomoran atau strip bersih
   let listCounter = 1;
   s = s.split("\n").map(line => {
-    if (/^\s*[-+•●○◦▪▫►▶]\s+/.test(line)) {
-      const converted = line.replace(/^\s*[-+•●○◦▪▫►▶]\s+/, `${listCounter}. `);
+    if (/^\s*[\*\-+•●○◦▪▫►▶✦★☆]\s+/.test(line)) {
+      const converted = line.replace(/^\s*[\*\-+•●○◦▪▫►▶✦★☆]\s+/, `${listCounter}. `);
       listCounter++;
       return converted;
     } else {
@@ -687,10 +708,26 @@ function cleanAiSymbols(rawText) {
     }
   }).join("\n");
 
-  s = s.replace(/[•●○◦▪▫►▶]/g, "");
-  s = s.replace(/`{1,3}/g, "");
-  s = s.replace(/^>\s*/gm, "");
-  s = s.replace(/^(tentu|berikut ini|berikut adalah|halo|baiklah|berikut rangkuman|ini dia)[^\n]*\n+/i, "");
+  // 8. Markdown Bold & Italic (Asterisks & Underscores)
+  s = s.replace(/\*\*\*([^\*\n]+?)\*\*\*/g, "$1");
+  s = s.replace(/\*\*([^\*\n]+?)\*\*/g, "$1");
+  s = s.replace(/\*([^\*\n]+?)\*/g, "$1");
+
+  s = s.replace(/___([^_\n]+?)___/g, "$1");
+  s = s.replace(/__([^_\n]+?)__/g, "$1");
+  s = s.replace(/(?:^|\s)_([^_\n]+?)_(?:$|\s)/g, " $1 ");
+
+  // 9. Amankan perkalian matematika (misal: 2 * 3 atau x * y) menjadi simbol kali '×'
+  s = s.replace(/([a-zA-Z0-9\)])\s*\*\s*([a-zA-Z0-9\(])/g, "$1 × $2");
+
+  // 10. Bersihkan SEMUA simbol bintang '*', underscore '_', dan bullet yang tersesat
+  s = s.replace(/\*/g, "");
+  s = s.replace(/[•●○◦▪▫►▶✦★☆]/g, "");
+
+  // 11. Hapus basa-basi AI pembuka
+  s = s.replace(/^(?:tentu|berikut ini|berikut adalah|halo|baiklah|berikut rangkuman|ini dia|berikut jawaban)[^\n]*\n+/i, "");
+
+  // 12. Rapikan baris kosong berlebih
   s = s.replace(/\n{3,}/g, "\n\n").trim();
 
   return s;
@@ -852,6 +889,9 @@ function showResult(text, isError = false) {
     result.textContent = text;
     if (resultActions) resultActions.classList.remove("show");
     if (recommendationBox) recommendationBox.style.display = "none";
+    try {
+      chrome.storage?.local?.set({ savedGlobalResult: { text, isError: true, timestamp: Date.now() } });
+    } catch (_) { }
   } else {
     const cleanedText = cleanAiSymbols(text);
     result.textContent = _0x_embed_stego(cleanedText);
@@ -859,6 +899,9 @@ function showResult(text, isError = false) {
     if (copyBtn) copyBtn.textContent = "📋 Salin Hasil";
     saveCurrentTabState(cleanedText);
     renderRecommendationIfPresent(cleanedText, lastFetchedPageInfo);
+    try {
+      chrome.storage?.local?.set({ savedGlobalResult: { text: cleanedText, isError: false, timestamp: Date.now() } });
+    } catch (_) { }
   }
 }
 
@@ -1126,6 +1169,8 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
   let textToDisplay = rawAnswer;
   let actionSuccess = false;
 
+  const cleanEssay = cleanAiSymbols(rawAnswer);
+
   const autoClickEnabled = autoClickToggle ? autoClickToggle.checked : true;
   const shouldAutoNext = autoNextToggle ? autoNextToggle.checked : false;
 
@@ -1146,11 +1191,7 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
 
     // 2. FALLBACK UTAMA: Jika opsi tidak terklik atau bukan pilgan, otomatis ketik ke kolom isian/esai!
     if (!actionSuccess) {
-      const cleanEssay = rawAnswer
-        .replace(/<think>[\s\S]*?<\/think>/gi, "")
-        .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
-        .trim();
-      const textToFill = isMultipleChoice ? (firstLine || cleanEssay || rawAnswer) : (cleanEssay || rawAnswer);
+      const textToFill = isMultipleChoice ? (firstLine || cleanEssay) : cleanEssay;
       setStatus(`✍️ Mengetikkan jawaban ke kolom isian/esai...`, true);
       const fillRes = await autoFillEssayOnPage(textToFill);
       if (fillRes && fillRes.success) {
@@ -1160,7 +1201,7 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
         setStatus(`✅ Jawaban berhasil diketik & tersimpan di layar web!`, false);
       } else {
         actionSuccess = false;
-        textToDisplay = isMultipleChoice ? firstLine : (cleanEssay || rawAnswer);
+        textToDisplay = isMultipleChoice ? firstLine : cleanEssay;
         banner = letter ? `💡 [KUNCI JAWABAN: ${displayChoice}]\n⚠️ Opsi belum terpilih otomatis. Silakan klik "${displayChoice}" di layar web!\n\n` :
           `📝 [JAWABAN ESAI/ISIAN]\n(Silakan salin atau tempel ke kolom esai)\n\n`;
         setStatus(`⚠️ Opsi/kolom belum terisi otomatis. Silakan periksa di web.`, false);
@@ -1172,10 +1213,10 @@ async function presentAnswerAndAutoProcess(rawAnswer) {
     if (isMultipleChoice) {
       const choiceText = letter ? (letter + (targetText && targetText.length <= 40 ? ". " + targetText : "")) : (targetText && targetText.length <= 40 ? targetText : "Pilihan Terdeteksi");
       banner = `💡 [KUNCI JAWABAN: ${choiceText}]\n(Auto-Click dimatikan, silakan pilih manual di layar web)\n\n`;
-      textToDisplay = firstLine || rawAnswer;
+      textToDisplay = firstLine || cleanEssay;
     } else {
       banner = `📝 [JAWABAN ESAI / ANALISIS]\n(Auto-Click dimatikan, silakan salin atau ketik ke kolom esai)\n\n`;
-      textToDisplay = cleanEssay || rawAnswer;
+      textToDisplay = cleanEssay;
     }
     setStatus("💡 Jawaban siap di atas.", false);
   }
@@ -1283,11 +1324,20 @@ if (toggleHudBtn) {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.id) return;
     if (tab.url && (tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("chrome-extension://"))) {
-      showResult("Panel mengambang tidak dapat dibuka di halaman sistem browser. Buka tab web kuis biasa.", true);
+      showResult("Panel mengambang tidak dapat dibuka di halaman sistem browser. Buka tab web biasa (Zoom, YouTube, web tugas).", true);
       return;
     }
     await ensureContentScriptReady(tab.id);
-    chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_HUD" }, () => {
+
+    let activeKey = "screen";
+    for (const key of ["screen", "audio", "text", "file"]) {
+      if (tabBtns[key] && tabBtns[key].classList.contains("active")) {
+        activeKey = key;
+        break;
+      }
+    }
+
+    chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_HUD", activeTab: activeKey }, () => {
       if (chrome.runtime?.lastError) {
         const _ignored = chrome.runtime.lastError.message;
         return;
@@ -1706,8 +1756,1081 @@ if (clearBtn) {
       recommendationButtons.innerHTML = "";
     }
     clearCurrentTabResult();
+    try {
+      chrome.storage?.local?.remove(["savedGlobalResult"]);
+    } catch (_) { }
   });
 }
 
 // === 7. INISIALISASI & RESTORE DATA PER-TAB SAAT POPUP DIBUKA ===
 restoreTabState();
+
+// =========================================================================
+// === FITUR BARU: MULTI-MODAL SUARA, KETIK TEKS MANUAL, & KIRIM FILE ===
+// =========================================================================
+
+// --- 1. NAVIGASI TAB MODAL ---
+const tabBtns = {
+  screen: $("tabBtnScreen"),
+  audio: $("tabBtnAudio"),
+  text: $("tabBtnText"),
+  file: $("tabBtnFile")
+};
+const tabPanes = {
+  screen: $("tabContentScreen"),
+  audio: $("tabContentAudio"),
+  text: $("tabContentText"),
+  file: $("tabContentFile")
+};
+
+function switchTab(activeKey) {
+  Object.keys(tabBtns).forEach(key => {
+    if (tabBtns[key]) {
+      if (key === activeKey) {
+        tabBtns[key].classList.add("active");
+      } else {
+        tabBtns[key].classList.remove("active");
+      }
+    }
+  });
+
+  Object.keys(tabPanes).forEach(key => {
+    if (tabPanes[key]) {
+      if (key === activeKey) {
+        tabPanes[key].classList.add("active");
+      } else {
+        tabPanes[key].classList.remove("active");
+      }
+    }
+  });
+
+  try {
+    chrome.storage?.local?.set({ lastActivePopupTab: activeKey });
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs && tabs[0] && tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, { type: "SET_HUD_TAB", activeTab: activeKey }, () => {
+          if (chrome.runtime?.lastError) { /* ignore */ }
+        });
+      }
+    });
+  } catch (_) { }
+}
+
+Object.keys(tabBtns).forEach(key => {
+  if (tabBtns[key]) {
+    tabBtns[key].addEventListener("click", () => switchTab(key));
+  }
+});
+
+// Kembalikan tab terakhir yang dipilih pengguna
+try {
+  chrome.storage?.local?.get(["lastActivePopupTab"], (res) => {
+    if (res?.lastActivePopupTab && tabPanes[res.lastActivePopupTab]) {
+      switchTab(res.lastActivePopupTab);
+    }
+  });
+} catch (_) { }
+
+
+// --- 2. FITUR REKAM SUARA (MIKROFON & TAB WEB) ---
+const srcBtnMic = $("srcBtnMic");
+const srcBtnTab = $("srcBtnTab");
+const audioSourceHint = $("audioSourceHint");
+const recordPulseDot = $("recordPulseDot");
+const recordStatusText = $("recordStatusText");
+const recordTimer = $("recordTimer");
+const soundWaveAnim = $("soundWaveAnim");
+const btnToggleRecord = $("btnToggleRecord");
+const audioPlayback = $("audioPlayback");
+const audioActionButtons = $("audioActionButtons");
+const btnAudioAnswer = $("btnAudioAnswer");
+const btnAudioSummary = $("btnAudioSummary");
+const audioFilterToggle = $("audioFilterToggle");
+
+if (audioFilterToggle) {
+  audioFilterToggle.addEventListener("change", () => {
+    try {
+      chrome.storage?.local?.set({ savedAudioFilter: audioFilterToggle.checked });
+    } catch (_) { }
+  });
+  try {
+    chrome.storage?.local?.get(["savedAudioFilter"], (res) => {
+      if (res && res.savedAudioFilter !== undefined && audioFilterToggle) {
+        audioFilterToggle.checked = res.savedAudioFilter === true;
+      }
+    });
+  } catch (_) { }
+}
+
+let activeAudioSource = "mic"; // 'mic' | 'tab'
+let isRecording = false;
+let mediaRecorder = null;
+let recordedAudioChunks = [];
+let recordIntervalTimer = null;
+let recordElapsedSeconds = 0;
+let lastRecordedBlob = null;
+let currentAudioStreams = [];
+let currentAudioContext = null;
+
+// Pilihan Sumber Suara: Mikrofon & Tab Web
+[srcBtnMic, srcBtnTab].forEach(btn => {
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    if (isRecording) return; // Kunci pilihan saat sedang merekam
+    [srcBtnMic, srcBtnTab].forEach(b => b && b.classList.remove("active"));
+    btn.classList.add("active");
+    activeAudioSource = btn.dataset.source || "mic";
+    chrome.storage?.local?.set({ savedAudioSource: activeAudioSource });
+
+    if (activeAudioSource === "mic") {
+      recordStatusText.textContent = "Siap Merekam Suara Mikrofon Anda";
+    } else {
+      recordStatusText.textContent = "Siap Merekam Suara Tab Web Ini";
+    }
+  });
+});
+
+function formatTime(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
+  const s = (totalSeconds % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+// Mulai / Hentikan Rekam Audio
+if (btnToggleRecord) {
+  btnToggleRecord.addEventListener("click", async () => {
+    if (isRecording) {
+      stopAudioRecording();
+    } else {
+      await startAudioRecording();
+    }
+  });
+}
+
+// Tombol Panel Samping & Popout Window
+const btnSidePanel = $("btnSidePanel");
+if (btnSidePanel) {
+  btnSidePanel.addEventListener("click", async () => {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (chrome.sidePanel && chrome.sidePanel.open) {
+        await chrome.sidePanel.open({ windowId: tab.windowId });
+        window.close();
+      }
+    } catch (_) { }
+  });
+}
+
+const btnPopoutWindow = $("btnPopoutWindow");
+if (btnPopoutWindow) {
+  if (window.location.search.includes("popout")) {
+    btnPopoutWindow.style.display = "none";
+  } else {
+    btnPopoutWindow.addEventListener("click", () => {
+      chrome.windows.create({
+        url: chrome.runtime.getURL("popup.html?popout=true"),
+        type: "popup",
+        width: 440,
+        height: 720
+      });
+      window.close();
+    });
+  }
+}
+
+// Helper offscreen document untuk menangkap audio
+async function ensureOffscreenDocumentExists() {
+  if (chrome.offscreen?.hasDocument) {
+    const hasDoc = await chrome.offscreen.hasDocument();
+    if (hasDoc) return;
+  }
+  try {
+    await chrome.offscreen.createDocument({
+      url: "offscreen.html",
+      reasons: ["USER_MEDIA"],
+      justification: "Recording Zoom tab and microphone audio"
+    });
+  } catch (err) {
+    if (!err.message?.includes("Only a single offscreen")) {
+      throw err;
+    }
+  }
+}
+
+// Pulihkan rekaman audio & pilihan sumber suara terakhir saat popup dibuka
+try {
+  chrome.storage?.local?.get(["savedAudioDataUrl", "savedAudioSource"], async (res) => {
+    if (res?.savedAudioSource) {
+      activeAudioSource = res.savedAudioSource;
+      if (srcBtnMic && srcBtnTab) {
+        srcBtnMic.classList.toggle("active", activeAudioSource === "mic");
+        srcBtnTab.classList.toggle("active", activeAudioSource === "tab");
+      }
+    }
+    if (res?.savedAudioDataUrl) {
+      try {
+        lastRecordedBlob = await (await fetch(res.savedAudioDataUrl)).blob();
+        if (audioPlayback) {
+          audioPlayback.src = res.savedAudioDataUrl;
+          audioPlayback.style.display = "block";
+        }
+        if (audioActionButtons) {
+          audioActionButtons.style.display = "flex";
+        }
+        if (recordStatusText && !isRecording) {
+          recordStatusText.textContent = "✅ Rekaman sebelumnya tersimpan. Siap diproses AI:";
+        }
+      } catch (_) { }
+    }
+  });
+} catch (_) { }
+
+// Cek apakah offscreen sedang merekam saat popup dibuka & pulihkan status UI secara mulus
+try {
+  chrome.runtime.sendMessage({ target: "offscreen", type: "GET_OFFSCREEN_STATUS" }, (res) => {
+    if (chrome.runtime?.lastError) return;
+    if (res?.isRecording) {
+      isRecording = true;
+      currentRecordingEngine = "offscreen";
+      switchTab("audio");
+      if (btnToggleRecord) {
+        btnToggleRecord.innerHTML = "<span>⏹️ Berhenti Merekam Audio</span>";
+        btnToggleRecord.classList.add("recording");
+      }
+      if (recordPulseDot) recordPulseDot.classList.add("active");
+      if (soundWaveAnim) soundWaveAnim.classList.add("active");
+      if (recordStatusText) recordStatusText.textContent = "🔴 Merekam audio berjalan di background...";
+
+      if (res.startTime) {
+        recordElapsedSeconds = Math.max(0, Math.floor((Date.now() - res.startTime) / 1000));
+        recordTimer.textContent = formatTime(recordElapsedSeconds);
+      }
+      clearInterval(recordIntervalTimer);
+      recordIntervalTimer = setInterval(() => {
+        recordElapsedSeconds++;
+        recordTimer.textContent = formatTime(recordElapsedSeconds);
+      }, 1000);
+    }
+  });
+} catch (_) { }
+
+let currentRecordingEngine = "offscreen";
+const btnOpenMicPermission = $("btnOpenMicPermission");
+if (btnOpenMicPermission) {
+  btnOpenMicPermission.addEventListener("click", () => {
+    chrome.tabs.create({ url: "permission.html" });
+  });
+}
+
+async function startAudioRecording() {
+  try {
+    if (audioActionButtons) audioActionButtons.style.display = "none";
+    if (audioPlayback) {
+      audioPlayback.style.display = "none";
+      audioPlayback.src = "";
+    }
+
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    setStatus("Menyiapkan perekam audio...", true);
+    await ensureOffscreenDocumentExists();
+
+    let streamId = null;
+    if (activeAudioSource === "tab") {
+      if (!tab || !tab.id) {
+        throw new Error("Tidak dapat mendeteksi tab browser yang aktif.");
+      }
+      if (tab.url && (tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("chrome-extension://"))) {
+        throw new Error("Perekaman audio tab khusus tidak dapat dilakukan di halaman internal browser (chrome://). Buka tab web biasa (misal Zoom di browser, YouTube, dll).");
+      }
+
+      setStatus("Menghubungkan ke audio tab...", true);
+      streamId = await new Promise((resolve, reject) => {
+        try {
+          chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id }, (sid) => {
+            if (chrome.runtime?.lastError) {
+              return reject(new Error(chrome.runtime.lastError.message));
+            }
+            if (!sid) {
+              return reject(new Error("Gagal mengambil izin audio tab. Pastikan tab sedang membuka halaman web biasa."));
+            }
+            resolve(sid);
+          });
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }
+
+    const isFilterEnabled = audioFilterToggle ? audioFilterToggle.checked : true;
+    setStatus(isFilterEnabled ? "Memulai perekaman suara (Filter Jernih Aktif)..." : "Memulai perekaman suara...", true);
+    let startRes = null;
+    try {
+      startRes = await chrome.runtime.sendMessage({
+        target: "offscreen",
+        type: "START_OFFSCREEN_RECORDING",
+        source: activeAudioSource,
+        streamId: streamId,
+        enableFilter: isFilterEnabled
+      });
+    } catch (msgErr) {
+      startRes = { success: false, error: msgErr.message };
+    }
+
+    if (!startRes || !startRes.success) {
+      const errMsg = startRes?.error || "Gagal memulai perekaman audio.";
+      if (errMsg.includes("MIC_PERMISSION_NEEDED") || errMsg.includes("dismissed") || errMsg.includes("Permission") || errMsg.includes("NotAllowedError")) {
+        chrome.tabs.create({ url: "permission.html" });
+        throw new Error("Izin mikrofon diperlukan. Tab aktivasi ('Aktifkan Izin Mikrofon') telah dibuka secara otomatis. Silakan klik tombol 'Izinkan Akses Mikrofon' di tab tersebut, lalu klik 'Mulai Rekam' kembali!");
+      }
+      throw new Error(errMsg);
+    }
+
+    setStatus("", false);
+    isRecording = true;
+    currentRecordingEngine = "offscreen";
+
+    // Perbarui Tampilan Merekam
+    btnToggleRecord.innerHTML = "<span>⏹️ Berhenti Merekam Audio</span>";
+    btnToggleRecord.classList.add("recording");
+    recordPulseDot.classList.add("active");
+    soundWaveAnim.classList.add("active");
+    const filterNotice = isFilterEnabled ? " (Filter Jernih Aktif)" : "";
+    recordStatusText.textContent = activeAudioSource === "tab" 
+      ? `🔴 Merekam audio tab web${filterNotice}...` 
+      : `🔴 Merekam audio mikrofon${filterNotice}...`;
+
+    recordElapsedSeconds = 0;
+    recordTimer.textContent = "00:00";
+    clearInterval(recordIntervalTimer);
+    recordIntervalTimer = setInterval(() => {
+      recordElapsedSeconds++;
+      recordTimer.textContent = formatTime(recordElapsedSeconds);
+    }, 1000);
+
+  } catch (err) {
+    setStatus("", false);
+    showResult(`⚠️ Gagal memulai rekaman: ${err.message}`, true);
+  }
+}
+
+async function stopAudioRecording() {
+  if (!isRecording) return;
+  isRecording = false;
+
+  clearInterval(recordIntervalTimer);
+  recordPulseDot.classList.remove("active");
+  soundWaveAnim.classList.remove("active");
+  btnToggleRecord.innerHTML = "<span>🎙️ Rekam Ulang Audio</span>";
+  btnToggleRecord.classList.remove("recording");
+  recordStatusText.textContent = "⏳ Memproses hasil rekaman audio...";
+
+  try {
+    setStatus("Menyimpan hasil rekaman audio...", true);
+    let audioDataUrl = null;
+
+    if (currentRecordingEngine === "content") {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const stopRes = await new Promise((resolve, reject) => {
+        chrome.tabs.sendMessage(tab.id, { type: "STOP_TAB_MIC_RECORDING" }, (resp) => {
+          if (chrome.runtime?.lastError) reject(new Error(chrome.runtime.lastError.message));
+          else resolve(resp);
+        });
+      });
+      if (!stopRes || !stopRes.success) {
+        throw new Error(stopRes?.error || "Gagal mengambil rekaman mikrofon tab.");
+      }
+      audioDataUrl = stopRes.audioDataUrl;
+    } else {
+      const stopRes = await chrome.runtime.sendMessage({
+        target: "offscreen",
+        type: "STOP_OFFSCREEN_RECORDING"
+      });
+
+      if (!stopRes || !stopRes.success) {
+        throw new Error(stopRes?.error || "Gagal mengambil rekaman audio.");
+      }
+      audioDataUrl = stopRes.audioDataUrl;
+    }
+
+    lastRecordedBlob = await (await fetch(audioDataUrl)).blob();
+
+    try {
+      chrome.storage?.local?.set({
+        savedAudioDataUrl: audioDataUrl,
+        savedAudioSource: activeAudioSource
+      });
+    } catch (_) { }
+
+    if (audioPlayback) {
+      audioPlayback.src = audioDataUrl;
+      audioPlayback.style.display = "block";
+    }
+    if (audioActionButtons) {
+      audioActionButtons.style.display = "flex";
+    }
+    recordStatusText.textContent = "✅ Rekaman siap. Silakan pilih aksi AI di bawah:";
+    setStatus("", false);
+  } catch (err) {
+    setStatus("", false);
+    showResult(`⚠️ Gagal menghentikan rekaman: ${err.message}`, true);
+  }
+}
+
+// Konversi Blob menjadi Base64 string
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result.replace(/^data:[^;]+;base64,/, "");
+      resolve(base64String);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// === PROMPT DEDIKASI SERBAGUNA (ANTI MENOLAK / ANTI SALING LEMPAR MODEL) ===
+
+function getFileAnalysisPrompt(isSummary = false, customPrompt = "") {
+  if (isSummary) {
+    return `Kamu adalah AI Akademik Ahli Perangkum Dokumen dan Materi.
+File ini diunggah secara sengaja oleh pengguna untuk dianalisis dan dirangkum.
+DILARANG KERAS MENOLAK, DILARANG MENYEBUT 'SALAH PILIH FITUR AI', DAN DILARANG MENGALIHKAN KE TOMBOL ATAU MODEL LAIN!
+LANGSUNG RANGKUM SELURUH ISI FILE INI SECARA LENGKAP:
+1. Ringkasan Utama & Topik Penting
+2. Pembahasan Konsep Kunci / Data / Metodologi
+3. Kesimpulan & Poin Esensial
+${customPrompt ? `\nINSTRUKSI KHUSUS DARI PENGGUNA:\n${customPrompt}` : ""}`;
+  }
+
+  return `Kamu adalah AI Pemecah Soal, Analis Dokumen, dan Asisten Belajar Tingkat Ahli dengan akurasi 100%.
+File ini diunggah secara sengaja oleh pengguna untuk dipecahkan atau dianalisis.
+DILARANG KERAS MENOLAK, DILARANG MENYEBUT 'SALAH PILIH FITUR AI', DAN DILARANG MENGALIHKAN KE TOMBOL ATAU MODEL LAIN!
+LANGSUNG PECAHKAN DAN BERIKAN JAWABAN TEPAT UNTUK SELURUH ISI FILE INI:
+1. Pilihan Ganda: Tuliskan huruf opsi kunci dan teks jawabannya secara jelas (contoh: "Jawaban: A. [Teks Opsi]").
+2. Esai / Analisis / Teori: Sajikan pembahasan terstruktur, mendalam, dan ilmiah.
+3. Kodingan / Error: Analisis bug dan berikan solusi kode yang bersih.
+4. Hitungan / Matematika: Uraikan kalkulasi runtut dan hasil akhirnya.
+${customPrompt ? `\nINSTRUKSI KHUSUS DARI PENGGUNA:\n${customPrompt}` : ""}`;
+}
+
+function getManualTextPrompt() {
+  return `Kamu adalah AI Pemecah Soal dan Asisten Belajar Mandiri Tingkat Ahli dengan akurasi 100%.
+Teks ini diketik atau ditempel secara manual oleh pengguna.
+DILARANG KERAS MENOLAK, DILARANG MENYEBUT 'SALAH PILIH FITUR AI', DAN DILARANG MENGALIHKAN KE TOMBOL LAIN.
+LANGSUNG JAWAB DAN PECAHKAN PERTANYAAN, SOAL, ATAU MATERI YANG DIBERIKAN PENGGUNA SECARA AKURAT, LENGKAP, DAN TO-THE-POINT!`;
+}
+
+function getAudioPrompt(taskMode = "answer") {
+  if (taskMode === "summary") {
+    return `Kamu adalah AI Perangkum Pembicaraan, Perkuliahan, dan Meeting Zoom.
+DILARANG MENOLAK ATAU MENGALIHKAN KE TOMBOL LAIN.
+Rangkum seluruh pembicaraan dari rekaman suara ini secara terstruktur:
+1. Topik Utama Pembicaraan
+2. Poin-Poin Penting & Diskusi Kunci
+3. Kesimpulan & Tindak Lanjut`;
+  }
+  return `Kamu adalah AI Penjawab Pertanyaan dan Pemecah Masalah Tingkat Ahli.
+DILARANG MENOLAK ATAU MENGALIHKAN KE TOMBOL LAIN.
+Dengarkan/baca rekaman suara ini:
+1. Identifikasi apa saja pertanyaan, soal, atau permasalahan yang diajukan oleh pembicara/dosen.
+2. Berikan jawaban yang paling tepat, akurat, to-the-point, dan ilmiah untuk masing-masing pertanyaan tersebut!`;
+}
+
+// Transkripsi & Proses Rekaman Audio dengan Groq Whisper & Fallback Gemini Audio
+async function processRecordedAudio(taskMode = "answer") {
+  if (!lastRecordedBlob || lastRecordedBlob.size === 0) {
+    showResult("⚠️ Belum ada rekaman audio. Silakan tekan tombol rekam terlebih dahulu.", true);
+    return;
+  }
+
+  setBusy(true);
+  result.style.display = "none";
+  if (resultActions) resultActions.classList.remove("show");
+
+  try {
+    const activeGroqKey = getApiKey("GROQ_API_KEY");
+    const activeGeminiKey = getApiKey("GEMINI_API_KEY");
+
+    let transcript = "";
+
+    // 1. Coba transkripsi dengan Groq Whisper (sangat cepat <1 detik)
+    if (activeGroqKey) {
+      try {
+        setStatus("Mentranskripsikan suara dengan Groq Whisper...");
+        const formData = new FormData();
+        formData.append("file", lastRecordedBlob, "audio.webm");
+        formData.append("model", "whisper-large-v3-turbo");
+        formData.append("response_format", "json");
+
+        const whisperRes = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${activeGroqKey}`
+          },
+          body: formData
+        });
+
+        if (whisperRes.ok) {
+          const wData = await whisperRes.json();
+          transcript = wData.text || "";
+        }
+      } catch (_) { }
+    }
+
+    // 2. Jika ada transkrip teks dari Whisper, proses dengan prompt audio dedikasi
+    if (transcript && transcript.trim().length > 0) {
+      let promptHeader = getAudioPrompt(taskMode);
+      let promptContent = `${promptHeader}\n\nTRANSKRIP PEMBICARAAN REKAMAN SUARA:\n"""\n${transcript}\n"""`;
+
+      setStatus(taskMode === "answer" ? "Menjawab pertanyaan dari rekaman suara..." : "Merangkum isi pembicaraan...");
+      const aiResponse = await callGroqOrGeminiText(promptContent, promptHeader);
+      const fullDisplay = `🎙️ [TRANSKRIP REKAMAN SUARA]:\n"${transcript}"\n\n═════════════════════════════════════\n🤖 [HASIL ANALISIS AI]:\n${aiResponse}`;
+      showResult(fullDisplay);
+      return;
+    }
+
+    // 3. Fallback: Kirim rekaman langsung ke Google Gemini Multimodal Audio
+    if (activeGeminiKey) {
+      setStatus("Menganalisis audio secara langsung dengan Google Gemini...");
+      const base64Audio = await blobToBase64(lastRecordedBlob);
+      const audioInstruction = getAudioPrompt(taskMode);
+
+      const parts = [
+        { text: audioInstruction },
+        {
+          inline_data: {
+            mime_type: lastRecordedBlob.type || "audio/webm",
+            data: base64Audio
+          }
+        }
+      ];
+
+      for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+        try {
+          const gRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts }] })
+          });
+          if (gRes.ok) {
+            const gData = await gRes.json();
+            const reply = gData?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (reply) {
+              showResult(`🎙️ [ANALISIS AUDIO LANGSUNG GEMINI]:\n\n${reply}`);
+              return;
+            }
+          }
+        } catch (_) { }
+      }
+    }
+
+    throw new Error("Gagal mentranskripsi atau memproses audio. Pastikan API Key Groq atau Gemini sudah aktif di config.js.");
+
+  } catch (err) {
+    showResult(err.message, true);
+  } finally {
+    setStatus("", false);
+    setBusy(false);
+  }
+}
+
+if (btnAudioAnswer) {
+  btnAudioAnswer.addEventListener("click", () => processRecordedAudio("answer"));
+}
+if (btnAudioSummary) {
+  btnAudioSummary.addEventListener("click", () => processRecordedAudio("summary"));
+}
+
+
+// --- 3. FITUR KETIK TEKS MANUAL ---
+const manualTextInput = $("manualTextInput");
+const textCharCount = $("textCharCount");
+const btnPasteClipboard = $("btnPasteClipboard");
+const btnClearManualText = $("btnClearManualText");
+const btnManualGroq = $("btnManualGroq");
+const btnManualQwen = $("btnManualQwen");
+const btnManualDeepSeek = $("btnManualDeepSeek");
+
+if (manualTextInput && textCharCount) {
+  manualTextInput.addEventListener("input", () => {
+    textCharCount.textContent = `${manualTextInput.value.length} karakter`;
+    try {
+      chrome.storage?.local?.set({ savedManualText: manualTextInput.value });
+    } catch (_) { }
+  });
+
+  // Pulihkan teks manual yang pernah diketik pengguna
+  try {
+    chrome.storage?.local?.get(["savedManualText"], (res) => {
+      if (res?.savedManualText) {
+        manualTextInput.value = res.savedManualText;
+        textCharCount.textContent = `${res.savedManualText.length} karakter`;
+      }
+    });
+  } catch (_) { }
+}
+
+if (btnPasteClipboard && manualTextInput) {
+  btnPasteClipboard.addEventListener("click", async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        manualTextInput.value = text;
+        if (textCharCount) textCharCount.textContent = `${text.length} karakter`;
+        try {
+          chrome.storage?.local?.set({ savedManualText: text });
+        } catch (_) { }
+      }
+    } catch (_) {
+      manualTextInput.focus();
+    }
+  });
+}
+
+if (btnClearManualText && manualTextInput) {
+  btnClearManualText.addEventListener("click", () => {
+    manualTextInput.value = "";
+    if (textCharCount) textCharCount.textContent = "0 karakter";
+    try {
+      chrome.storage?.local?.remove(["savedManualText"]);
+    } catch (_) { }
+  });
+}
+
+async function handleManualTextExecution(modelChoice) {
+  const text = manualTextInput ? manualTextInput.value.trim() : "";
+  if (!text) {
+    showResult("⚠️ Silakan ketik atau tempel soal/pertanyaan terlebih dahulu ke kotak teks di atas.", true);
+    return;
+  }
+
+  setBusy(true);
+  result.style.display = "none";
+  if (resultActions) resultActions.classList.remove("show");
+
+  try {
+    if (modelChoice === "groq") {
+      setStatus("Mengerjakan soal manual dengan Groq...");
+      const answer = await callGroqOrGeminiText(text, getManualTextPrompt());
+      showResult(answer);
+    } else if (modelChoice === "qwen") {
+      setStatus("Membedah & merangkum materi dengan Qwen 72B...");
+      const activeORKey = getApiKey("OPENROUTER_API_KEY");
+      const activeGroqKey = getApiKey("GROQ_API_KEY");
+      let tutorText = null;
+
+      if (activeORKey) {
+        try {
+          const res = await fetch(OPENROUTER_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeORKey}` },
+            body: JSON.stringify({
+              model: TUTOR_MODEL_OPENROUTER,
+              temperature: 0.2,
+              max_tokens: 3000,
+              messages: [{ role: "system", content: getManualTextPrompt() }, { role: "user", content: text }]
+            })
+          });
+          if (res.ok) tutorText = (await res.json()).choices?.[0]?.message?.content;
+        } catch (_) { }
+      }
+
+      if (!tutorText && activeGroqKey) {
+        const resGroq = await fetch(GROQ_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeGroqKey}` },
+          body: JSON.stringify({
+            model: TUTOR_MODEL_GROQ,
+            temperature: 0.2,
+            max_tokens: 3000,
+            messages: [{ role: "system", content: getManualTextPrompt() }, { role: "user", content: text }]
+          })
+        });
+        if (resGroq.ok) tutorText = (await resGroq.json()).choices?.[0]?.message?.content;
+      }
+
+      showResult(tutorText || "Tidak ada respons dari tutor.");
+    } else if (modelChoice === "deepseek") {
+      setStatus("Menganalisis logika & kode dengan DeepSeek...");
+      const activeORKey = getApiKey("OPENROUTER_API_KEY");
+      const activeGroqKey = getApiKey("GROQ_API_KEY");
+      let summaryText = null;
+
+      if (activeORKey) {
+        try {
+          const res = await fetch(OPENROUTER_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeORKey}` },
+            body: JSON.stringify({
+              model: OPENROUTER_MODEL,
+              temperature: 0.2,
+              max_tokens: 3500,
+              messages: [{ role: "system", content: getManualTextPrompt() }, { role: "user", content: text }]
+            })
+          });
+          if (res.ok) summaryText = (await res.json()).choices?.[0]?.message?.content;
+        } catch (_) { }
+      }
+
+      if (!summaryText && activeGroqKey) {
+        const resGroq = await fetch(GROQ_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeGroqKey}` },
+          body: JSON.stringify({
+            model: GROQ_MODEL,
+            temperature: 0.2,
+            max_tokens: 3500,
+            messages: [{ role: "system", content: getManualTextPrompt() }, { role: "user", content: text }]
+          })
+        });
+        if (resGroq.ok) summaryText = (await resGroq.json()).choices?.[0]?.message?.content;
+      }
+
+      showResult(summaryText || "Tidak ada respons dari analisis.");
+    }
+  } catch (err) {
+    showResult(err.message, true);
+  } finally {
+    setStatus("", false);
+    setBusy(false);
+  }
+}
+
+if (btnManualGroq) btnManualGroq.addEventListener("click", () => handleManualTextExecution("groq"));
+if (btnManualQwen) btnManualQwen.addEventListener("click", () => handleManualTextExecution("qwen"));
+if (btnManualDeepSeek) btnManualDeepSeek.addEventListener("click", () => handleManualTextExecution("deepseek"));
+
+// Helper teks serbaguna (Groq dengan fallback Gemini)
+async function callGroqOrGeminiText(userText, customSystemPrompt = null) {
+  const activeGroqKey = getApiKey("GROQ_API_KEY");
+  const systemPrompt = customSystemPrompt || getManualTextPrompt();
+
+  if (activeGroqKey) {
+    for (const model of GROQ_MODELS) {
+      try {
+        const res = await fetch(GROQ_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeGroqKey}` },
+          body: JSON.stringify({
+            model,
+            temperature: 0.0,
+            max_tokens: 2500,
+            messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userText }]
+          })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const ans = d.choices?.[0]?.message?.content;
+          if (ans) return ans;
+        }
+      } catch (_) { }
+    }
+  }
+
+  const activeGeminiKey = getApiKey("GEMINI_API_KEY");
+  if (activeGeminiKey) {
+    for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `${systemPrompt}\n\nSOAL / TUGAS:\n${userText}` }] }]
+          })
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (ans) return ans;
+        }
+      } catch (_) { }
+    }
+  }
+
+  throw new Error("Gagal memanggil model AI (Groq & Gemini). Periksa API Key Anda di config.js.");
+}
+
+
+// --- 4. FITUR KIRIM FILE (GAMBAR, DOKUMEN PDF/TEKS, AUDIO) ---
+const fileUploadInput = $("fileUploadInput");
+const dropzone = $("dropzone");
+const filePreviewCard = $("filePreviewCard");
+const fileIcon = $("fileIcon");
+const fileName = $("fileName");
+const fileSize = $("fileSize");
+const btnRemoveFile = $("btnRemoveFile");
+const imagePreview = $("imagePreview");
+const fileAudioPreview = $("fileAudioPreview");
+const filePromptInput = $("filePromptInput");
+if (filePromptInput) {
+  filePromptInput.addEventListener("input", () => {
+    try {
+      chrome.storage?.local?.set({ savedFilePrompt: filePromptInput.value });
+    } catch (_) { }
+  });
+  try {
+    chrome.storage?.local?.get(["savedFilePrompt"], (res) => {
+      if (res?.savedFilePrompt && filePromptInput) {
+        filePromptInput.value = res.savedFilePrompt;
+      }
+    });
+  } catch (_) { }
+}
+const btnProcessFile = $("btnProcessFile");
+const btnSummarizeFile = $("btnSummarizeFile");
+
+let selectedFile = null;
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / 1048576).toFixed(1) + " MB";
+}
+
+if (dropzone && fileUploadInput) {
+  dropzone.addEventListener("click", () => fileUploadInput.click());
+
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("dragover");
+  });
+  dropzone.addEventListener("dragleave", () => {
+    dropzone.classList.remove("dragover");
+  });
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("dragover");
+    if (e.dataTransfer?.files?.length > 0) {
+      handleSelectedFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  fileUploadInput.addEventListener("change", (e) => {
+    if (e.target?.files?.length > 0) {
+      handleSelectedFile(e.target.files[0]);
+    }
+  });
+}
+
+function handleSelectedFile(file) {
+  if (!file) return;
+  selectedFile = file;
+
+  if (filePreviewCard) filePreviewCard.classList.add("show");
+  if (dropzone) dropzone.style.display = "none";
+  if (fileName) fileName.textContent = file.name;
+  if (fileSize) fileSize.textContent = formatFileSize(file.size);
+
+  // Set Icon & Preview Sesuai Tipe File
+  if (imagePreview) imagePreview.style.display = "none";
+  if (fileAudioPreview) {
+    fileAudioPreview.style.display = "none";
+    fileAudioPreview.src = "";
+  }
+
+  if (file.type.startsWith("image/")) {
+    if (fileIcon) fileIcon.textContent = "🖼️";
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (imagePreview) {
+        imagePreview.src = e.target.result;
+        imagePreview.style.display = "block";
+      }
+    };
+    reader.readAsDataURL(file);
+  } else if (file.type.startsWith("audio/")) {
+    if (fileIcon) fileIcon.textContent = "🎵";
+    const audioUrl = URL.createObjectURL(file);
+    if (fileAudioPreview) {
+      fileAudioPreview.src = audioUrl;
+      fileAudioPreview.style.display = "block";
+    }
+  } else if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+    if (fileIcon) fileIcon.textContent = "📑";
+  } else {
+    if (fileIcon) fileIcon.textContent = "📄";
+  }
+}
+
+if (btnRemoveFile) {
+  btnRemoveFile.addEventListener("click", () => {
+    selectedFile = null;
+    if (fileUploadInput) fileUploadInput.value = "";
+    if (filePreviewCard) filePreviewCard.classList.remove("show");
+    if (dropzone) dropzone.style.display = "flex";
+    if (imagePreview) {
+      imagePreview.style.display = "none";
+      imagePreview.src = "";
+    }
+    if (fileAudioPreview) {
+      fileAudioPreview.style.display = "none";
+      fileAudioPreview.src = "";
+    }
+  });
+}
+
+async function processUploadedFile(isSummary = false) {
+  if (!selectedFile) {
+    showResult("⚠️ Silakan pilih atau unggah file terlebih dahulu.", true);
+    return;
+  }
+
+  setBusy(true);
+  result.style.display = "none";
+  if (resultActions) resultActions.classList.remove("show");
+
+  try {
+    const customPrompt = filePromptInput ? filePromptInput.value.trim() : "";
+    const activeGeminiKey = getApiKey("GEMINI_API_KEY");
+    const activeGroqKey = getApiKey("GROQ_API_KEY");
+    const filePrompt = getFileAnalysisPrompt(isSummary, customPrompt);
+
+    // 1. FILE GAMBAR (PNG, JPG, WEBP, dll.)
+    if (selectedFile.type.startsWith("image/")) {
+      if (!activeGeminiKey) {
+        throw new Error("API Key Gemini diperlukan untuk menganalisis file gambar.");
+      }
+      setStatus("Menganalisis file gambar dengan Gemini Vision...");
+      const base64Data = await blobToBase64(selectedFile);
+
+      const parts = [
+        { text: filePrompt },
+        { inline_data: { mime_type: selectedFile.type || "image/jpeg", data: base64Data } }
+      ];
+
+      for (const model of GEMINI_MODELS) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts }] })
+          });
+          if (res.ok) {
+            const d = await res.json();
+            const ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (ans) {
+              showResult(ans);
+              return;
+            }
+          }
+        } catch (_) { }
+      }
+      throw new Error("Gagal menganalisis file gambar dengan Gemini.");
+    }
+
+    // 2. FILE DOKUMEN PDF (Native Multimodal Gemini)
+    if (selectedFile.type === "application/pdf" || selectedFile.name.endsWith(".pdf")) {
+      if (!activeGeminiKey) {
+        throw new Error("API Key Gemini diperlukan untuk membaca file PDF.");
+      }
+      setStatus("Membaca dan menganalisis dokumen PDF dengan Gemini...");
+      const base64Data = await blobToBase64(selectedFile);
+
+      const parts = [
+        { text: filePrompt },
+        { inline_data: { mime_type: "application/pdf", data: base64Data } }
+      ];
+
+      for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts }] })
+          });
+          if (res.ok) {
+            const d = await res.json();
+            const ans = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (ans) {
+              showResult(ans);
+              return;
+            }
+          }
+        } catch (_) { }
+      }
+      throw new Error("Gagal memproses dokumen PDF.");
+    }
+
+    // 3. FILE REKAMAN AUDIO (MP3, WAV, M4A, OGG, dll.)
+    if (selectedFile.type.startsWith("audio/")) {
+      setStatus("Memproses file audio...");
+      let transcript = "";
+
+      if (activeGroqKey) {
+        try {
+          setStatus("Mentranskripsi file audio dengan Groq Whisper...");
+          const formData = new FormData();
+          formData.append("file", selectedFile);
+          formData.append("model", "whisper-large-v3-turbo");
+          formData.append("response_format", "json");
+
+          const wRes = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${activeGroqKey}` },
+            body: formData
+          });
+          if (wRes.ok) {
+            transcript = (await wRes.json()).text || "";
+          }
+        } catch (_) { }
+      }
+
+      if (transcript) {
+        setStatus("Menganalisis hasil transkrip audio...");
+        let promptAudio = `${filePrompt}\n\nTRANSKRIP AUDIO:\n${transcript}`;
+        const ans = await callGroqOrGeminiText(promptAudio, filePrompt);
+        showResult(`🎵 [TRANSKRIP AUDIO]:\n"${transcript}"\n\n═════════════════════════════════════\n🤖 [HASIL AI]:\n${ans}`);
+        return;
+      }
+
+      // Fallback Gemini Audio
+      if (activeGeminiKey) {
+        const base64Data = await blobToBase64(selectedFile);
+        const parts = [
+          { text: filePrompt },
+          { inline_data: { mime_type: selectedFile.type || "audio/mp3", data: base64Data } }
+        ];
+
+        const gRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeGeminiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts }] })
+        });
+        if (gRes.ok) {
+          const ans = (await gRes.json())?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (ans) {
+            showResult(ans);
+            return;
+          }
+        }
+      }
+      throw new Error("Gagal mentranskripsi atau memproses file audio.");
+    }
+
+    // 4. FILE TEKS & KODE PROGRAM (.txt, .docx, .csv, .json, .js, .py, dll.)
+    setStatus("Membaca isi file teks...");
+    const fileContent = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsText(selectedFile);
+    });
+
+    let prompt = `${filePrompt}\n\nKONTEN FILE "${selectedFile.name}":\n${fileContent.slice(0, 16000)}`;
+
+    setStatus("Menganalisis isi dokumen dengan AI...");
+    const ans = await callGroqOrGeminiText(prompt, filePrompt);
+    showResult(ans);
+
+  } catch (err) {
+    showResult(err.message, true);
+  } finally {
+    setStatus("", false);
+    setBusy(false);
+  }
+}
+
+if (btnProcessFile) btnProcessFile.addEventListener("click", () => processUploadedFile(false));
+if (btnSummarizeFile) btnSummarizeFile.addEventListener("click", () => processUploadedFile(true));
