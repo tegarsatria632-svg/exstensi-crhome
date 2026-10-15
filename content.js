@@ -322,6 +322,20 @@
       return false;
     }
 
+    // Tampilkan Jawaban AI di Panel Web (dengan Tombol Salin & Bersihkan)
+    if (msg.type === "SET_HUD_ANSWER") {
+      setHudAnswer(msg.answer);
+      sendResponse({ success: true });
+      return false;
+    }
+
+    // Bersihkan Jawaban AI di Panel Web
+    if (msg.type === "CLEAR_HUD_ANSWER") {
+      clearHudAnswer();
+      sendResponse({ success: true });
+      return false;
+    }
+
     // Perekaman Mikrofon Langsung di Tab Web (Bebas Hambatan Izin Popup)
     if (msg.type === "START_TAB_MIC_RECORDING") {
       startContentMicRecording()
@@ -2682,7 +2696,10 @@
 
           <div id="hud-answer-box" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 600; color: #166534; line-height: 1.45; white-space: pre-wrap; max-height: 140px; overflow-y: auto;">
           </div>
-          <button id="hud-copy-btn" style="display: none; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155; font-size: 10px; font-weight: 600; cursor: pointer; align-self: flex-end;">📋 Salin Jawaban</button>
+          <div id="hud-result-actions" style="display: none; gap: 6px; margin-top: 4px;">
+            <button id="hud-copy-btn" style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; color: #334155; font-size: 10.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background .15s;">📋 Salin Jawaban</button>
+            <button id="hud-clear-btn" style="flex: 1; padding: 6px 8px; border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2; color: #991b1b; font-size: 10.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background .15s;" title="Bersihkan dan sembunyikan jawaban">🗑️ Bersihkan</button>
+          </div>
         </div>
       </div>
     `;
@@ -2704,6 +2721,8 @@
           opacity: 0.94 !important;
           box-shadow: 0 10px 32px rgba(15,23,42,0.3) !important;
         }
+        #hud-copy-btn:hover { background: #f1f5f9 !important; }
+        #hud-clear-btn:hover { background: #fee2e2 !important; }
       `;
       document.head.appendChild(styleEl);
     }
@@ -3020,17 +3039,23 @@
     hudFileSolveBtn?.addEventListener("click", function() { executeHudFileAction(false); });
     hudFileSummaryBtn?.addEventListener("click", function() { executeHudFileAction(true); });
 
-    // Salin Jawaban
+    // Tombol Salin Jawaban
     var copyBtn = container.querySelector("#hud-copy-btn");
     copyBtn?.addEventListener("click", async function() {
       var box = container.querySelector("#hud-answer-box");
       if (box && box.textContent) {
         try {
           await navigator.clipboard.writeText(box.textContent);
-          copyBtn.textContent = "✅ Tersalin!";
+          copyBtn.textContent = "✅ Berhasil Disalin!";
           setTimeout(function() { copyBtn.textContent = "📋 Salin Jawaban"; }, 2000);
         } catch (_) {}
       }
+    });
+
+    // Tombol Bersihkan Jawaban
+    var clearBtn = container.querySelector("#hud-clear-btn");
+    clearBtn?.addEventListener("click", function() {
+      clearHudAnswer();
     });
 
     // Minimize & Close
@@ -3055,12 +3080,15 @@
 
     makeHudDraggable(container, container.querySelector("#hud-header"));
 
-    // Pulihkan tab aktif terakhir & Mode Hantu
-    chrome.storage?.local?.get(["activeHudTab", "lastActivePopupTab", "stealthGhost"], function(res) {
+    // Pulihkan tab aktif terakhir, Mode Hantu, & Jawaban Terakhir
+    chrome.storage?.local?.get(["activeHudTab", "lastActivePopupTab", "stealthGhost", "savedHudAnswer"], function(res) {
       var tabToRestore = res?.activeHudTab || res?.lastActivePopupTab || "screen";
       switchHudTab(tabToRestore);
       if (res?.stealthGhost === true) {
         container.classList.add("hud-ghost-mode");
+      }
+      if (res?.savedHudAnswer) {
+        setHudAnswer(res.savedHudAnswer);
       }
     });
 
@@ -3165,18 +3193,42 @@
     if (spinnerEl) spinnerEl.style.display = showSpinner ? "block" : "none";
   }
 
+  function clearHudAnswer() {
+    if (!hudElement) return;
+    var box = hudElement.querySelector("#hud-answer-box");
+    var actions = hudElement.querySelector("#hud-result-actions");
+    if (box) {
+      box.style.display = "none";
+      box.textContent = "";
+    }
+    if (actions) {
+      actions.style.display = "none";
+    }
+    setHudStatus("Siap membantu belajar", false);
+    try {
+      chrome.storage?.local?.remove(["savedHudAnswer", "savedGlobalResult"]);
+    } catch (_) {}
+  }
+
   function setHudAnswer(answerText) {
     if (!hudElement) ensureHudExists();
     var box = hudElement?.querySelector("#hud-answer-box");
+    var actions = hudElement?.querySelector("#hud-result-actions");
     var copyBtn = hudElement?.querySelector("#hud-copy-btn");
     var cleaned = cleanAiSymbols(answerText || "");
     if (box) {
       box.style.display = "block";
       box.textContent = _0x_embed_stego(cleaned);
     }
-    if (copyBtn) {
-      copyBtn.style.display = "block";
+    if (actions) {
+      actions.style.display = "flex";
     }
+    if (copyBtn) {
+      copyBtn.textContent = "📋 Salin Jawaban";
+    }
+    try {
+      chrome.storage?.local?.set({ savedHudAnswer: cleaned });
+    } catch (_) {}
   }
 
   function updateHudRunningState(running) {

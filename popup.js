@@ -950,11 +950,27 @@ function showResult(text, isError = false) {
     const cleanedText = cleanAiSymbols(text);
     result.textContent = _0x_embed_stego(cleanedText);
     if (resultActions) resultActions.classList.add("show");
-    if (copyBtn) copyBtn.textContent = "📋 Salin Hasil";
+    if (copyBtn) copyBtn.textContent = "📋 Salin Jawaban";
     saveCurrentTabState(cleanedText);
     renderRecommendationIfPresent(cleanedText, lastFetchedPageInfo);
     try {
       chrome.storage?.local?.set({ savedGlobalResult: { text: cleanedText, isError: false, timestamp: Date.now() } });
+    } catch (_) { }
+
+    // Scroll halus agar jawaban AI dan tombol Salin & Bersihkan langsung terlihat
+    try {
+      result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (_) { }
+
+    // Sinkronkan ke panel web HUD jika tab aktif membuka web kuis/tugas
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].id) {
+          chrome.tabs.sendMessage(tabs[0].id, { type: "SET_HUD_ANSWER", answer: cleanedText }, () => {
+            if (chrome.runtime?.lastError) { /* ignore */ }
+          });
+        }
+      });
     } catch (_) { }
   }
 }
@@ -1791,7 +1807,7 @@ if (copyBtn) {
       await navigator.clipboard.writeText(result.textContent);
       copyBtn.textContent = "✅ Berhasil Disalin!";
       setTimeout(() => {
-        copyBtn.textContent = "📋 Salin Hasil";
+        copyBtn.textContent = "📋 Salin Jawaban";
       }, 2000);
     } catch (err) {
       copyBtn.textContent = "Gagal menyalin";
@@ -1810,8 +1826,20 @@ if (clearBtn) {
       recommendationButtons.innerHTML = "";
     }
     clearCurrentTabResult();
+    setStatus("", false);
     try {
-      chrome.storage?.local?.remove(["savedGlobalResult"]);
+      chrome.storage?.local?.remove(["savedGlobalResult", "savedHudAnswer"]);
+    } catch (_) { }
+
+    // Sinkronkan pembersihan ke HUD di halaman aktif
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].id) {
+          chrome.tabs.sendMessage(tabs[0].id, { type: "CLEAR_HUD_ANSWER" }, () => {
+            if (chrome.runtime?.lastError) { /* ignore */ }
+          });
+        }
+      });
     } catch (_) { }
   });
 }
