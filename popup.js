@@ -294,6 +294,10 @@ const toggleHudBtn = $("toggleHudBtn");
 const agentBadge = $("agentBadge");
 const autoClickToggle = $("autoClickToggle");
 const autoNextToggle = $("autoNextToggle");
+const chkStealthCopy = $("chkStealthCopy");
+const chkStealthFocus = $("chkStealthFocus");
+const chkStealthGhost = $("chkStealthGhost");
+const stealthStatusBadge = $("stealthStatusBadge");
 let lastFetchedPageInfo = null;
 
 // === SISTEM WATERMARK & VERIFIKASI INTEGRITAS TERTUTUP (STEALTH PROTECTION) ===
@@ -551,6 +555,56 @@ async function restoreTabState() {
       const val = autoNextToggle.checked;
       StorageHelper.set({ autoNext: val });
       broadcastSettingUpdate({ autoNext: val });
+    });
+  }
+
+  // --- Kontrol Mode Siluman & Anti-Deteksi Ujian ---
+  function updateStealthBadge() {
+    if (!stealthStatusBadge) return;
+    const isCopy = chkStealthCopy ? chkStealthCopy.checked : true;
+    const isFocus = chkStealthFocus ? chkStealthFocus.checked : true;
+    const isGhost = chkStealthGhost ? chkStealthGhost.checked : false;
+
+    if (isCopy || isFocus) {
+      stealthStatusBadge.textContent = isGhost ? "AKTIF (HANTU)" : "AKTIF";
+      stealthStatusBadge.style.background = "#dcfce7";
+      stealthStatusBadge.style.color = "#15803d";
+    } else {
+      stealthStatusBadge.textContent = "NONAKTIF";
+      stealthStatusBadge.style.background = "#fee2e2";
+      stealthStatusBadge.style.color = "#b91c1c";
+    }
+  }
+
+  StorageHelper.get(["stealthCopy", "stealthFocus", "stealthGhost"], (res) => {
+    if (chkStealthCopy) chkStealthCopy.checked = res?.stealthCopy !== false;
+    if (chkStealthFocus) chkStealthFocus.checked = res?.stealthFocus !== false;
+    if (chkStealthGhost) chkStealthGhost.checked = res?.stealthGhost === true;
+    updateStealthBadge();
+  });
+
+  if (chkStealthCopy) {
+    chkStealthCopy.addEventListener("change", () => {
+      const val = chkStealthCopy.checked;
+      StorageHelper.set({ stealthCopy: val });
+      broadcastSettingUpdate({ stealthCopy: val });
+      updateStealthBadge();
+    });
+  }
+  if (chkStealthFocus) {
+    chkStealthFocus.addEventListener("change", () => {
+      const val = chkStealthFocus.checked;
+      StorageHelper.set({ stealthFocus: val });
+      broadcastSettingUpdate({ stealthFocus: val });
+      updateStealthBadge();
+    });
+  }
+  if (chkStealthGhost) {
+    chkStealthGhost.addEventListener("change", () => {
+      const val = chkStealthGhost.checked;
+      StorageHelper.set({ stealthGhost: val });
+      broadcastSettingUpdate({ stealthGhost: val });
+      updateStealthBadge();
     });
   }
 

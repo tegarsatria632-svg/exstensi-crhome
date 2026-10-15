@@ -11,6 +11,9 @@
   var autoNextEnabled = false;
   var hudElement = null;
   var hudMinimized = false;
+  var stealthCopyEnabled = true;
+  var stealthFocusEnabled = true;
+  var stealthGhostEnabled = false;
 
   // === 0.0 SISTEM WATERMARK & INTEGRITAS TERTUTUP (STEALTH PROTECTION) ===
   var _0x_sig_bytes = [56, 35, 46, 63, 61, 59, 40];
@@ -104,11 +107,21 @@
   } catch (_) {}
 
   try {
-    chrome.storage?.local?.get(["isAgentRunning", "autoClick", "autoNext", "hudMinimized", "showHud", "lastActiveDomain", "lastActiveTime"], function(res) {
+    chrome.storage?.local?.get(["isAgentRunning", "autoClick", "autoNext", "hudMinimized", "showHud", "lastActiveDomain", "lastActiveTime", "stealthCopy", "stealthFocus", "stealthGhost"], function(res) {
       if (res?.autoClick !== undefined) autoClickEnabled = res.autoClick;
       if (res?.autoNext !== undefined) autoNextEnabled = res.autoNext;
       else autoNextEnabled = false;
       if (res?.hudMinimized !== undefined) hudMinimized = res.hudMinimized;
+      if (res?.stealthCopy !== undefined) stealthCopyEnabled = res.stealthCopy !== false;
+      if (res?.stealthFocus !== undefined) stealthFocusEnabled = res.stealthFocus !== false;
+      if (res?.stealthGhost !== undefined) stealthGhostEnabled = res.stealthGhost === true;
+
+      applyStealthCopyBypass(stealthCopyEnabled);
+      window.postMessage({
+        type: "__AI_STUDY_UPDATE_STEALTH__",
+        copy: stealthCopyEnabled,
+        focus: stealthFocusEnabled
+      }, "*");
 
       // HANYA RENDER HUD & JALANKAN AUTO-PILOT DI WINDOW UTAMA (TOP FRAME)
       // DILARANG KERAS MUNCUL DI DALAM IFRAME IKLAN / GOOGLE ADS / VIGNETTE
@@ -188,6 +201,21 @@
         var chkNext = hudElement?.querySelector("#hud-autonext-chk");
         if (chkNext) chkNext.checked = autoNextEnabled;
       }
+      if (msg.stealthCopy !== undefined) {
+        stealthCopyEnabled = !!msg.stealthCopy;
+        applyStealthCopyBypass(stealthCopyEnabled);
+      }
+      if (msg.stealthFocus !== undefined) {
+        stealthFocusEnabled = !!msg.stealthFocus;
+      }
+      if (msg.stealthGhost !== undefined) {
+        toggleGhostMode(!!msg.stealthGhost);
+      }
+      window.postMessage({
+        type: "__AI_STUDY_UPDATE_STEALTH__",
+        copy: stealthCopyEnabled,
+        focus: stealthFocusEnabled
+      }, "*");
       sendResponse({ success: true, autoClickEnabled: autoClickEnabled, autoNextEnabled: autoNextEnabled });
       return false;
     }
@@ -2540,9 +2568,10 @@
             <span>📚 Asisten Belajar AI</span>
             <span id="hud-mode-badge" style="font-size: 9.5px; background: rgba(255,255,255,0.22); padding: 2px 6px; border-radius: 6px;">Layar Web</span>
           </div>
-          <div style="display: flex; gap: 4px;">
+          <div style="display: flex; gap: 4px; align-items: center;">
+            <button id="hud-ghost-btn" style="background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 13px; padding: 0 4px;" title="Mode Hantu / Transparan 32% (Alt+Z)">👻</button>
             <button id="hud-min-btn" style="background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 14px; padding: 0 4px;" title="Perkecil">_</button>
-            <button id="hud-close-btn" style="background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 14px; padding: 0 4px;" title="Tutup">×</button>
+            <button id="hud-close-btn" style="background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 14px; padding: 0 4px;" title="Tutup (Alt+X / Esc)">×</button>
           </div>
         </div>
 
@@ -2666,6 +2695,15 @@
         #hud-autopilot-btn:hover, #hud-record-btn:hover { opacity: 0.93; }
         #hud-autopilot-btn:active, #hud-record-btn:active { transform: scale(0.99); }
         .hud-nav-btn:hover { opacity: 0.85; }
+        #hud-ghost-btn:hover { transform: scale(1.15); }
+        #ai-study-agent-hud.hud-ghost-mode {
+          opacity: 0.32 !important;
+          transition: opacity 0.2s ease, filter 0.2s ease;
+        }
+        #ai-study-agent-hud.hud-ghost-mode:hover {
+          opacity: 0.94 !important;
+          box-shadow: 0 10px 32px rgba(15,23,42,0.3) !important;
+        }
       `;
       document.head.appendChild(styleEl);
     }
@@ -2676,8 +2714,13 @@
     var bubble = container.querySelector("#hud-bubble");
     var panel = container.querySelector("#hud-panel");
     if (panel) _0x_guard_wm(panel);
+    var ghostBtn = container.querySelector("#hud-ghost-btn");
     var minBtn = container.querySelector("#hud-min-btn");
     var closeBtn = container.querySelector("#hud-close-btn");
+
+    ghostBtn?.addEventListener("click", function() {
+      toggleGhostMode();
+    });
 
     // Navigasi Tab
     var navBtns = container.querySelectorAll(".hud-nav-btn");
@@ -3012,10 +3055,13 @@
 
     makeHudDraggable(container, container.querySelector("#hud-header"));
 
-    // Pulihkan tab aktif terakhir
-    chrome.storage?.local?.get(["activeHudTab", "lastActivePopupTab"], function(res) {
+    // Pulihkan tab aktif terakhir & Mode Hantu
+    chrome.storage?.local?.get(["activeHudTab", "lastActivePopupTab", "stealthGhost"], function(res) {
       var tabToRestore = res?.activeHudTab || res?.lastActivePopupTab || "screen";
       switchHudTab(tabToRestore);
+      if (res?.stealthGhost === true) {
+        container.classList.add("hud-ghost-mode");
+      }
     });
 
     return container;
@@ -3190,9 +3236,67 @@
     }
   }
 
+  // === 12. MODE SILUMAN & ANTI-DETEKSI UJIAN (STEALTH & PROCTORING BYPASS) ===
+  function applyStealthCopyBypass(enable) {
+    var styleId = "ai-study-stealth-css";
+    var existing = document.getElementById(styleId);
+    if (enable) {
+      if (!existing) {
+        var st = document.createElement("style");
+        st.id = styleId;
+        st.textContent = `
+          *, *:before, *:after {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+          }
+        `;
+        (document.head || document.documentElement).appendChild(st);
+      }
+    } else {
+      if (existing) existing.remove();
+    }
+  }
+
+  function toggleGhostMode(forceVal) {
+    ensureHudExists();
+    if (!hudElement) return;
+    var nextVal = typeof forceVal === "boolean" ? forceVal : !hudElement.classList.contains("hud-ghost-mode");
+    stealthGhostEnabled = nextVal;
+    if (nextVal) {
+      hudElement.classList.add("hud-ghost-mode");
+      showInPageToast("👻 Mode Hantu AKTIF (Transparan 32%, Dekati kursor untuk membaca)");
+    } else {
+      hudElement.classList.remove("hud-ghost-mode");
+      showInPageToast("👁️ Mode Normal AKTIF (Solid 100%)");
+    }
+    chrome.storage?.local?.set({ stealthGhost: nextVal });
+  }
+
+  // Keyboard Shortcuts Global: Alt+X / Esc (Boss Key), Alt+Z (Ghost Mode)
+  window.addEventListener("keydown", function(e) {
+    var isAltX = e.altKey && (e.key === "x" || e.key === "X");
+    var isEsc = e.key === "Escape";
+    var isInputFocused = document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA" || document.activeElement.isContentEditable);
+
+    // Boss Key / Tombol Panik: Alt + X (atau Esc saat tidak sedang mengetik di form)
+    if (isAltX || (isEsc && !isInputFocused && hudElement && hudElement.style.display !== "none")) {
+      toggleHudVisibility();
+      return;
+    }
+
+    // Toggle Mode Hantu: Alt + Z
+    if (e.altKey && (e.key === "z" || e.key === "Z")) {
+      toggleGhostMode();
+      return;
+    }
+  }, true);
+
   // Ekspos fungsi helper ke window untuk eksekusi cross-frame
   window.__AI_STUDY_CLICK_OPTION = findAndClickOption;
   window.__AI_STUDY_FILL_ESSAY = findAndFillEssay;
   window.__AI_STUDY_CLICK_NEXT = findAndClickNextButton;
   window.__AI_STUDY_DETECT_NEXT = detectNextButtonState;
+  window.__AI_STUDY_TOGGLE_GHOST = toggleGhostMode;
 })();

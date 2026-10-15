@@ -46,6 +46,13 @@ Ekstensi Google Chrome modern (**Manifest V3**) yang dirancang untuk asisten bel
    - **Dokumen PDF & Teks**: Dibaca langsung oleh multimodal AI untuk pemecahan soal atau rangkuman.
    - **File Audio (MP3, WAV, M4A)**: Ditranskripsi otomatis dan dianalisis oleh AI tanpa saling lempar model.
 
+9. **🛡️ Mode Siluman & Anti-Deteksi Ujian (Stealth & Proctoring Bypass)**
+   - **🔓 Buka Blokir Klik Kanan & Salin Teks**: Melumpuhkan proteksi anti-copy dan blokir klik kanan pada web ujian (seperti Moodle, CBT, Google Forms terkunci) agar teks soal dapat disorot dan dibaca dengan leluasa.
+   - **👁️ Anti-Deteksi Pindah Tab (Fake Focus / Always Active)**: Memalsukan status `document.visibilityState` dan `window.blur` di level browser (*Main World*), mencegah sistem pengawas mendeteksi peringatan *"Anda keluar dari tab ujian"*.
+   - **👻 Mode Hantu (Transparan 32%)**: Mengubah panel kontrol di layar menjadi semi-transparan dan samar dari kejauhan, otomatis jelas saat kursor didekatkan.
+   - **⌨️ Tombol Panik / Boss Key (`Alt + X` / `Esc`)**: Sembunyikan seketika Panel Web dalam 0.1 detik tanpa jejak saat ada orang mendekat.
+   - **⌨️ Shortcut Mode Hantu (`Alt + Z`)**: Beralih instan antara mode transparan dan mode normal solid.
+
 ---
 
 ## 🚀 Panduan Instalasi Pertama Kali
