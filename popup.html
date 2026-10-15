@@ -1,440 +1,611 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-<meta charset="UTF-8">
-<style>
-  * { box-sizing: border-box; }
-  body {
-    width: 395px;
-    margin: 0;
-    padding: 12px;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #f8fafc;
-    color: #0f172a;
-    font-size: 12px;
-  }
-  
-  .header {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    margin-bottom: 10px;
-  }
-  .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .header h1 {
-    font-size: 14.5px;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 700;
-    color: #1e1b4b;
-    white-space: nowrap;
-  }
-  .version-tag {
-    font-size: 10px;
-    font-weight: 700;
-    background: #e0e7ff;
-    color: #4338ca;
-    padding: 2.5px 7px;
-    border-radius: 12px;
-    white-space: nowrap;
-  }
-  .header-actions {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-  }
-  .header-btn {
-    flex: 1;
-    padding: 5px 6px;
-    font-size: 10px;
-    font-weight: 600;
-    border: 1px solid #cbd5e1;
-    border-radius: 7px;
-    background: #ffffff;
-    color: #334155;
-    cursor: pointer;
-    transition: all .15s ease;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 3.5px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-  }
-  .header-btn:hover {
-    background: #f1f5f9;
-    border-color: #94a3b8;
-    color: #0f172a;
-  }
+  <meta charset="UTF-8">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-  /* Navigation Tabs */
-  .nav-tabs {
-    display: flex;
-    gap: 4px;
-    background: #e2e8f0;
-    padding: 3px;
-    border-radius: 10px;
-    margin-bottom: 11px;
-  }
-  .nav-tab-btn {
-    flex: 1;
-    padding: 6.5px 4px;
-    font-size: 11px;
-    font-weight: 600;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: #64748b;
-    cursor: pointer;
-    transition: all .15s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    white-space: nowrap;
-  }
-  .nav-tab-btn:hover {
-    color: #1e293b;
-  }
-  .nav-tab-btn.active {
-    background: #4f46e5;
-    color: #ffffff;
-    box-shadow: 0 1px 4px rgba(79, 70, 229, 0.28);
-  }
+    body {
+      width: 395px;
+      margin: 0;
+      padding: 12px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      font-size: 12px;
+    }
 
-  .tab-pane {
-    display: none;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .tab-pane.active {
-    display: flex;
-  }
+    .header {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
 
-  /* Action Buttons */
-  .btn-group { display: flex; flex-direction: column; gap: 7px; }
-  .btn-action {
-    width: 100%;
-    padding: 8.5px 12px;
-    border: 0;
-    border-radius: 8px;
-    font-size: 11.5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity .15s, transform .05s, box-shadow .15s;
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .btn-action:hover { opacity: 0.93; transform: translateY(-1px); }
-  .btn-action:active { transform: translateY(0); }
-  .btn-action:disabled { opacity: 0.55; cursor: wait; transform: none; }
-  
-  .btn-groq { background: #4f46e5; color: #fff; }
-  .btn-openrouter { background: #059669; color: #fff; }
-  .btn-hf { background: #d97706; color: #fff; }
-  .btn-gemini { background: #0284c7; color: #fff; }
-  
-  /* Voice / Audio Controls */
-  .source-selector {
-    display: flex;
-    gap: 4px;
-    background: #f1f5f9;
-    padding: 3px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-  }
-  .source-btn {
-    flex: 1;
-    padding: 5px 4px;
-    font-size: 10.5px;
-    font-weight: 600;
-    border: 0;
-    border-radius: 6px;
-    background: transparent;
-    color: #475569;
-    cursor: pointer;
-    transition: all .15s;
-    text-align: center;
-  }
-  .source-btn.active {
-    background: #fff;
-    color: #312e81;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-  .record-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  .record-timer {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1e293b;
-    font-variant-numeric: tabular-nums;
-  }
-  .record-status-label {
-    font-size: 11px;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .record-pulse {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: #ef4444;
-    animation: pulseRed 1s infinite;
-    display: none;
-  }
-  .record-pulse.active { display: inline-block; }
-  @keyframes pulseRed {
-    0% { transform: scale(0.95); opacity: 1; }
-    50% { transform: scale(1.3); opacity: 0.6; }
-    100% { transform: scale(0.95); opacity: 1; }
-  }
+    .header h1 {
+      font-size: 14.5px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      color: #1e1b4b;
+      white-space: nowrap;
+    }
 
-  /* Sound Wave Animation */
-  .soundwave {
-    display: none;
-    align-items: center;
-    gap: 3px;
-    height: 22px;
-  }
-  .soundwave.active { display: flex; }
-  .soundwave-bar {
-    width: 3.5px;
-    background: #4f46e5;
-    border-radius: 3px;
-    animation: soundWaveAnim 1s ease-in-out infinite;
-  }
-  .soundwave-bar:nth-child(1) { height: 8px; animation-delay: 0.1s; }
-  .soundwave-bar:nth-child(2) { height: 16px; animation-delay: 0.3s; }
-  .soundwave-bar:nth-child(3) { height: 22px; animation-delay: 0.2s; }
-  .soundwave-bar:nth-child(4) { height: 12px; animation-delay: 0.4s; }
-  .soundwave-bar:nth-child(5) { height: 18px; animation-delay: 0.25s; }
-  @keyframes soundWaveAnim {
-    0%, 100% { transform: scaleY(0.4); }
-    50% { transform: scaleY(1); }
-  }
+    .version-tag {
+      font-size: 10px;
+      font-weight: 700;
+      background: #e0e7ff;
+      color: #4338ca;
+      padding: 2.5px 7px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
 
-  .btn-record-main {
-    width: 100%;
-    padding: 10px;
-    border: 0;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all .15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #fff;
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
-  }
-  .btn-record-main.recording {
-    background: linear-gradient(135deg, #475569, #334155);
-    box-shadow: 0 2px 6px rgba(51, 65, 85, 0.25);
-  }
+    .header-actions {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
 
-  /* Text Input */
-  .manual-textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 12px;
-    font-family: inherit;
-    resize: vertical;
-    min-height: 85px;
-    max-height: 180px;
-    line-height: 1.45;
-    color: #0f172a;
-    background: #ffffff;
-    box-sizing: border-box;
-  }
-  .manual-textarea:focus {
-    outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
-  }
-  .textarea-tools {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 10.5px;
-    color: #64748b;
-  }
-  .btn-mini {
-    padding: 3px 8px;
-    font-size: 10.5px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    color: #334155;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .btn-mini:hover { background: #f1f5f9; }
+    .header-btn {
+      flex: 1;
+      padding: 5px 6px;
+      font-size: 10px;
+      font-weight: 600;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #ffffff;
+      color: #334155;
+      cursor: pointer;
+      transition: all .15s ease;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3.5px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
 
-  /* Dropzone / File Upload */
-  .dropzone {
-    border: 2px dashed #cbd5e1;
-    background: #ffffff;
-    border-radius: 10px;
-    padding: 14px;
-    text-align: center;
-    cursor: pointer;
-    transition: all .15s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-  .dropzone:hover, .dropzone.dragover {
-    border-color: #4f46e5;
-    background: #eef2ff;
-  }
-  .dropzone-icon { font-size: 24px; }
-  .dropzone-title { font-weight: 700; font-size: 11.5px; color: #1e293b; }
-  .dropzone-desc { font-size: 10px; color: #64748b; line-height: 1.3; }
+    .header-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
 
-  .file-preview-card {
-    display: none;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 9px 11px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .file-preview-card.show { display: flex; }
-  .file-preview-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    overflow: hidden;
-  }
-  .file-preview-name {
-    font-size: 11.5px;
-    font-weight: 600;
-    color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 220px;
-  }
-  .file-preview-size { font-size: 10px; color: #64748b; }
-  .btn-remove-file {
-    background: #fee2e2;
-    color: #b91c1c;
-    border: 0;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 10px;
+      margin-bottom: 11px;
+    }
 
-  .file-prompt-input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 7px;
-    font-size: 11.5px;
-    font-family: inherit;
-    box-sizing: border-box;
-  }
-  .file-prompt-input:focus {
-    outline: none;
-    border-color: #4f46e5;
-  }
+    .nav-tab-btn {
+      flex: 1;
+      padding: 6.5px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      transition: all .15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
 
-  /* Result & Status Area */
-  #status {
-    display: none;
-    margin-top: 10px;
-    font-size: 11.5px;
-    color: #475569;
-    align-items: center;
-    gap: 8px;
-    background: #f1f5f9;
-    padding: 7px 10px;
-    border-radius: 7px;
-  }
-  #status.show { display: flex; }
-  .spinner {
-    width: 13px;
-    height: 13px;
-    border: 2px solid #cbd5e1;
-    border-top-color: #4f46e5;
-    border-radius: 50%;
-    animation: spin .8s linear infinite;
-    flex-shrink: 0;
-  }
-  .spinner.hide { display: none; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+    .nav-tab-btn:hover {
+      color: #1e293b;
+    }
 
-  #result {
-    margin-top: 10px;
-    max-height: 280px;
-    overflow-y: auto;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 12.5px;
-    line-height: 1.6;
-    color: #1e293b;
-    display: none;
-    white-space: pre-wrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  #result.error { color: #b91c1c; background: #fff5f5; border-color: #fecaca; }
+    .nav-tab-btn.active {
+      background: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 1px 4px rgba(79, 70, 229, 0.28);
+    }
 
-  .result-actions { display: none; gap: 8px; margin-top: 8px; }
-  .result-actions.show { display: flex; }
-  .btn-sub {
-    flex: 1;
-    padding: 7px 10px;
-    font-size: 11px;
-    border: 0;
-    border-radius: 7px;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
-    transition: all .15s;
-  }
-  .btn-copy { background: #e2e8f0; color: #334155; }
-  .btn-copy:hover { background: #cbd5e1; }
-  .btn-clear { background: #fee2e2; color: #991b1b; }
-  .btn-clear:hover { background: #fecaca; }
-</style>
+    .tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tab-pane.active {
+      display: flex;
+    }
+
+    /* Action Buttons */
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .btn-action {
+      width: 100%;
+      padding: 8.5px 12px;
+      border: 0;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .05s, box-shadow .15s;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-action:hover {
+      opacity: 0.93;
+      transform: translateY(-1px);
+    }
+
+    .btn-action:active {
+      transform: translateY(0);
+    }
+
+    .btn-action:disabled {
+      opacity: 0.55;
+      cursor: wait;
+      transform: none;
+    }
+
+    .btn-groq {
+      background: #4f46e5;
+      color: #fff;
+    }
+
+    .btn-openrouter {
+      background: #059669;
+      color: #fff;
+    }
+
+    .btn-hf {
+      background: #d97706;
+      color: #fff;
+    }
+
+    .btn-gemini {
+      background: #0284c7;
+      color: #fff;
+    }
+
+    /* Voice / Audio Controls */
+    .source-selector {
+      display: flex;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .source-btn {
+      flex: 1;
+      padding: 5px 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #475569;
+      cursor: pointer;
+      transition: all .15s;
+      text-align: center;
+    }
+
+    .source-btn.active {
+      background: #fff;
+      color: #312e81;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .record-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .record-timer {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e293b;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .record-status-label {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .record-pulse {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: pulseRed 1s infinite;
+      display: none;
+    }
+
+    .record-pulse.active {
+      display: inline-block;
+    }
+
+    @keyframes pulseRed {
+      0% {
+        transform: scale(0.95);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.3);
+        opacity: 0.6;
+      }
+
+      100% {
+        transform: scale(0.95);
+        opacity: 1;
+      }
+    }
+
+    /* Sound Wave Animation */
+    .soundwave {
+      display: none;
+      align-items: center;
+      gap: 3px;
+      height: 22px;
+    }
+
+    .soundwave.active {
+      display: flex;
+    }
+
+    .soundwave-bar {
+      width: 3.5px;
+      background: #4f46e5;
+      border-radius: 3px;
+      animation: soundWaveAnim 1s ease-in-out infinite;
+    }
+
+    .soundwave-bar:nth-child(1) {
+      height: 8px;
+      animation-delay: 0.1s;
+    }
+
+    .soundwave-bar:nth-child(2) {
+      height: 16px;
+      animation-delay: 0.3s;
+    }
+
+    .soundwave-bar:nth-child(3) {
+      height: 22px;
+      animation-delay: 0.2s;
+    }
+
+    .soundwave-bar:nth-child(4) {
+      height: 12px;
+      animation-delay: 0.4s;
+    }
+
+    .soundwave-bar:nth-child(5) {
+      height: 18px;
+      animation-delay: 0.25s;
+    }
+
+    @keyframes soundWaveAnim {
+
+      0%,
+      100% {
+        transform: scaleY(0.4);
+      }
+
+      50% {
+        transform: scaleY(1);
+      }
+    }
+
+    .btn-record-main {
+      width: 100%;
+      padding: 10px;
+      border: 0;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #fff;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+    }
+
+    .btn-record-main.recording {
+      background: linear-gradient(135deg, #475569, #334155);
+      box-shadow: 0 2px 6px rgba(51, 65, 85, 0.25);
+    }
+
+    /* Text Input */
+    .manual-textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 85px;
+      max-height: 180px;
+      line-height: 1.45;
+      color: #0f172a;
+      background: #ffffff;
+      box-sizing: border-box;
+    }
+
+    .manual-textarea:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+    }
+
+    .textarea-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: #64748b;
+    }
+
+    .btn-mini {
+      padding: 3px 8px;
+      font-size: 10.5px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #334155;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-mini:hover {
+      background: #f1f5f9;
+    }
+
+    /* Dropzone / File Upload */
+    .dropzone {
+      border: 2px dashed #cbd5e1;
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dropzone:hover,
+    .dropzone.dragover {
+      border-color: #4f46e5;
+      background: #eef2ff;
+    }
+
+    .dropzone-icon {
+      font-size: 24px;
+    }
+
+    .dropzone-title {
+      font-weight: 700;
+      font-size: 11.5px;
+      color: #1e293b;
+    }
+
+    .dropzone-desc {
+      font-size: 10px;
+      color: #64748b;
+      line-height: 1.3;
+    }
+
+    .file-preview-card {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 9px 11px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .file-preview-card.show {
+      display: flex;
+    }
+
+    .file-preview-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .file-preview-name {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+    }
+
+    .file-preview-size {
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .btn-remove-file {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 0;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .file-prompt-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: 11.5px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
+    .file-prompt-input:focus {
+      outline: none;
+      border-color: #4f46e5;
+    }
+
+    /* Result & Status Area */
+    #status {
+      display: none;
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: #475569;
+      align-items: center;
+      gap: 8px;
+      background: #f1f5f9;
+      padding: 7px 10px;
+      border-radius: 7px;
+    }
+
+    #status.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 13px;
+      height: 13px;
+      border: 2px solid #cbd5e1;
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .spinner.hide {
+      display: none;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #result {
+      margin-top: 10px;
+      max-height: 280px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: #1e293b;
+      display: none;
+      white-space: pre-wrap;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    #result.error {
+      color: #b91c1c;
+      background: #fff5f5;
+      border-color: #fecaca;
+    }
+
+    .result-actions {
+      display: none;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .result-actions.show {
+      display: flex;
+    }
+
+    .btn-sub {
+      flex: 1;
+      padding: 7px 10px;
+      font-size: 11px;
+      border: 0;
+      border-radius: 7px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all .15s;
+    }
+
+    .btn-copy {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .btn-copy:hover {
+      background: #cbd5e1;
+    }
+
+    .btn-clear {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .btn-clear:hover {
+      background: #fecaca;
+    }
+  </style>
 </head>
+
 <body>
   <div class="header">
     <div class="header-top">
@@ -442,10 +613,12 @@
       <span class="version-tag">v1.5 Multi-Modal</span>
     </div>
     <div class="header-actions">
-      <button id="toggleHudBtn" class="header-btn" title="Buka / Tutup Panel Mengambang di Layar Web (Sesuai menu yang sedang aktif)">
+      <button id="toggleHudBtn" class="header-btn"
+        title="Buka / Tutup Panel Mengambang di Layar Web (Sesuai menu yang sedang aktif)">
         📌 Panel Web
       </button>
-      <button id="btnSidePanel" class="header-btn" title="Buka di Panel Samping Chrome (Tetap terbuka permanen saat klik website / aplikasi lain)">
+      <button id="btnSidePanel" class="header-btn"
+        title="Buka di Panel Samping Chrome (Tetap terbuka permanen saat klik website / aplikasi lain)">
         📌 Panel Samping
       </button>
       <button id="btnPopoutWindow" class="header-btn" title="Buka di jendela mandiri mengambang">
@@ -465,10 +638,13 @@
   <!-- TAB 1: LAYAR WEB & AUTO-PILOT -->
   <div id="tabContentScreen" class="tab-pane active">
     <!-- Mode AI Agent Auto-Pilot -->
-    <div style="background: linear-gradient(135deg, #3730a3, #4f46e5); padding: 9px 11px; border-radius: 9px; color: #fff; box-shadow: 0 2px 7px rgba(79, 70, 229, 0.25);">
-      <div style="font-weight: 700; font-size: 11.5px; display: flex; align-items: center; justify-content: space-between;">
+    <div
+      style="background: linear-gradient(135deg, #3730a3, #4f46e5); padding: 9px 11px; border-radius: 9px; color: #fff; box-shadow: 0 2px 7px rgba(79, 70, 229, 0.25);">
+      <div
+        style="font-weight: 700; font-size: 11.5px; display: flex; align-items: center; justify-content: space-between;">
         <span>🤖 Mode Agen Otomatis (Auto-Pilot)</span>
-        <span id="agentBadge" style="background: rgba(255,255,255,0.22); padding: 2px 7px; border-radius: 10px; font-size: 9.5px; font-weight: 600;">Standby</span>
+        <span id="agentBadge"
+          style="background: rgba(255,255,255,0.22); padding: 2px 7px; border-radius: 10px; font-size: 9.5px; font-weight: 600;">Standby</span>
       </div>
       <div style="font-size: 10px; opacity: 0.95; margin: 3px 0 2px; font-weight: 600; color: #fde047;">
         ⚡ Ditenagai Groq & Gemini • Khusus Tugas & Kuis
@@ -477,7 +653,8 @@
         Membaca soal tugas, menjawab to-the-point, klik opsi, dan otomatis next berurutan tanpa henti.
       </div>
       <div>
-        <button id="toggleAgentBtn" style="width: 100%; padding: 7px 10px; background: #fff; color: #3730a3; border: 0; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 5px;">
+        <button id="toggleAgentBtn"
+          style="width: 100%; padding: 7px 10px; background: #fff; color: #3730a3; border: 0; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 5px;">
           ▶️ Mulai Agen Otomatis
         </button>
       </div>
@@ -486,11 +663,13 @@
     <div class="btn-group">
       <button id="run" class="btn-action btn-groq">⚡ Kerjakan Tugas / Kuis Teks (Groq)</button>
       <button id="runVision" class="btn-action btn-gemini">📸 Kerjakan Tugas Bergambar / Diagram (Gemini)</button>
-      <button id="runOpenRouter" class="btn-action btn-openrouter">🖥️ Analisis Layar, Fitur & Deteksi Error (DeepSeek)</button>
+      <button id="runOpenRouter" class="btn-action btn-openrouter">🖥️ Analisis Layar, Fitur & Deteksi Error
+        (DeepSeek)</button>
       <button id="runHF" class="btn-action btn-hf">🎓 Bedah Materi & Rangkum Jurnal (Qwen 72B)</button>
     </div>
 
-    <div style="padding: 7px 9px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 10.5px; color: #334155; display: flex; flex-direction: column; gap: 5px;">
+    <div
+      style="padding: 7px 9px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 10.5px; color: #334155; display: flex; flex-direction: column; gap: 5px;">
       <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
         <input type="checkbox" id="autoClickToggle" checked style="accent-color: #4f46e5; cursor: pointer;">
         <span>🎯 <b>Auto-Click & Auto-Fill</b> (Otomatis klik/isi ke layar web)</span>
@@ -502,12 +681,15 @@
     </div>
 
     <!-- KARTU MODE SILUMAN & ANTI-DETEKSI UJIAN -->
-    <div style="margin-top: 8px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 9px; padding: 9px 11px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <div
+      style="margin-top: 8px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 9px; padding: 9px 11px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px;">
-        <span style="font-weight: 700; font-size: 11.5px; color: #1e1b4b; display: flex; align-items: center; gap: 5px;">
+        <span
+          style="font-weight: 700; font-size: 11.5px; color: #1e1b4b; display: flex; align-items: center; gap: 5px;">
           🛡️ Mode Siluman & Anti-Deteksi Ujian
         </span>
-        <span id="stealthStatusBadge" style="font-size: 9.5px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 10px;">
+        <span id="stealthStatusBadge"
+          style="font-size: 9.5px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 10px;">
           AKTIF
         </span>
       </div>
@@ -527,7 +709,8 @@
         </label>
       </div>
 
-      <div style="margin-top: 7px; padding-top: 6px; border-top: 1px dashed #e2e8f0; font-size: 9.5px; color: #64748b; display: flex; justify-content: space-between;">
+      <div
+        style="margin-top: 7px; padding-top: 6px; border-top: 1px dashed #e2e8f0; font-size: 9.5px; color: #64748b; display: flex; justify-content: space-between;">
         <span>⌨️ <b>Alt+X / Esc</b>: Panik (Sembunyikan)</span>
         <span>⌨️ <b>Alt+Z</b>: Toggle Mode Hantu</span>
       </div>
@@ -546,20 +729,26 @@
       <button id="srcBtnTab" class="source-btn" data-source="tab">🌐 Suara Tab Web (Zoom/Video)</button>
     </div>
 
-    <div id="audioSourceHint" style="font-size: 10.5px; color: #1e3a8a; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 7px; padding: 7px 9px; line-height: 1.45;">
+    <div id="audioSourceHint"
+      style="font-size: 10.5px; color: #1e3a8a; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 7px; padding: 7px 9px; line-height: 1.45;">
       💡 <b>Panduan Sumber Suara:</b><br>
       • <b>🎙️ Mikrofon Anda:</b> Merekam suara Anda untuk bertanya, dikte soal, atau latihan lisan.<br>
-      • <b>🌐 Suara Tab Web:</b> Merekam suara dosen/pembicara langsung dari tab yang sedang dibuka (Zoom di <i>app.zoom.us</i>, Google Meet, YouTube, dll).
+      • <b>🌐 Suara Tab Web:</b> Merekam suara dosen/pembicara langsung dari tab yang sedang dibuka (Zoom di
+      <i>app.zoom.us</i>, Google Meet, YouTube, dll).
     </div>
 
     <!-- Filter Suara Jernih & Noise Reduction -->
-    <div style="margin-top: 6px; padding: 7px 9px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 10.5px; color: #166534; display: flex; align-items: center; justify-content: space-between;">
+    <div
+      style="margin-top: 6px; padding: 7px 9px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 10.5px; color: #166534; display: flex; align-items: center; justify-content: space-between;">
       <label style="display: flex; align-items: center; gap: 7px; cursor: pointer; flex: 1;">
-        <input type="checkbox" id="audioFilterToggle" checked style="accent-color: #16a34a; width: 14px; height: 14px; cursor: pointer;">
+        <input type="checkbox" id="audioFilterToggle" checked
+          style="accent-color: #16a34a; width: 14px; height: 14px; cursor: pointer;">
         <div>
           <div style="font-weight: 700; color: #14532d; display: flex; align-items: center; gap: 4px;">
             <span>🛡️ Filter Suara Jernih & Hapus Bising</span>
-            <span style="font-size: 9px; background: #dcfce7; color: #15803d; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Noise Reduction</span>
+            <span
+              style="font-size: 9px; background: #dcfce7; color: #15803d; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Noise
+              Reduction</span>
           </div>
           <div style="font-size: 9.5px; color: #166534; line-height: 1.25; margin-top: 1px;">
             Meredam desis/dengung kipas & menajamkan vokal percakapan/soal
@@ -589,7 +778,9 @@
       </button>
 
       <audio id="audioPlayback" controls style="display:none; width: 100%; margin-top: 6px;"></audio>
-      <button id="btnOpenMicPermission" style="background: none; border: 0; color: #4f46e5; font-size: 10px; cursor: pointer; text-decoration: underline; padding: 4px 0 0;" title="Buka tab aktivasi izin mikrofon">🎙️ Klik di sini jika mikrofon butuh izin browser</button>
+      <button id="btnOpenMicPermission"
+        style="background: none; border: 0; color: #4f46e5; font-size: 10px; cursor: pointer; text-decoration: underline; padding: 4px 0 0;"
+        title="Buka tab aktivasi izin mikrofon">🎙️ Klik di sini jika mikrofon butuh izin browser</button>
     </div>
 
     <!-- Tombol Pemrosesan Rekaman -->
@@ -605,7 +796,8 @@
       Ketik atau tempel soal tugas, kode program, esai, atau pertanyaan bebas:
     </div>
 
-    <textarea id="manualTextInput" class="manual-textarea" placeholder="Contoh:&#10;1. Jelaskan perbedaan antara RAM dan ROM beserta fungsinya!&#10;2. Diketahui deret angka 2, 4, 8, 16, berapakah angka berikutnya?"></textarea>
+    <textarea id="manualTextInput" class="manual-textarea"
+      placeholder="Contoh:&#10;1. Jelaskan perbedaan antara RAM dan ROM beserta fungsinya!&#10;2. Diketahui deret angka 2, 4, 8, 16, berapakah angka berikutnya?"></textarea>
 
     <div class="textarea-tools">
       <span id="textCharCount">0 karakter</span>
@@ -618,7 +810,8 @@
     <div class="btn-group">
       <button id="btnManualGroq" class="btn-action btn-groq">⚡ Jawab Soal Cepat (Groq)</button>
       <button id="btnManualQwen" class="btn-action btn-hf">🎓 Bedah & Rangkum Materi (Qwen 72B)</button>
-      <button id="btnManualDeepSeek" class="btn-action btn-openrouter">🔍 Analisis & Debugging Logika (DeepSeek)</button>
+      <button id="btnManualDeepSeek" class="btn-action btn-openrouter">🔍 Analisis & Debugging Logika
+        (DeepSeek)</button>
     </div>
   </div>
 
@@ -628,8 +821,9 @@
       Unggah file gambar soal, dokumen materi, atau rekaman audio:
     </div>
 
-    <input type="file" id="fileUploadInput" accept="image/*,.pdf,.txt,.docx,.csv,.json,.js,.py,audio/*" style="display: none;">
-    
+    <input type="file" id="fileUploadInput" accept="image/*,.pdf,.txt,.docx,.csv,.json,.js,.py,audio/*"
+      style="display: none;">
+
     <div id="dropzone" class="dropzone">
       <span class="dropzone-icon">📁</span>
       <span class="dropzone-title">Klik atau Tarik File ke Sini</span>
@@ -648,10 +842,12 @@
       <button id="btnRemoveFile" class="btn-remove-file" title="Hapus file">✕</button>
     </div>
 
-    <img id="imagePreview" style="display:none; max-height: 110px; width: auto; object-fit: contain; border-radius: 6px; border: 1px solid #e2e8f0; align-self: center;">
+    <img id="imagePreview"
+      style="display:none; max-height: 110px; width: auto; object-fit: contain; border-radius: 6px; border: 1px solid #e2e8f0; align-self: center;">
     <audio id="fileAudioPreview" controls style="display:none; width: 100%;"></audio>
 
-    <input type="text" id="filePromptInput" class="file-prompt-input" placeholder="Instruksi / pertanyaan tambahan untuk file ini (opsional)...">
+    <input type="text" id="filePromptInput" class="file-prompt-input"
+      placeholder="Instruksi / pertanyaan tambahan untuk file ini (opsional)...">
 
     <div class="btn-group">
       <button id="btnProcessFile" class="btn-action btn-gemini">🚀 Pecahkan Soal / Analisis File</button>
@@ -660,10 +856,13 @@
   </div>
 
   <!-- COMMON RESULT & STATUS AREA -->
-  <div id="status"><div id="statusSpinner" class="spinner"></div><span id="statusText"></span></div>
+  <div id="status">
+    <div id="statusSpinner" class="spinner"></div><span id="statusText"></span>
+  </div>
   <div id="result"></div>
-  
-  <div id="recommendationBox" style="display: none; margin-top: 9px; padding: 9px 11px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 11px; color: #1e3a8a;">
+
+  <div id="recommendationBox"
+    style="display: none; margin-top: 9px; padding: 9px 11px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 11px; color: #1e3a8a;">
     <div style="font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
       <span id="recommendationHeader">💡 Rekomendasi Tombol AI yang Tepat Sesuai Layar:</span>
     </div>
@@ -678,4 +877,5 @@
   <script src="config.js"></script>
   <script src="popup.js"></script>
 </body>
+
 </html>
