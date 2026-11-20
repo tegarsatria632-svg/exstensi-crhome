@@ -3,26 +3,78 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asisten Belajar AI</title>
   <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --bg-muted: #e2e8f0;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --text-inverse: #ffffff;
+
+      --border-subtle: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-focus: #4f46e5;
+
+      --color-primary: #4f46e5;
+      --color-primary-hover: #4338ca;
+      --color-primary-light: #eef2ff;
+      --color-primary-border: #c7d2fe;
+
+      --color-gemini: #0369a1;
+      --color-gemini-hover: #075985;
+
+      --color-deepseek: #047857;
+      --color-deepseek-hover: #065f46;
+
+      --color-qwen: #b45309;
+      --color-qwen-hover: #92400e;
+
+      --color-danger: #dc2626;
+      --color-danger-hover: #b91c1c;
+      --color-danger-light: #fef2f2;
+      --color-danger-border: #fecaca;
+
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 10px;
+      --radius-full: 9999px;
+
+      --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      width: 395px;
-      margin: 0;
-      padding: 12px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f8fafc;
-      color: #0f172a;
+      width: 400px;
+      min-height: 480px;
+      padding: 13px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-primary);
       font-size: 12px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
+    /* Header */
     .header {
       display: flex;
       flex-direction: column;
-      gap: 7px;
-      margin-bottom: 10px;
+      gap: 9px;
+      margin-bottom: 12px;
     }
 
     .header-top {
@@ -32,103 +84,192 @@
     }
 
     .header h1 {
-      font-size: 14.5px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
       margin: 0;
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-weight: 700;
-      color: #1e1b4b;
-      white-space: nowrap;
+      gap: 7px;
     }
 
     .version-tag {
       font-size: 10px;
-      font-weight: 700;
-      background: #e0e7ff;
-      color: #4338ca;
-      padding: 2.5px 7px;
-      border-radius: 12px;
+      font-weight: 600;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-primary-border);
       white-space: nowrap;
     }
 
     .header-actions {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 5px;
-      align-items: center;
     }
 
     .header-btn {
-      flex: 1;
-      padding: 5px 6px;
-      font-size: 10px;
+      padding: 6px 7px;
+      font-size: 10.5px;
       font-weight: 600;
-      border: 1px solid #cbd5e1;
-      border-radius: 7px;
-      background: #ffffff;
-      color: #334155;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text-secondary);
       cursor: pointer;
-      transition: all .15s ease;
+      transition: all 0.15s ease;
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 3.5px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      gap: 4px;
+      box-shadow: var(--shadow-xs);
     }
 
     .header-btn:hover {
-      background: #f1f5f9;
+      background: var(--bg-subtle);
       border-color: #94a3b8;
-      color: #0f172a;
+      color: var(--text-primary);
+      transform: translateY(-0.5px);
     }
 
-    /* Navigation Tabs */
+    .header-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Navigation Tabs (Segmented Control) */
     .nav-tabs {
       display: flex;
-      gap: 4px;
-      background: #e2e8f0;
+      background: var(--bg-muted);
       padding: 3px;
-      border-radius: 10px;
-      margin-bottom: 11px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 12px;
+      gap: 2px;
     }
 
     .nav-tab-btn {
       flex: 1;
-      padding: 6.5px 4px;
+      padding: 7px 4px;
       font-size: 11px;
       font-weight: 600;
       border: 0;
       border-radius: 7px;
       background: transparent;
-      color: #64748b;
+      color: #334155;
       cursor: pointer;
-      transition: all .15s ease;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 4.5px;
       white-space: nowrap;
     }
 
     .nav-tab-btn:hover {
-      color: #1e293b;
+      color: var(--text-primary);
     }
 
     .nav-tab-btn.active {
-      background: #4f46e5;
-      color: #ffffff;
-      box-shadow: 0 1px 4px rgba(79, 70, 229, 0.28);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+      font-weight: 700;
     }
 
+    /* Tab Panes */
     .tab-pane {
       display: none;
       flex-direction: column;
-      gap: 8px;
+      gap: 9px;
     }
 
     .tab-pane.active {
       display: flex;
+    }
+
+    /* Auto-Pilot Card */
+    .autopilot-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-lg);
+      padding: 11px 12px;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .autopilot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .autopilot-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #agentBadge {
+      background: rgba(255, 255, 255, 0.16);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 2px 7.5px;
+      border-radius: var(--radius-full);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .autopilot-tech {
+      font-size: 10px;
+      font-weight: 600;
+      color: #818cf8;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .autopilot-desc {
+      font-size: 10px;
+      color: #94a3b8;
+      line-height: 1.4;
+      margin-bottom: 2px;
+    }
+
+    #toggleAgentBtn {
+      width: 100%;
+      padding: 8px 12px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 0;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    #toggleAgentBtn:hover {
+      background: #f1f5f9;
+      transform: translateY(-0.5px);
+    }
+
+    #toggleAgentBtn:active {
+      transform: translateY(0);
     }
 
     /* Action Buttons */
@@ -140,25 +281,29 @@
 
     .btn-action {
       width: 100%;
-      padding: 8.5px 12px;
+      padding: 9px 12px;
       border: 0;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       font-size: 11.5px;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity .15s, transform .05s, box-shadow .15s;
+      transition: transform 0.08s ease, filter 0.15s ease, box-shadow 0.15s ease;
       text-align: left;
       display: flex;
       align-items: center;
       gap: 8px;
+      color: #ffffff;
+      box-shadow: var(--shadow-xs);
     }
 
     .btn-action:hover {
-      opacity: 0.93;
-      transform: translateY(-1px);
+      filter: brightness(1.05);
+      transform: translateY(-0.5px);
+      box-shadow: var(--shadow-sm);
     }
 
     .btn-action:active {
+      filter: brightness(0.96);
       transform: translateY(0);
     }
 
@@ -169,93 +314,203 @@
     }
 
     .btn-groq {
-      background: #4f46e5;
-      color: #fff;
-    }
-
-    .btn-openrouter {
-      background: #059669;
-      color: #fff;
-    }
-
-    .btn-hf {
-      background: #d97706;
-      color: #fff;
+      background: var(--color-primary);
     }
 
     .btn-gemini {
-      background: #0284c7;
-      color: #fff;
+      background: var(--color-gemini);
+    }
+
+    .btn-openrouter {
+      background: var(--color-deepseek);
+    }
+
+    .btn-hf {
+      background: var(--color-qwen);
+    }
+
+    /* Checkbox & Settings Card */
+    .settings-card {
+      padding: 8px 11px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .settings-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .settings-label input[type="checkbox"] {
+      accent-color: var(--color-primary);
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Stealth / Anti-Deteksi Card */
+    .stealth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      padding: 10px 12px;
+      box-shadow: var(--shadow-xs);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .stealth-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+
+    .stealth-title {
+      font-weight: 700;
+      font-size: 11.5px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #stealthStatusBadge {
+      font-size: 9.5px;
+      font-weight: 700;
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+      padding: 1.5px 7px;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.02em;
+    }
+
+    .stealth-options {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 10.5px;
+      color: var(--text-secondary);
+    }
+
+    .stealth-options label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .stealth-options input[type="checkbox"] {
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+    }
+
+    .stealth-footer {
+      margin-top: 4px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border-subtle);
+      font-size: 9.5px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    kbd {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-medium);
+      border-radius: 4px;
+      padding: 1px 4.5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-primary);
     }
 
     /* Voice / Audio Controls */
     .source-selector {
       display: flex;
-      gap: 4px;
-      background: #f1f5f9;
+      gap: 3px;
+      background: var(--bg-subtle);
       padding: 3px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
     }
 
     .source-btn {
       flex: 1;
-      padding: 5px 4px;
+      padding: 6px 4px;
       font-size: 10.5px;
       font-weight: 600;
       border: 0;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       background: transparent;
-      color: #475569;
+      color: var(--text-secondary);
       cursor: pointer;
-      transition: all .15s;
+      transition: all 0.15s ease;
       text-align: center;
     }
 
     .source-btn.active {
-      background: #fff;
-      color: #312e81;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
     }
 
     .record-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      gap: 10px;
+      box-shadow: var(--shadow-xs);
     }
 
     .record-timer {
-      font-size: 20px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 26px;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-primary);
       font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
     }
 
     .record-status-label {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
     .record-pulse {
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: #ef4444;
-      animation: pulseRed 1s infinite;
+      background: var(--color-danger);
       display: none;
     }
 
     .record-pulse.active {
       display: inline-block;
+      animation: pulseRed 1.2s infinite;
     }
 
     @keyframes pulseRed {
@@ -279,7 +534,7 @@
     .soundwave {
       display: none;
       align-items: center;
-      gap: 3px;
+      gap: 3.5px;
       height: 22px;
     }
 
@@ -289,8 +544,8 @@
 
     .soundwave-bar {
       width: 3.5px;
-      background: #4f46e5;
-      border-radius: 3px;
+      background: var(--color-primary);
+      border-radius: 2px;
       animation: soundWaveAnim 1s ease-in-out infinite;
     }
 
@@ -333,48 +588,53 @@
 
     .btn-record-main {
       width: 100%;
-      padding: 10px;
+      padding: 9.5px 12px;
       border: 0;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
-      transition: all .15s;
+      transition: all 0.15s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      color: #fff;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+      color: #ffffff;
+      background: var(--color-danger);
+      box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25);
+    }
+
+    .btn-record-main:hover {
+      background: var(--color-danger-hover);
+      transform: translateY(-0.5px);
     }
 
     .btn-record-main.recording {
-      background: linear-gradient(135deg, #475569, #334155);
-      box-shadow: 0 2px 6px rgba(51, 65, 85, 0.25);
+      background: #334155;
+      box-shadow: 0 1px 3px rgba(51, 65, 85, 0.25);
     }
 
     /* Text Input */
     .manual-textarea {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
       font-size: 12px;
       font-family: inherit;
       resize: vertical;
-      min-height: 85px;
+      min-height: 90px;
       max-height: 180px;
-      line-height: 1.45;
-      color: #0f172a;
-      background: #ffffff;
+      line-height: 1.5;
+      color: var(--text-primary);
+      background: var(--bg-card);
       box-sizing: border-box;
     }
 
     .manual-textarea:focus {
       outline: none;
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
     }
 
     .textarea-tools {
@@ -382,43 +642,46 @@
       align-items: center;
       justify-content: space-between;
       font-size: 10.5px;
-      color: #64748b;
+      color: var(--text-muted);
     }
 
     .btn-mini {
-      padding: 3px 8px;
+      padding: 3.5px 9px;
       font-size: 10.5px;
-      border: 1px solid #cbd5e1;
-      background: #fff;
-      color: #334155;
-      border-radius: 5px;
+      border: 1px solid var(--border-medium);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
       cursor: pointer;
       font-weight: 600;
+      transition: all 0.15s ease;
     }
 
     .btn-mini:hover {
-      background: #f1f5f9;
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border-color: #94a3b8;
     }
 
     /* Dropzone / File Upload */
     .dropzone {
-      border: 2px dashed #cbd5e1;
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 14px;
+      border: 2px dashed var(--border-medium);
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 16px;
       text-align: center;
       cursor: pointer;
-      transition: all .15s;
+      transition: all 0.15s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     }
 
     .dropzone:hover,
     .dropzone.dragover {
-      border-color: #4f46e5;
-      background: #eef2ff;
+      border-color: var(--color-primary);
+      background: #f5f3ff;
     }
 
     .dropzone-icon {
@@ -428,24 +691,25 @@
     .dropzone-title {
       font-weight: 700;
       font-size: 11.5px;
-      color: #1e293b;
+      color: var(--text-primary);
     }
 
     .dropzone-desc {
       font-size: 10px;
-      color: #64748b;
-      line-height: 1.3;
+      color: var(--text-muted);
+      line-height: 1.35;
     }
 
     .file-preview-card {
       display: none;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 9px 11px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      box-shadow: var(--shadow-xs);
     }
 
     .file-preview-card.show {
@@ -462,7 +726,7 @@
     .file-preview-name {
       font-size: 11.5px;
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -471,12 +735,12 @@
 
     .file-preview-size {
       font-size: 10px;
-      color: #64748b;
+      color: var(--text-muted);
     }
 
     .btn-remove-file {
-      background: #fee2e2;
-      color: #b91c1c;
+      background: var(--color-danger-light);
+      color: var(--color-danger-hover);
       border: 0;
       border-radius: 50%;
       width: 20px;
@@ -488,21 +752,29 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      transition: background 0.15s ease;
+    }
+
+    .btn-remove-file:hover {
+      background: var(--color-danger-border);
     }
 
     .file-prompt-input {
       width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #cbd5e1;
-      border-radius: 7px;
+      padding: 8px 11px;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
       font-size: 11.5px;
       font-family: inherit;
       box-sizing: border-box;
+      background: var(--bg-card);
+      color: var(--text-primary);
     }
 
     .file-prompt-input:focus {
       outline: none;
-      border-color: #4f46e5;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
     }
 
     /* Result & Status Area */
@@ -510,12 +782,13 @@
       display: none;
       margin-top: 10px;
       font-size: 11.5px;
-      color: #475569;
+      color: var(--text-secondary);
       align-items: center;
       gap: 8px;
-      background: #f1f5f9;
-      padding: 7px 10px;
-      border-radius: 7px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 11px;
+      border-radius: var(--radius-md);
     }
 
     #status.show {
@@ -525,10 +798,10 @@
     .spinner {
       width: 13px;
       height: 13px;
-      border: 2px solid #cbd5e1;
-      border-top-color: #4f46e5;
+      border: 2px solid var(--border-medium);
+      border-top-color: var(--color-primary);
       border-radius: 50%;
-      animation: spin .8s linear infinite;
+      animation: spin 0.8s linear infinite;
       flex-shrink: 0;
     }
 
@@ -544,24 +817,24 @@
 
     #result {
       margin-top: 10px;
-      max-height: 280px;
+      max-height: 290px;
       overflow-y: auto;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 13px 14px;
       font-size: 12.5px;
-      line-height: 1.6;
-      color: #1e293b;
+      line-height: 1.65;
+      color: var(--text-primary);
       display: none;
       white-space: pre-wrap;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      box-shadow: var(--shadow-xs);
     }
 
     #result.error {
-      color: #b91c1c;
-      background: #fff5f5;
-      border-color: #fecaca;
+      color: var(--color-danger-hover);
+      background: var(--color-danger-light);
+      border-color: var(--color-danger-border);
     }
 
     .result-actions {
@@ -576,32 +849,39 @@
 
     .btn-sub {
       flex: 1;
-      padding: 7px 10px;
+      padding: 7px 11px;
       font-size: 11px;
-      border: 0;
-      border-radius: 7px;
+      border-radius: var(--radius-sm);
       font-weight: 600;
       cursor: pointer;
       text-align: center;
-      transition: all .15s;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
     }
 
     .btn-copy {
-      background: #e2e8f0;
-      color: #334155;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-xs);
     }
 
     .btn-copy:hover {
-      background: #cbd5e1;
+      background: var(--bg-subtle);
+      border-color: #94a3b8;
     }
 
     .btn-clear {
-      background: #fee2e2;
-      color: #991b1b;
+      background: var(--color-danger-light);
+      border: 1px solid var(--color-danger-border);
+      color: var(--color-danger-hover);
     }
 
     .btn-clear:hover {
-      background: #fecaca;
+      background: #fee2e2;
     }
   </style>
 </head>
@@ -610,7 +890,7 @@
   <div class="header">
     <div class="header-top">
       <h1>📚 Asisten Belajar AI</h1>
-      <span class="version-tag">v1.5 Multi-Modal</span>
+      <span class="version-tag">v1.5 Pro</span>
     </div>
     <div class="header-actions">
       <button id="toggleHudBtn" class="header-btn"
@@ -627,7 +907,7 @@
     </div>
   </div>
 
-  <!-- Tab Bar Navigation -->
+  <!-- Tab Bar Navigation (Segmented Control) -->
   <div class="nav-tabs">
     <button id="tabBtnScreen" class="nav-tab-btn active">⚡ Layar Web</button>
     <button id="tabBtnAudio" class="nav-tab-btn">🎙️ Rekam Suara</button>
@@ -638,88 +918,78 @@
   <!-- TAB 1: LAYAR WEB & AUTO-PILOT -->
   <div id="tabContentScreen" class="tab-pane active">
     <!-- Mode AI Agent Auto-Pilot -->
-    <div
-      style="background: linear-gradient(135deg, #3730a3, #4f46e5); padding: 9px 11px; border-radius: 9px; color: #fff; box-shadow: 0 2px 7px rgba(79, 70, 229, 0.25);">
-      <div
-        style="font-weight: 700; font-size: 11.5px; display: flex; align-items: center; justify-content: space-between;">
-        <span>🤖 Mode Agen Otomatis (Auto-Pilot)</span>
-        <span id="agentBadge"
-          style="background: rgba(255,255,255,0.22); padding: 2px 7px; border-radius: 10px; font-size: 9.5px; font-weight: 600;">Standby</span>
+    <div class="autopilot-card">
+      <div class="autopilot-header">
+        <span class="autopilot-title">🤖 Mode Agen Otomatis (Auto-Pilot)</span>
+        <span id="agentBadge">Standby</span>
       </div>
-      <div style="font-size: 10px; opacity: 0.95; margin: 3px 0 2px; font-weight: 600; color: #fde047;">
-        ⚡ Ditenagai Groq & Gemini • Khusus Tugas & Kuis
+      <div class="autopilot-tech">
+        ⚡ Khusus Tugas & Kuis Akademik
       </div>
-      <div style="font-size: 10px; opacity: 0.92; margin: 2px 0 7px; line-height: 1.35;">
+      <div class="autopilot-desc">
         Membaca soal tugas, menjawab to-the-point, klik opsi, dan otomatis next berurutan tanpa henti.
       </div>
       <div>
-        <button id="toggleAgentBtn"
-          style="width: 100%; padding: 7px 10px; background: #fff; color: #3730a3; border: 0; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 5px;">
+        <button id="toggleAgentBtn">
           ▶️ Mulai Agen Otomatis
         </button>
       </div>
     </div>
 
     <div class="btn-group">
-      <button id="run" class="btn-action btn-groq">⚡ Kerjakan Tugas / Kuis Teks (Groq)</button>
-      <button id="runVision" class="btn-action btn-gemini">📸 Kerjakan Tugas Bergambar / Diagram (Gemini)</button>
-      <button id="runOpenRouter" class="btn-action btn-openrouter">🖥️ Analisis Layar, Fitur & Deteksi Error
-        (DeepSeek)</button>
-      <button id="runHF" class="btn-action btn-hf">🎓 Bedah Materi & Rangkum Jurnal (Qwen 72B)</button>
+      <button id="run" class="btn-action btn-groq">⚡ Kerjakan Tugas / Kuis Teks</button>
+      <button id="runVision" class="btn-action btn-gemini">📸 Kerjakan Tugas Bergambar / Diagram</button>
+      <button id="runOpenRouter" class="btn-action btn-openrouter">🖥️ Analisis Layar, Fitur & Deteksi Error</button>
+      <button id="runHF" class="btn-action btn-hf">🎓 Bedah Materi & Rangkum Jurnal</button>
     </div>
 
-    <div
-      style="padding: 7px 9px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 10.5px; color: #334155; display: flex; flex-direction: column; gap: 5px;">
-      <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-        <input type="checkbox" id="autoClickToggle" checked style="accent-color: #4f46e5; cursor: pointer;">
+    <div class="settings-card">
+      <label class="settings-label">
+        <input type="checkbox" id="autoClickToggle" class="chk-auto-click" checked>
         <span>🎯 <b>Auto-Click & Auto-Fill</b> (Otomatis klik/isi ke layar web)</span>
       </label>
-      <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-        <input type="checkbox" id="autoNextToggle" style="accent-color: #4f46e5; cursor: pointer;">
+      <label class="settings-label">
+        <input type="checkbox" id="autoNextToggle">
         <span>⏩ <b>Auto-Next</b> (Otomatis lanjut nomor berikutnya)</span>
       </label>
     </div>
 
     <!-- KARTU MODE SILUMAN & ANTI-DETEKSI UJIAN -->
-    <div
-      style="margin-top: 8px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 9px; padding: 9px 11px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px;">
-        <span
-          style="font-weight: 700; font-size: 11.5px; color: #1e1b4b; display: flex; align-items: center; gap: 5px;">
+    <div class="stealth-card">
+      <div class="stealth-header">
+        <span class="stealth-title">
           🛡️ Mode Siluman & Anti-Deteksi Ujian
         </span>
-        <span id="stealthStatusBadge"
-          style="font-size: 9.5px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 10px;">
+        <span id="stealthStatusBadge" class="stealth-status-badge">
           AKTIF
         </span>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 5.5px; font-size: 10.5px; color: #334155;">
-        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-          <input type="checkbox" id="chkStealthCopy" checked style="accent-color: #16a34a; cursor: pointer;">
-          <span>🔓 <b>Buka Blokir Klik Kanan & Salin Teks</b> (Moodle/CBT)</span>
+      <div class="stealth-options">
+        <label>
+          <input type="checkbox" id="chkStealthCopy" class="chk-stealth-copy" checked style="accent-color: #16a34a;">
+          <span>🔓 <b>Buka Blokir Klik Kanan, Salin & Tempel (Ctrl+V)</b> (Moodle/CBT)</span>
         </label>
-        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-          <input type="checkbox" id="chkStealthFocus" checked style="accent-color: #16a34a; cursor: pointer;">
+        <label>
+          <input type="checkbox" id="chkStealthFocus" class="chk-stealth-focus" checked style="accent-color: #16a34a;">
           <span>👁️ <b>Anti-Deteksi Pindah Tab</b> (Fake Focus / Always Active)</span>
         </label>
-        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-          <input type="checkbox" id="chkStealthGhost" style="accent-color: #4f46e5; cursor: pointer;">
+        <label>
+          <input type="checkbox" id="chkStealthGhost" class="chk-stealth-ghost" style="accent-color: #4f46e5;">
           <span>👻 <b>Mode Hantu</b> (Panel Web Transparan 32% di Layar)</span>
         </label>
       </div>
 
-      <div
-        style="margin-top: 7px; padding-top: 6px; border-top: 1px dashed #e2e8f0; font-size: 9.5px; color: #64748b; display: flex; justify-content: space-between;">
-        <span>⌨️ <b>Alt+X / Esc</b>: Panik (Sembunyikan)</span>
-        <span>⌨️ <b>Alt+Z</b>: Toggle Mode Hantu</span>
+      <div class="stealth-footer">
+        <span>⌨️ <kbd>Alt+X</kbd> / <kbd>Esc</kbd>: Panik (Sembunyikan)</span>
+        <span>⌨️ <kbd>Alt+Z</kbd>: Toggle Mode Hantu</span>
       </div>
     </div>
   </div>
 
   <!-- TAB 2: REKAM SUARA (MIKROFON & TAB WEB) -->
   <div id="tabContentAudio" class="tab-pane">
-    <div style="font-size: 11px; color: #475569; line-height: 1.45;">
+    <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.45;">
       Merekam suara dari <b>Mikrofon</b> atau <b>Tab Web</b> (Zoom Web, Google Meet, YouTube, materi video):
     </div>
 
@@ -730,7 +1000,7 @@
     </div>
 
     <div id="audioSourceHint"
-      style="font-size: 10.5px; color: #1e3a8a; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 7px; padding: 7px 9px; line-height: 1.45;">
+      style="font-size: 10.5px; color: #1e3a8a; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-md); padding: 8px 10px; line-height: 1.45;">
       💡 <b>Panduan Sumber Suara:</b><br>
       • <b>🎙️ Mikrofon Anda:</b> Merekam suara Anda untuk bertanya, dikte soal, atau latihan lisan.<br>
       • <b>🌐 Suara Tab Web:</b> Merekam suara dosen/pembicara langsung dari tab yang sedang dibuka (Zoom di
@@ -739,8 +1009,8 @@
 
     <!-- Filter Suara Jernih & Noise Reduction -->
     <div
-      style="margin-top: 6px; padding: 7px 9px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 10.5px; color: #166534; display: flex; align-items: center; justify-content: space-between;">
-      <label style="display: flex; align-items: center; gap: 7px; cursor: pointer; flex: 1;">
+      style="padding: 8px 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); font-size: 10.5px; color: #166534; display: flex; align-items: center; justify-content: space-between;">
+      <label style="display: flex; align-items: center; gap: 7px; cursor: pointer; flex: 1; user-select: none;">
         <input type="checkbox" id="audioFilterToggle" checked
           style="accent-color: #16a34a; width: 14px; height: 14px; cursor: pointer;">
         <div>
@@ -779,20 +1049,20 @@
 
       <audio id="audioPlayback" controls style="display:none; width: 100%; margin-top: 6px;"></audio>
       <button id="btnOpenMicPermission"
-        style="background: none; border: 0; color: #4f46e5; font-size: 10px; cursor: pointer; text-decoration: underline; padding: 4px 0 0;"
+        style="background: none; border: 0; color: var(--color-primary); font-size: 10px; cursor: pointer; text-decoration: underline; padding: 4px 0 0;"
         title="Buka tab aktivasi izin mikrofon">🎙️ Klik di sini jika mikrofon butuh izin browser</button>
     </div>
 
     <!-- Tombol Pemrosesan Rekaman -->
     <div id="audioActionButtons" class="btn-group" style="display: none;">
-      <button id="btnAudioAnswer" class="btn-action btn-groq">🎯 Jawab Pertanyaan dari Suara Ini (AI)</button>
-      <button id="btnAudioSummary" class="btn-action btn-gemini">📝 Rangkum Pembicaraan / Materi (AI)</button>
+      <button id="btnAudioAnswer" class="btn-action btn-groq">🎯 Jawab Pertanyaan dari Suara Ini</button>
+      <button id="btnAudioSummary" class="btn-action btn-gemini">📝 Rangkum Pembicaraan / Materi</button>
     </div>
   </div>
 
   <!-- TAB 3: KETIK TEKS MANUAL -->
   <div id="tabContentText" class="tab-pane">
-    <div style="font-size: 11px; color: #475569;">
+    <div style="font-size: 11px; color: var(--text-secondary);">
       Ketik atau tempel soal tugas, kode program, esai, atau pertanyaan bebas:
     </div>
 
@@ -808,16 +1078,54 @@
     </div>
 
     <div class="btn-group">
-      <button id="btnManualGroq" class="btn-action btn-groq">⚡ Jawab Soal Cepat (Groq)</button>
-      <button id="btnManualQwen" class="btn-action btn-hf">🎓 Bedah & Rangkum Materi (Qwen 72B)</button>
-      <button id="btnManualDeepSeek" class="btn-action btn-openrouter">🔍 Analisis & Debugging Logika
-        (DeepSeek)</button>
+      <button id="btnManualGroq" class="btn-action btn-groq">⚡ Jawab Soal Cepat</button>
+      <button id="btnManualQwen" class="btn-action btn-hf">🎓 Bedah & Rangkum Materi</button>
+      <button id="btnManualDeepSeek" class="btn-action btn-openrouter">🔍 Analisis & Debugging Logika</button>
+    </div>
+
+    <div class="settings-card">
+      <label class="settings-label">
+        <input type="checkbox" id="autoClickToggleText" class="chk-auto-click" checked>
+        <span>🎯 <b>Auto-Click & Auto-Fill</b> (Otomatis klik/isi ke layar web)</span>
+      </label>
+    </div>
+
+    <!-- KARTU MODE SILUMAN & ANTI-DETEKSI UJIAN DI MENU KETIK TEKS -->
+    <div class="stealth-card">
+      <div class="stealth-header">
+        <span class="stealth-title">
+          🛡️ Mode Siluman & Anti-Deteksi Ujian
+        </span>
+        <span id="stealthStatusBadgeText" class="stealth-status-badge">
+          AKTIF
+        </span>
+      </div>
+
+      <div class="stealth-options">
+        <label>
+          <input type="checkbox" id="chkStealthCopyText" class="chk-stealth-copy" checked style="accent-color: #16a34a;">
+          <span>🔓 <b>Buka Blokir Klik Kanan, Salin & Tempel (Ctrl+V)</b> (Moodle/CBT)</span>
+        </label>
+        <label>
+          <input type="checkbox" id="chkStealthFocusText" class="chk-stealth-focus" checked style="accent-color: #16a34a;">
+          <span>👁️ <b>Anti-Deteksi Pindah Tab</b> (Fake Focus / Always Active)</span>
+        </label>
+        <label>
+          <input type="checkbox" id="chkStealthGhostText" class="chk-stealth-ghost" style="accent-color: #4f46e5;">
+          <span>👻 <b>Mode Hantu</b> (Panel Web Transparan 32% di Layar)</span>
+        </label>
+      </div>
+
+      <div class="stealth-footer">
+        <span>⌨️ <kbd>Alt+X</kbd> / <kbd>Esc</kbd>: Panik (Sembunyikan)</span>
+        <span>⌨️ <kbd>Alt+Z</kbd>: Toggle Mode Hantu</span>
+      </div>
     </div>
   </div>
 
   <!-- TAB 4: KIRIM FILE -->
   <div id="tabContentFile" class="tab-pane">
-    <div style="font-size: 11px; color: #475569;">
+    <div style="font-size: 11px; color: var(--text-secondary);">
       Unggah file gambar soal, dokumen materi, atau rekaman audio:
     </div>
 
@@ -843,7 +1151,7 @@
     </div>
 
     <img id="imagePreview"
-      style="display:none; max-height: 110px; width: auto; object-fit: contain; border-radius: 6px; border: 1px solid #e2e8f0; align-self: center;">
+      style="display:none; max-height: 110px; width: auto; object-fit: contain; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); align-self: center;">
     <audio id="fileAudioPreview" controls style="display:none; width: 100%;"></audio>
 
     <input type="text" id="filePromptInput" class="file-prompt-input"
@@ -862,7 +1170,7 @@
   <div id="result"></div>
 
   <div id="recommendationBox"
-    style="display: none; margin-top: 9px; padding: 9px 11px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 11px; color: #1e3a8a;">
+    style="display: none; margin-top: 9px; padding: 10px 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-md); font-size: 11px; color: #1e3a8a;">
     <div style="font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
       <span id="recommendationHeader">💡 Rekomendasi Tombol AI yang Tepat Sesuai Layar:</span>
     </div>

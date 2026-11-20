@@ -19,7 +19,7 @@
   var _0x_sig_bytes = [56, 35, 46, 63, 61, 59, 40];
   var _0x_sig_key = 90;
   function _0x_get_sig() {
-    return _0x_sig_bytes.map(function(c) { return String.fromCharCode(c ^ _0x_sig_key); }).join("");
+    return _0x_sig_bytes.map(function (c) { return String.fromCharCode(c ^ _0x_sig_key); }).join("");
   }
 
   function _0x_embed_stego(text) {
@@ -50,16 +50,16 @@
     _0x_inject_hud_wm(panelEl);
 
     try {
-      var obs = new MutationObserver(function() {
+      var obs = new MutationObserver(function () {
         var sigEl = panelEl.querySelector(".ai-agent-sys-sig");
         if (!sigEl || sigEl.textContent !== _0x_get_sig()) {
           _0x_inject_hud_wm(panelEl);
         }
       });
       obs.observe(panelEl, { childList: true, subtree: true, characterData: true });
-    } catch (_) {}
+    } catch (_) { }
 
-    setInterval(function() {
+    setInterval(function () {
       var sigEl = panelEl.querySelector(".ai-agent-sys-sig");
       if (!sigEl || sigEl.textContent !== _0x_get_sig()) {
         _0x_inject_hud_wm(panelEl);
@@ -83,7 +83,7 @@
     if (window.name && /google_ads|aswift|gpt|ad_iframe/i.test(window.name)) {
       return;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // === 0. INISIALISASI SAAT HALAMAN DIMUAT (RESUME OTOMATIS JIKA AUTO-PILOT AKTIF) ===
   var isTopFrame = false;
@@ -95,7 +95,7 @@
 
   // Simpan state saat berpindah halaman agar auto-pilot lanjut secara mulus
   try {
-    window.addEventListener("beforeunload", function() {
+    window.addEventListener("beforeunload", function () {
       if (isAgentRunning && isTopFrame) {
         chrome.storage?.local?.set({
           isAgentRunning: true,
@@ -104,10 +104,10 @@
         });
       }
     });
-  } catch (_) {}
+  } catch (_) { }
 
   try {
-    chrome.storage?.local?.get(["isAgentRunning", "autoClick", "autoNext", "hudMinimized", "showHud", "lastActiveDomain", "lastActiveTime", "stealthCopy", "stealthFocus", "stealthGhost"], function(res) {
+    chrome.storage?.local?.get(["isAgentRunning", "autoClick", "autoNext", "hudMinimized", "showHud", "lastActiveDomain", "lastActiveTime", "stealthCopy", "stealthFocus", "stealthGhost"], function (res) {
       if (res?.autoClick !== undefined) autoClickEnabled = res.autoClick;
       if (res?.autoNext !== undefined) autoNextEnabled = res.autoNext;
       else autoNextEnabled = false;
@@ -145,7 +145,7 @@
           ensureHudExists();
           updateHudRunningState(true);
           setHudStatus("🤖 Melanjutkan pengerjaan soal berikutnya dalam 1.2 detik...", true);
-          setTimeout(function() {
+          setTimeout(function () {
             if (isAgentRunning) {
               startAutoPilotLoop();
             }
@@ -157,11 +157,11 @@
         }
       }
     });
-  } catch (_) {}
+  } catch (_) { }
 
   // SINKRONISASI REALTIME PREFERENSI (Auto-Click, Auto-Next, Agent) DARI POPUP
   try {
-    chrome.storage?.onChanged?.addListener(function(changes, area) {
+    chrome.storage?.onChanged?.addListener(function (changes, area) {
       if (area === "local") {
         if (changes.autoClick !== undefined) {
           autoClickEnabled = changes.autoClick.newValue === true;
@@ -179,10 +179,10 @@
         }
       }
     });
-  } catch (_) {}
+  } catch (_) { }
 
   // === 1. ROUTER KOMUNIKASI DENGAN POPUP & BACKGROUND ===
-  chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
+  chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (!msg) return false;
     // Cegah sub-frame (terutama iframe luar/iklan) merespons permintaan teks halaman & kontrol agen
     if (!isTopFrame && (msg.type === "GET_PAGE_TEXT" || msg.type === "TOGGLE_AUTOPILOT" || msg.type === "TOGGLE_HUD")) {
@@ -339,15 +339,15 @@
     // Perekaman Mikrofon Langsung di Tab Web (Bebas Hambatan Izin Popup)
     if (msg.type === "START_TAB_MIC_RECORDING") {
       startContentMicRecording()
-        .then(function() { sendResponse({ success: true }); })
-        .catch(function(err) { sendResponse({ success: false, error: err.message }); });
+        .then(function () { sendResponse({ success: true }); })
+        .catch(function (err) { sendResponse({ success: false, error: err.message }); });
       return true;
     }
 
     if (msg.type === "STOP_TAB_MIC_RECORDING") {
       stopContentMicRecording()
-        .then(function(data) { sendResponse({ success: true, audioDataUrl: data.audioDataUrl, mimeType: data.mimeType }); })
-        .catch(function(err) { sendResponse({ success: false, error: err.message }); });
+        .then(function (data) { sendResponse({ success: true, audioDataUrl: data.audioDataUrl, mimeType: data.mimeType }); })
+        .catch(function (err) { sendResponse({ success: false, error: err.message }); });
       return true;
     }
 
@@ -360,12 +360,12 @@
   var contentMicStream = null;
 
   function startContentMicRecording() {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         return reject(new Error("Browser tidak mendukung getUserMedia di halaman ini."));
       }
       navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(function(stream) {
+        .then(function (stream) {
           contentMicStream = stream;
           contentMicChunks = [];
           var mimeType = "audio/webm;codecs=opus";
@@ -373,34 +373,34 @@
             mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
           }
           contentMicRecorder = new MediaRecorder(stream, mimeType ? { mimeType: mimeType } : {});
-          contentMicRecorder.ondataavailable = function(e) {
+          contentMicRecorder.ondataavailable = function (e) {
             if (e.data && e.data.size > 0) contentMicChunks.push(e.data);
           };
           contentMicRecorder.start(250);
           resolve(true);
         })
-        .catch(function(err) {
+        .catch(function (err) {
           reject(err);
         });
     });
   }
 
   function stopContentMicRecording() {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       if (!contentMicRecorder || contentMicRecorder.state === "inactive") {
         if (contentMicStream) {
-          try { contentMicStream.getTracks().forEach(function(t) { t.stop(); }); } catch (_) {}
+          try { contentMicStream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) { }
         }
         return reject(new Error("Tidak ada perekaman mikrofon aktif di tab"));
       }
 
-      contentMicRecorder.onstop = function() {
+      contentMicRecorder.onstop = function () {
         var mimeType = contentMicRecorder.mimeType || "audio/webm";
         var blob = new Blob(contentMicChunks, { type: mimeType });
         var reader = new FileReader();
-        reader.onloadend = function() {
+        reader.onloadend = function () {
           if (contentMicStream) {
-            try { contentMicStream.getTracks().forEach(function(t) { t.stop(); }); } catch (_) {}
+            try { contentMicStream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) { }
           }
           resolve({ audioDataUrl: reader.result, mimeType: mimeType });
         };
@@ -481,7 +481,7 @@
           el.style.display = "none";
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // Prioritaskan mencari elemen container soal kuis (CBT, Google Forms, Quizizz, Moodle, dst)
     var text = "";
@@ -510,7 +510,7 @@
     for (var k = 0; k < hiddenJunks.length; k++) {
       try {
         hiddenJunks[k].el.style.display = hiddenJunks[k].prev;
-      } catch (_) {}
+      } catch (_) { }
     }
 
     if (hud) {
@@ -520,7 +520,7 @@
     // Bersihkan sisa-sisa string kode iklan / pelacak jika masih ada yang lolos
     text = cleanExtractedText(text);
 
-    var visualElements = Array.from(document.querySelectorAll("img, svg, canvas, picture, [role='img']")).filter(function(el) {
+    var visualElements = Array.from(document.querySelectorAll("img, svg, canvas, picture, [role='img']")).filter(function (el) {
       try {
         if (isHudElement(el)) return false;
         var rect = el.getBoundingClientRect();
@@ -560,7 +560,7 @@
       /image is not provided/i,
       /requires (?:the )?image/i
     ];
-    return patterns.some(function(p) { return p.test(lower); });
+    return patterns.some(function (p) { return p.test(lower); });
   }
 
   // === 4. HELPER TEKS & ELEMEN KELAS (AMAN DARI SVG ANIMATED STRING) ===
@@ -637,7 +637,7 @@
     // Filter seluruh kandidat elemen opsi di halaman (abaikan HUD dan tombol submit/finish ujian)
     var candidateOptions = Array.from(document.querySelectorAll(
       "[class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], [class*='item' i], [class*='card' i], [class*='check' i], [class*='radio' i], [class*='row' i], [class*='group' i], [class*='selection' i], [class*='btn' i], [role='radio'], [role='checkbox'], [role='button'], label, button, a, li, tr, td, input[type='radio'], input[type='checkbox'], input[type='button'], input[type='submit'], [data-value], [data-choice], [data-opt], [data-answer]"
-    )).filter(function(el) {
+    )).filter(function (el) {
       if (!isElementVisible(el) || isHudElement(el)) return false;
       var elTxt = (el.textContent || el.innerText || el.value || "").trim();
       if (isForbiddenButton(elTxt)) return false;
@@ -645,7 +645,7 @@
     });
 
     // --- TIER 0: SCANNING RADIO LANGSUNG (ANTI-GAGAL UNTUK OPSI TANPA KELAS SEPERTI OPSI D) ---
-    var allRadios = Array.from(document.querySelectorAll("input[type='radio'], input[type='checkbox']")).filter(function(r) {
+    var allRadios = Array.from(document.querySelectorAll("input[type='radio'], input[type='checkbox']")).filter(function (r) {
       return !isHudElement(r) && isElementVisible(r.parentElement || r);
     });
 
@@ -658,8 +658,8 @@
           var rLabel = rInput.id ? document.querySelector("label[for='" + rInput.id + "']") : null;
           if (!rLabel) rLabel = rInput.closest("label") || rInput.parentElement;
           var rText = (rLabel ? (rLabel.textContent || rLabel.innerText || "") : "") ||
-                      (rInput.nextSibling ? (rInput.nextSibling.textContent || "") : "");
-          
+            (rInput.nextSibling ? (rInput.nextSibling.textContent || "") : "");
+
           if (rVal === upperLetter || (numStr && rVal === numStr && rVal !== "ON") || matchesLetterPrefix(rText.trim(), upperLetter)) {
             var rClean = cleanText(rText);
             if (!cleanSnippet && !pureNum) {
@@ -680,7 +680,7 @@
           var rLabel2 = rInput2.id ? document.querySelector("label[for='" + rInput2.id + "']") : null;
           if (!rLabel2) rLabel2 = rInput2.closest("label") || rInput2.parentElement;
           var rText2 = (rLabel2 ? (rLabel2.textContent || rLabel2.innerText || "") : "") ||
-                       (rInput2.nextSibling ? (rInput2.nextSibling.textContent || "") : "");
+            (rInput2.nextSibling ? (rInput2.nextSibling.textContent || "") : "");
           var rClean2 = cleanText(rText2);
           var isMatch2 = (cleanSnippet && rClean2.includes(cleanSnippet)) || (pureNum && rClean2.includes(pureNum));
           if (isMatch2) {
@@ -715,7 +715,7 @@
               if (new RegExp('(^|\\s|[=><])' + escaped + '($|\\s|[,.;])').test(elClean)) {
                 isNumMatch = true;
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         }
         var matchText = (cleanSnippet && elClean.includes(cleanSnippet)) || isNumMatch;
@@ -744,7 +744,7 @@
               if (new RegExp('(^|\\s|[=><])' + esc2 + '($|\\s|[,.;])').test(c) || new RegExp('(^|\\s|[=><])' + esc2 + '($|\\s|[,.;])').test(stripped)) {
                 isTier2NumMatch = true;
               }
-            } catch (_) {}
+            } catch (_) { }
           }
         }
 
@@ -761,7 +761,7 @@
     }
 
     // --- TIER 3: INPUT RADIO / CHECKBOX / TOMBOL DENGAN VALUE ATAU LABEL SESUAI ---
-    var inputs = Array.from(document.querySelectorAll("input[type='radio'], input[type='checkbox'], input[type='button'], input[type='submit']")).filter(function(inp) {
+    var inputs = Array.from(document.querySelectorAll("input[type='radio'], input[type='checkbox'], input[type='button'], input[type='submit']")).filter(function (inp) {
       return !isHudElement(inp) && isElementVisible(inp.parentElement || inp);
     });
 
@@ -846,7 +846,7 @@
     // --- TIER 6: URUTAN INDEX KARTU (Fallback cerdas untuk kuis bergambar, matriks IQ, atau opsi tanpa huruf) ---
     if (letterIndex >= 0) {
       // 6a. Khusus Tes IQ / Soal Bergambar: Cari container di dekat judul "Choose your answer" / opsi bergambar
-      var answerHeading = Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, p, span, div, b")).find(function(el) {
+      var answerHeading = Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, p, span, div, b")).find(function (el) {
         if (!isElementVisible(el) || isHudElement(el)) return false;
         var t = (el.textContent || "").trim().toLowerCase();
         return t === "choose your answer:" || t === "choose your answer" || t === "select answer" || t === "pilihan jawaban:" || t.includes("choose your answer");
@@ -855,9 +855,9 @@
       if (answerHeading) {
         var parentBox = answerHeading.parentElement || document.body;
         // Cari container yang membungkus kartu-kartu jawaban di dekat judul ini
-        var cardGroups = Array.from(parentBox.querySelectorAll("div, section, ul")).filter(function(g) {
+        var cardGroups = Array.from(parentBox.querySelectorAll("div, section, ul")).filter(function (g) {
           if (!isElementVisible(g) || isHudElement(g) || g.contains(answerHeading)) return false;
-          var directCards = Array.from(g.children).filter(function(ch) {
+          var directCards = Array.from(g.children).filter(function (ch) {
             if (!isElementVisible(ch) || isHudElement(ch)) return false;
             var r = ch.getBoundingClientRect();
             return r.width >= 35 && r.height >= 35 && (ch.querySelector("img, svg, canvas") || ch.tagName === "IMG" || ch.tagName === "SVG");
@@ -866,14 +866,14 @@
         });
 
         if (cardGroups.length > 0) {
-          cardGroups.sort(function(a, b) { return b.children.length - a.children.length; });
+          cardGroups.sort(function (a, b) { return b.children.length - a.children.length; });
           var bestGroup = cardGroups[0];
-          var visualCards = Array.from(bestGroup.children).filter(function(ch) {
+          var visualCards = Array.from(bestGroup.children).filter(function (ch) {
             return isElementVisible(ch) && !isHudElement(ch);
           });
 
           // Urutkan kartu secara natural (atas ke bawah, lalu kiri ke kanan)
-          visualCards.sort(function(a, b) {
+          visualCards.sort(function (a, b) {
             var ra = a.getBoundingClientRect();
             var rb = b.getBoundingClientRect();
             if (Math.abs(ra.top - rb.top) > 25) return ra.top - rb.top;
@@ -891,18 +891,18 @@
       // 6b. Pencarian Universal Kontainer Pilihan Ganda & Grid Opsi
       var containers = Array.from(document.querySelectorAll(
         "[role='radiogroup'], fieldset, [class*='option' i], [class*='choice' i], [class*='answer' i], [class*='pilihan' i], [class*='soal' i], [class*='quiz' i], [class*='question' i], [class*='matrix' i], [class*='grid' i], ul, ol, form, div, section"
-      )).filter(function(c) {
+      )).filter(function (c) {
         if (!isElementVisible(c) || isHudElement(c)) return false;
         var classId = `${getElementClassName(c)} ${c.id || ""}`.toLowerCase();
         if (classId.includes("nav") || classId.includes("header") || classId.includes("footer") || classId.includes("menu") || classId.includes("tool") || classId.includes("pagination") || classId.includes("pager") || classId.includes("indicator")) return false;
 
-        var hasDots = Array.from(c.children).some(function(child) {
+        var hasDots = Array.from(c.children).some(function (child) {
           var chClass = getElementClassName(child).toLowerCase();
           return chClass.includes("dot") || chClass.includes("page");
         });
         if (hasDots) return false;
 
-        var children = Array.from(c.children).filter(function(child) {
+        var children = Array.from(c.children).filter(function (child) {
           if (!isElementVisible(child) || isHudElement(child)) return false;
           var style = window.getComputedStyle ? window.getComputedStyle(child) : {};
           return child.tagName === "BUTTON" || child.tagName === "LI" || child.tagName === "LABEL" ||
@@ -915,7 +915,7 @@
       });
 
       // Beri bobot lebih tinggi pada kontainer yang memiliki kartu gambar / ada kata kunci pilihan
-      containers.sort(function(a, b) {
+      containers.sort(function (a, b) {
         var scoreA = 0;
         var scoreB = 0;
         var idClassA = `${getElementClassName(a)} ${a.id || ""}`.toLowerCase();
@@ -931,7 +931,7 @@
 
       for (var ct = 0; ct < containers.length; ct++) {
         var grp = containers[ct];
-        var grpChildren = Array.from(grp.children).filter(function(child) {
+        var grpChildren = Array.from(grp.children).filter(function (child) {
           if (!isElementVisible(child) || isHudElement(child)) return false;
           var style = window.getComputedStyle ? window.getComputedStyle(child) : {};
           return child.tagName === "BUTTON" || child.tagName === "LI" || child.tagName === "LABEL" ||
@@ -953,17 +953,17 @@
 
   // === 6. AUTO-FILL ESAI & INPUT TEXT ===
   function hasActiveEssayField() {
-    var textareas = Array.from(document.querySelectorAll("textarea:not([disabled]):not([readonly])")).filter(function(ta) {
+    var textareas = Array.from(document.querySelectorAll("textarea:not([disabled]):not([readonly])")).filter(function (ta) {
       return !isHudElement(ta) && isElementVisible(ta);
     });
     if (textareas.length > 0) return true;
 
-    var editables = Array.from(document.querySelectorAll("[contenteditable='true'], [role='textbox']")).filter(function(ed) {
+    var editables = Array.from(document.querySelectorAll("[contenteditable='true'], [role='textbox']")).filter(function (ed) {
       return !isHudElement(ed) && isElementVisible(ed);
     });
     if (editables.length > 0) return true;
 
-    var inputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='radio']):not([type='checkbox']):not([type='file']):not([disabled]):not([readonly])")).filter(function(inp) {
+    var inputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='radio']):not([type='checkbox']):not([type='file']):not([disabled]):not([readonly])")).filter(function (inp) {
       if (isHudElement(inp) || !isElementVisible(inp)) return false;
       var meta = `${inp.name || ""} ${inp.id || ""} ${inp.placeholder || ""}`.toLowerCase();
       return !meta.includes("search") && !meta.includes("token") && !meta.includes("pass");
@@ -972,12 +972,12 @@
   }
 
   function hasMultipleChoiceOptionsOnPage() {
-    var radios = Array.from(document.querySelectorAll("input[type='radio'], [role='radio'], .option-item, [class*='option-item' i], [class*='choice-item' i], [class*='answer-item' i]")).filter(function(el) {
+    var radios = Array.from(document.querySelectorAll("input[type='radio'], [role='radio'], .option-item, [class*='option-item' i], [class*='choice-item' i], [class*='answer-item' i]")).filter(function (el) {
       return !isHudElement(el) && isElementVisible(el);
     });
     if (radios.length >= 2) return true;
 
-    var choices = Array.from(document.querySelectorAll("label, button, li, [class*='option' i], [class*='choice' i], [class*='pilihan' i]")).filter(function(el) {
+    var choices = Array.from(document.querySelectorAll("label, button, li, [class*='option' i], [class*='choice' i], [class*='pilihan' i]")).filter(function (el) {
       if (isHudElement(el) || !isElementVisible(el)) return false;
       var txt = (el.textContent || "").trim();
       return /^[A-E][\.\)\-\:]\s+/i.test(txt);
@@ -1013,7 +1013,7 @@
 
     // 7. Bullet lists: ubah menjadi penomoran atau strip bersih
     var listCounter = 1;
-    s = s.split("\n").map(function(line) {
+    s = s.split("\n").map(function (line) {
       if (/^\s*[\*\-+•●○◦▪▫►▶✦★☆]\s+/.test(line)) {
         var converted = line.replace(/^\s*[\*\-+•●○◦▪▫►▶✦★☆]\s+/, listCounter + ". ");
         listCounter++;
@@ -1046,12 +1046,16 @@
     // 12. Rapikan baris kosong berlebih
     s = s.replace(/\n{3,}/g, "\n\n").trim();
 
+    // 13. Sembunyikan dan sterilkan nama model AI dari teks jawaban
+    s = s.replace(/\b(?:Groq|Gemini(?:\s*(?:Pro|Flash|Ultra|3\.5|2\.5|Vision))?|DeepSeek(?:\s*(?:R1|V3|Chat))?|Qwen(?:\s*(?:2\.5|72b|instruct|3\.8))?|OpenAI|ChatGPT|GPT-?[34o]|Claude|Whisper)\b/gi, "AI");
+    s = s.replace(/Sebagai\s+(?:model\s+)?(?:bahasa\s+)?(?:AI|kecerdasan\s+buatan)[^,\.\n]*[,\.]\s*/gi, "");
+
     return s;
   }
 
   function findAndFillEssay(rawText) {
     if (!rawText) return null;
-    
+
     // 1. Bersihkan think block, hitungan tertutup, badge, simbol asterisk, dan prefix kunci/jawaban
     var cleanText = cleanAiSymbols(rawText)
       .replace(/^(?:🎯|✍️|💡|📝)\s*\[[^\]]+\]\s*/gim, "")
@@ -1064,7 +1068,7 @@
     conciseAnswer = cleanAiSymbols(conciseAnswer);
 
     // 2. Prioritas 1: Textarea aktif (untuk soal esai / uraian panjang)
-    var textareas = Array.from(document.querySelectorAll("textarea:not([disabled]):not([readonly])")).filter(function(ta) {
+    var textareas = Array.from(document.querySelectorAll("textarea:not([disabled]):not([readonly])")).filter(function (ta) {
       return !isHudElement(ta);
     });
     for (var ta = 0; ta < textareas.length; ta++) {
@@ -1075,7 +1079,7 @@
     }
 
     // 3. Prioritas 2: Rich text editor / Contenteditable / role='textbox' (Quill, CKEditor, contenteditable div)
-    var editables = Array.from(document.querySelectorAll("[contenteditable='true'], [role='textbox']")).filter(function(ed) {
+    var editables = Array.from(document.querySelectorAll("[contenteditable='true'], [role='textbox']")).filter(function (ed) {
       return !isHudElement(ed);
     });
     for (var ed = 0; ed < editables.length; ed++) {
@@ -1088,12 +1092,12 @@
           try {
             document.execCommand("selectAll", false, null);
             successExec = document.execCommand("insertText", false, textToPut);
-          } catch (_) {}
+          } catch (_) { }
           if (!successExec || !(targetEd.innerText || targetEd.textContent || "").trim()) {
             targetEd.innerText = textToPut;
           }
           if (typeof InputEvent !== "undefined") {
-            try { targetEd.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: textToPut })); } catch (_) {}
+            try { targetEd.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: textToPut })); } catch (_) { }
           }
           targetEd.dispatchEvent(new Event("input", { bubbles: true }));
           targetEd.dispatchEvent(new Event("change", { bubbles: true }));
@@ -1101,18 +1105,18 @@
           targetEd.dispatchEvent(new Event("focusout", { bubbles: true }));
           highlightElement(targetEd);
           return "contenteditable";
-        } catch (_) {}
+        } catch (_) { }
       }
     }
 
     // 4. Prioritas 3: Input teks atau angka (untuk soal isian singkat / CBT short-answer)
-    var inputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='radio']):not([type='checkbox']):not([type='file']):not([disabled]):not([readonly])")).filter(function(inp) {
+    var inputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='radio']):not([type='checkbox']):not([type='file']):not([disabled]):not([readonly])")).filter(function (inp) {
       return !isHudElement(inp);
     });
     for (var inp = 0; inp < inputs.length; inp++) {
       var meta = `${inputs[inp].name || ""} ${inputs[inp].id || ""} ${inputs[inp].placeholder || ""}`.toLowerCase();
       if (!meta.includes("search") && !meta.includes("cari") && !meta.includes("token") && !meta.includes("pass") && isElementVisible(inputs[inp])) {
-        var cleanLines = cleanText.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
+        var cleanLines = cleanText.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
         var joinedLines = cleanLines.join(", ");
         var textForInput = (joinedLines && joinedLines.length < 250) ? joinedLines : ((conciseAnswer && conciseAnswer.length < 120) ? conciseAnswer : (cleanLines[0] || cleanText));
         fillInput(inputs[inp], textForInput);
@@ -1149,7 +1153,7 @@
         el.dispatchEvent(new Event("change", { bubbles: true }));
         el.dispatchEvent(new Event("blur", { bubbles: true }));
         el.dispatchEvent(new Event("focusout", { bubbles: true }));
-      } catch (_) {}
+      } catch (_) { }
     }
   }
 
@@ -1161,7 +1165,7 @@
       "kumpul", "submit", "kirim", "selesai", "finish", "akhiri",
       "turn in", "end test", "complete", "login", "masuk", "sign in", "log in"
     ];
-    return keywords.some(function(kw) { return lower.includes(kw); });
+    return keywords.some(function (kw) { return lower.includes(kw); });
   }
 
   var lastNextClickTime = 0;
@@ -1226,7 +1230,7 @@
 
     // PASS 0: PENCARIAN LANGSUNG ELEMEN EKSPLISIT NAVIGASI MAJU DI HALAMAN (Button, A, Div, Span, Input)
     // Sangat efektif untuk mengatasi berbagai struktur framework (Tailwind, React, Vue, AntD, dsb)
-    var explicitTextElements = Array.from(document.querySelectorAll("button, a, [role='button'], div, span, p, input[type='button'], input[type='submit']")).filter(function(el) {
+    var explicitTextElements = Array.from(document.querySelectorAll("button, a, [role='button'], div, span, p, input[type='button'], input[type='submit']")).filter(function (el) {
       if (isHudElement(el) || !isElementVisible(el) || isHeaderNavElement(el) || isInsideOptionCard(el)) return false;
       if (el.disabled || el.getAttribute("aria-disabled") === "true") return false;
       var t = (el.textContent || el.innerText || el.value || "").trim().toLowerCase();
@@ -1255,7 +1259,7 @@
     }
 
     // 1. Pagination "1 of 10", "1 dari 10", dsb. (HANYA JIKA TOMBOL BERADA PERSIS BERDAMPINGAN < 120px)
-    var pageSpans = Array.from(document.querySelectorAll("span, p, b, div")).filter(function(el) {
+    var pageSpans = Array.from(document.querySelectorAll("span, p, b, div")).filter(function (el) {
       if (isHudElement(el) || isInsideOptionCard(el) || el.children.length > 2) return false;
       var txt = (el.textContent || "").trim();
       return /(?:\b\d+\s*(?:of|\/|dari)\s*\d+\b)/i.test(txt);
@@ -1265,7 +1269,7 @@
       var pageEl = pageSpans[ps];
       var container = pageEl.parentElement;
       for (var depth = 0; depth < 4 && container && container !== document.body; depth++) {
-        var buttons = Array.from(container.querySelectorAll("button, a, input[type='button'], input[type='submit'], [role='button']")).filter(function(b) {
+        var buttons = Array.from(container.querySelectorAll("button, a, input[type='button'], input[type='submit'], [role='button']")).filter(function (b) {
           if (isHudElement(b) || !isElementVisible(b) || b.disabled || b.getAttribute("aria-disabled") === "true") return false;
           if (b === pageEl || pageEl.contains(b) || b.contains(pageEl)) return false;
           if (isHeaderNavElement(b) || isInsideOptionCard(b)) return false;
@@ -1273,14 +1277,14 @@
         });
 
         var pageRect = pageEl.getBoundingClientRect();
-        var rightButtons = buttons.filter(function(b) {
+        var rightButtons = buttons.filter(function (b) {
           var r = b.getBoundingClientRect();
           var dist = r.left - pageRect.right;
           return dist >= -5 && dist <= 120 && r.width >= 16 && r.height >= 16;
         });
 
         if (rightButtons.length > 0) {
-          rightButtons.sort(function(a, b) { return a.getBoundingClientRect().left - b.getBoundingClientRect().left; });
+          rightButtons.sort(function (a, b) { return a.getBoundingClientRect().left - b.getBoundingClientRect().left; });
           var targetBtn = rightButtons[0];
           var btnText = (targetBtn.textContent || targetBtn.innerText || targetBtn.value || "").trim();
           if (isForbiddenButton(btnText)) {
@@ -1299,7 +1303,7 @@
     // 2. Tombol Next Standar & Pencarian Komprehensif (Termasuk Tombol Simpan & SVG Arrow)
     var candidates = Array.from(document.querySelectorAll(
       "button, a, input[type='button'], input[type='submit'], [role='button'], [class*='btn' i], [class*='button' i], [class*='cursor-pointer' i], div[onclick], span[onclick]"
-    )).filter(function(el) {
+    )).filter(function (el) {
       if (isHudElement(el) || !isElementVisible(el) || el.disabled || el.getAttribute("aria-disabled") === "true") return false;
       if (isHeaderNavElement(el) || isInsideOptionCard(el)) return false;
       if (el.querySelector("button, a, input[type='button'], input[type='submit'], [role='button']")) return false;
@@ -1375,7 +1379,7 @@
     if (forwardMatch) return forwardMatch;
 
     // 3. Deteksi Heuristik Spasial: Tombol di baris navigasi bawah kuis sebelah kanan
-    var navButtons = candidates.filter(function(b) {
+    var navButtons = candidates.filter(function (b) {
       var r = b.getBoundingClientRect();
       var t = (b.textContent || b.innerText || "").trim().toLowerCase();
       if (t.match(/^(?:sebelumnya|kembali|back|prev|ragu|tandai|reset)/i)) return false;
@@ -1383,7 +1387,7 @@
     });
 
     if (navButtons.length > 0) {
-      navButtons.sort(function(a, b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });
+      navButtons.sort(function (a, b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });
       var spatialBtn = navButtons[0];
       var sText = (spatialBtn.textContent || spatialBtn.innerText || spatialBtn.value || "").trim();
       if (!isForbiddenButton(sText)) {
@@ -1394,7 +1398,7 @@
     // 4. Deteksi navigasi tombol nomor soal berikutnya (misal sedang di Soal 1, cari kotak '2' di daftar nomor)
     if (progress.current > 0 && !progress.isLast) {
       var nextNumStr = String(progress.current + 1);
-      var numCandidates = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function(el) {
+      var numCandidates = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function (el) {
         if (isHudElement(el) || !isElementVisible(el) || isHeaderNavElement(el) || isInsideOptionCard(el)) return false;
         var t = (el.textContent || el.innerText || "").trim();
         if (t !== nextNumStr || el.children.length > 0) return false;
@@ -1437,7 +1441,7 @@
     var targetNum = expectedNextNum || (current + 1);
     var targetNumStr = String(targetNum);
 
-    var allNumElements = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function(el) {
+    var allNumElements = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function (el) {
       if (isHudElement(el) || !isElementVisible(el) || isHeaderNavElement(el) || isInsideOptionCard(el)) return false;
       var t = (el.textContent || el.innerText || "").trim();
       if (t !== targetNumStr || el.children.length > 0) return false;
@@ -1465,13 +1469,13 @@
       // MAKA JAWABAN 100% SUDAH TERBUKTI TERSIMPAN DI SISTEM KUIS!
       var savedNotifs = Array.from(document.querySelectorAll(
         "#savedIndicator, .saved-status, [class*='saved-status' i], [class*='saved_status' i], .saved, [class*='saved' i], [class*='is-saved' i], [class*='answer-saved' i], [class*='terjawab' i], [class*='dijawab' i], [class*='sudah-dijawab' i], [id*='saved' i], [id*='simpan' i], span, div, p, b, strong, .badge, [class*='badge' i], .toast, [class*='toast' i], .alert, [class*='alert' i]"
-      )).filter(function(el) {
+      )).filter(function (el) {
         if (!el || isHudElement(el)) return false;
         var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
         if (style && (style.display === "none" || style.visibility === "hidden" || style.opacity === "0")) return false;
         var r = el.getBoundingClientRect();
         if (r.width <= 0 && r.height <= 0) return false;
-        
+
         var txt = (el.textContent || el.innerText || "").trim().toLowerCase();
         return (
           txt.includes("tersimpan") || txt.includes("disimpan") ||
@@ -1485,32 +1489,32 @@
       // 0b. Cek Palet Nomor Soal yang Berstatus Terisi/Terjawab (contoh .dot.filled, .dot.active.filled, .answered)
       var answeredDots = Array.from(document.querySelectorAll(
         ".dot.filled, [class*='dot' i][class*='filled' i], [class*='palette' i][class*='filled' i], [class*='number' i][class*='answered' i], [class*='item' i][class*='terjawab' i], [data-answered='true'], [data-status='answered']"
-      )).filter(function(el) {
+      )).filter(function (el) {
         if (!el || isHudElement(el)) return false;
         var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
         if (style && (style.display === "none" || style.visibility === "hidden")) return false;
         return true;
       });
-      var activeFilledDot = answeredDots.find(function(d) {
+      var activeFilledDot = answeredDots.find(function (d) {
         var cl = getElementClassName(d).toLowerCase();
         return cl.includes("active") || cl.includes("current");
       });
       if (activeFilledDot) return true;
 
       // 1. Cek input radio atau checkbox HTML standar yang :checked
-      var checkedInputs = Array.from(document.querySelectorAll("input[type='radio']:checked, input[type='checkbox']:checked")).filter(function(el) {
+      var checkedInputs = Array.from(document.querySelectorAll("input[type='radio']:checked, input[type='checkbox']:checked")).filter(function (el) {
         return !isHudElement(el) && isElementVisible(el.parentElement || el);
       });
       if (checkedInputs.length > 0) return true;
 
       // 2. Cek atribut aksesibilitas ARIA (aria-checked='true' atau aria-selected='true')
-      var ariaSelected = Array.from(document.querySelectorAll("[aria-checked='true'], [aria-selected='true']")).filter(function(el) {
+      var ariaSelected = Array.from(document.querySelectorAll("[aria-checked='true'], [aria-selected='true']")).filter(function (el) {
         return !isHudElement(el) && isElementVisible(el);
       });
       if (ariaSelected.length > 0) return true;
 
       // 3. Cek data-state / data-checked pada web modern (Radix UI, Headless UI, React, dsb)
-      var dataStateSelected = Array.from(document.querySelectorAll("[data-state='checked'], [data-checked='true'], [data-selected='true']")).filter(function(el) {
+      var dataStateSelected = Array.from(document.querySelectorAll("[data-state='checked'], [data-checked='true'], [data-selected='true']")).filter(function (el) {
         return !isHudElement(el) && isElementVisible(el);
       });
       if (dataStateSelected.length > 0) return true;
@@ -1518,7 +1522,7 @@
       // 4. Cek class seleksi pada elemen yang merepresentasikan opsi / jawaban kuis (bukan tombol navigasi/HUD)
       var selectedElements = Array.from(document.querySelectorAll(
         ".selected, [class*='selected' i], [class*='checked' i], [class*='active' i], .pilihan-selected, .opsi-selected, .is-selected, .chosen"
-      )).filter(function(el) {
+      )).filter(function (el) {
         if (!isElementVisible(el) || isHudElement(el) || isHeaderNavElement(el)) return false;
         var elText = (el.textContent || el.innerText || "").trim().toLowerCase();
         if (isForbiddenButton(elText) || isNextButtonCandidate(el)) return false;
@@ -1531,7 +1535,7 @@
       // 5. Cek jika soal bertipe isian / esai dan sudah terisi teks (input teks, angka, textarea, contenteditable, role='textbox')
       var essayElements = Array.from(document.querySelectorAll(
         "textarea, input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='radio']):not([type='checkbox']):not([type='file']), [contenteditable='true'], [role='textbox']"
-      )).filter(function(el) {
+      )).filter(function (el) {
         if (!el || isHudElement(el)) return false;
         var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
         if (style && (style.display === "none" || style.visibility === "hidden")) return false;
@@ -1603,7 +1607,7 @@
 
     // 4. Jika TIDAK ADA tombol navigasi maju, tapi ada tombol "Simpan / Simpan Jawaban" mandiri
     try {
-      var saveButtons = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function(b) {
+      var saveButtons = Array.from(document.querySelectorAll("button, a, [role='button'], div, span")).filter(function (b) {
         if (isHudElement(b) || !isElementVisible(b) || isHeaderNavElement(b) || isInsideOptionCard(b)) return false;
         var t = (b.textContent || b.innerText || "").trim().toLowerCase();
         return t === "simpan" || t === "simpan jawaban";
@@ -1616,7 +1620,7 @@
           return { success: true, buttonText: "Simpan", fromNumber: currentNum, toNumber: targetSeqNum };
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // 5. Navigasi Grid Palet CBT: HANYA BOLEH KLIK NOMOR PERSIS BERIKUTNYA (currentNum + 1)!
     // Contoh: dari nomor 1 HANYA boleh ke nomor 2, DILARANG LANGSUNG KE NOMOR 3!
@@ -1722,7 +1726,7 @@
     // Scroll ke elemen target agar terlihat jelas
     try {
       (card || targetEl).scrollIntoView({ behavior: "smooth", block: "center" });
-    } catch (_) {}
+    } catch (_) { }
 
     // 2. Berikan highlight visual hijau langsung pada wadah kartu pilihan
     highlightElement(card || targetEl);
@@ -1735,7 +1739,7 @@
     if (card && !elementsToClick.includes(card) && (!card.querySelectorAll || card.querySelectorAll("input[type='radio'], input[type='checkbox']").length <= 1)) elementsToClick.push(card);
     if (label && !elementsToClick.includes(label)) elementsToClick.push(label);
 
-    elementsToClick.forEach(function(el) {
+    elementsToClick.forEach(function (el) {
       if (!el) return;
       try {
         if (typeof PointerEvent !== "undefined") {
@@ -1751,7 +1755,7 @@
         } else {
           el.dispatchEvent(new MouseEvent("click", mouseOpts));
         }
-      } catch (_) {}
+      } catch (_) { }
     });
 
     // 4. Sinkronisasi status radio secara terprogram (dukung React/Vue/Angular controlled input & browser form)
@@ -1769,37 +1773,37 @@
       try {
         radio.dispatchEvent(new Event("input", { bubbles: true }));
         radio.dispatchEvent(new Event("change", { bubbles: true }));
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // 5. Role radio (Google Forms / ARIA widgets)
     var ariaRadio = (radio && radio.getAttribute && (radio.getAttribute("role") === "radio" || radio.getAttribute("role") === "checkbox")) ? radio :
-                    (targetEl.getAttribute && (targetEl.getAttribute("role") === "radio" || targetEl.getAttribute("role") === "checkbox")) ? targetEl :
-                    (card && card.getAttribute && (card.getAttribute("role") === "radio" || card.getAttribute("role") === "checkbox")) ? card : null;
+      (targetEl.getAttribute && (targetEl.getAttribute("role") === "radio" || targetEl.getAttribute("role") === "checkbox")) ? targetEl :
+        (card && card.getAttribute && (card.getAttribute("role") === "radio" || card.getAttribute("role") === "checkbox")) ? card : null;
     if (ariaRadio) {
       try {
         ariaRadio.setAttribute("aria-checked", "true");
         if (typeof ariaRadio.click === "function") ariaRadio.click();
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // 6. Jika kartu pembungkus memiliki handler onclick eksplisit di HTML (onclick="...")
     if (card && card !== targetEl && typeof card.onclick === "function") {
       try {
         card.onclick();
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // 7. Jika halaman me-render ulang DOM secara dinamis (seperti kuis berbasis SPA/React/Vue)
     // Pastikan item yang baru di-render tetap mendapatkan highlight visual hijau
-    setTimeout(function() {
+    setTimeout(function () {
       try {
         var selectedItem = document.querySelector(".selected, [class*='selected' i], :checked, [aria-checked='true']");
         if (selectedItem) {
           var containerToGlow = selectedItem.closest(".option-item, [class*='option' i], [class*='choice' i], [class*='answer' i], label, tr, li") || selectedItem;
           highlightElement(containerToGlow);
         }
-      } catch (_) {}
+      } catch (_) { }
     }, 60);
 
     return true;
@@ -1820,11 +1824,11 @@
 
     try {
       btn.scrollIntoView({ behavior: "instant", block: "center" });
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       if (typeof btn.focus === "function") btn.focus();
-    } catch (_) {}
+    } catch (_) { }
 
     var rect = btn.getBoundingClientRect();
     var cx = rect.left + rect.width / 2;
@@ -1876,14 +1880,14 @@
       element.style.backgroundColor = "rgba(34, 197, 94, 0.12)";
       element.style.borderRadius = "8px";
 
-      setTimeout(function() {
+      setTimeout(function () {
         try {
           element.style.outline = originalOutline;
           element.style.boxShadow = originalShadow;
           element.style.backgroundColor = originalBg;
-        } catch (_) {}
+        } catch (_) { }
       }, 3000);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   // === 8. EKSTRAKSI JAWABAN TO-THE-POINT DARI RAW AI ANSWER ===
@@ -1897,13 +1901,13 @@
 
     // 1. Bersihkan blok think, hitungan tertutup, badge & markdown formatting (*, _, `, #)
     var clean = text.replace(/<think>[\s\S]*?<\/think>/gi, "")
-                    .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
-                    .replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
-                    .replace(/[*_`#]/g, "")
-                    .trim();
+      .replace(/\[(?:hitungan|langkah|scratchpad|analisis|cara)[\s\S]*?\]/gi, "")
+      .replace(/^(?:🎯|✍️|💡|📝)\[[^\]]+\]\s*/gi, "")
+      .replace(/[*_`#]/g, "")
+      .trim();
 
-    var lines = clean.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
-    if (lines.length === 0) lines = text.split("\n").map(function(l) { return l.trim(); }).filter(Boolean);
+    var lines = clean.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+    if (lines.length === 0) lines = text.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
 
     var answerLine = "";
     var foundIndex = -1;
@@ -2001,11 +2005,11 @@
     var rawAnswer = "";
 
     if (needsVision) {
-      setHudStatus("📸 Menganalisis visual dengan Gemini Vision...", true);
+      setHudStatus("📸 Menganalisis visual...", true);
       if (hudElement) hudElement.style.visibility = "hidden";
-      await new Promise(function(r) { setTimeout(r, 80); });
-      var res = await new Promise(function(resolve) {
-        chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION", text: content }, function(r) {
+      await new Promise(function (r) { setTimeout(r, 80); });
+      var res = await new Promise(function (resolve) {
+        chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION", text: content }, function (r) {
           if (chrome.runtime?.lastError) {
             resolve({ success: false, error: chrome.runtime.lastError.message });
             return;
@@ -2015,13 +2019,13 @@
       });
       if (hudElement) hudElement.style.visibility = "visible";
       if (!res || !res.success) {
-        throw new Error(res?.error || "Gagal menghubungi Gemini Vision.");
+        throw new Error(res?.error || "Gagal memproses visual.");
       }
       rawAnswer = res.answer;
     } else {
-      setHudStatus("⚡ Menjawab soal dengan Groq...", true);
-      var gRes = await new Promise(function(resolve) {
-        chrome.runtime.sendMessage({ type: "EXECUTE_GROQ", text: content }, function(r) {
+      setHudStatus("⚡ Menjawab soal...", true);
+      var gRes = await new Promise(function (resolve) {
+        chrome.runtime.sendMessage({ type: "EXECUTE_GROQ", text: content }, function (r) {
           if (chrome.runtime?.lastError) {
             resolve({ success: false, error: chrome.runtime.lastError.message });
             return;
@@ -2034,11 +2038,11 @@
       if (!gRes || !gRes.success) {
         var errMsg = gRes?.error || "";
         if (errMsg.includes("429") || errMsg.includes("Rate limit") || errMsg.includes("limit reached")) {
-          setHudStatus("⏳ Groq padat (429). Mengalihkan otomatis ke Gemini Vision...", true);
+          setHudStatus("⏳ Server padat (429). Mengalihkan otomatis...", true);
           if (hudElement) hudElement.style.visibility = "hidden";
-          await new Promise(function(r) { setTimeout(r, 80); });
-          var gFallback = await new Promise(function(resolve) {
-            chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION", text: content }, function(r) {
+          await new Promise(function (r) { setTimeout(r, 80); });
+          var gFallback = await new Promise(function (resolve) {
+            chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION", text: content }, function (r) {
               if (chrome.runtime?.lastError) {
                 resolve({ success: false, error: chrome.runtime.lastError.message });
                 return;
@@ -2051,21 +2055,21 @@
           if (gFallback && gFallback.success) {
             rawAnswer = gFallback.answer;
           } else {
-            throw new Error(gRes?.error || "Gagal menghubungi Groq & Gemini.");
+            throw new Error(gRes?.error || "Gagal memproses soal.");
           }
         } else {
-          throw new Error(gRes?.error || "Gagal menghubungi Groq.");
+          throw new Error(gRes?.error || "Gagal memproses soal.");
         }
       } else {
         rawAnswer = gRes.answer;
       }
 
       if (isVisualProblem(rawAnswer)) {
-        setHudStatus("🖼️ Soal butuh gambar! Mengalihkan ke Gemini Vision...", true);
+        setHudStatus("🖼️ Soal butuh analisis visual! Mengalihkan...", true);
         if (hudElement) hudElement.style.visibility = "hidden";
-        await new Promise(function(r) { setTimeout(r, 80); });
-        var vRes = await new Promise(function(resolve) {
-          chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION", text: content }, function(r) {
+        await new Promise(function (r) { setTimeout(r, 80); });
+        var vRes = await new Promise(function (resolve) {
+          chrome.runtime.sendMessage({ type: "EXECUTE_GEMINI_VISION", text: content }, function (r) {
             if (chrome.runtime?.lastError) {
               resolve({ success: false, error: chrome.runtime.lastError.message });
               return;
@@ -2146,18 +2150,18 @@
       }
 
       // Berikan jeda 350ms untuk rendering DOM & event loop web
-      await new Promise(function(r) { setTimeout(r, 350); });
+      await new Promise(function (r) { setTimeout(r, 350); });
       var isAnsweredInDom = isAnswerActuallySelectedOnPage();
 
       // RETRY JIKA BELUM TERVERIFIKASI TERISI
       if (!isAnsweredInDom) {
         if (hasEssayField && (radioCount < 2 || !hasPilgan)) {
           findAndFillEssay(rawAnswer);
-          await new Promise(function(r) { setTimeout(r, 400); });
+          await new Promise(function (r) { setTimeout(r, 400); });
           isAnsweredInDom = isAnswerActuallySelectedOnPage();
         } else if (ansInfo.letter || ansInfo.targetText) {
           findAndClickOption(ansInfo.letter, ansInfo.targetText);
-          await new Promise(function(r) { setTimeout(r, 400); });
+          await new Promise(function (r) { setTimeout(r, 400); });
           isAnsweredInDom = isAnswerActuallySelectedOnPage();
         }
       }
@@ -2209,11 +2213,11 @@
     var curSoalNum = progressNow.current || sequentialQuestionCounter;
     var nextExpectedSoalNum = curSoalNum + 1;
     setHudStatus("✅ Soal " + curSoalNum + " terbukti sudah terjawab! Berpindah urut ke Soal " + nextExpectedSoalNum + "...", true);
-    await new Promise(function(r) { setTimeout(r, 700); });
+    await new Promise(function (r) { setTimeout(r, 700); });
 
     // Verifikasi ulang sekali lagi sesaat sebelum klik tombol Next (dengan toleransi transisi DOM)
     if (!isAnswerActuallySelectedOnPage()) {
-      await new Promise(function(r) { setTimeout(r, 300); });
+      await new Promise(function (r) { setTimeout(r, 300); });
       if (!isAnswerActuallySelectedOnPage()) {
         setHudStatus("⚠️ Jawaban belum terisi di web! Membatalkan perpindahan lembar...", false);
         return { success: false, notSelected: true, answer: displayAnswer };
@@ -2271,11 +2275,11 @@
     var start = Date.now();
     // Tunggu transisi DOM secara pasif hingga 4.5 detik. Dilarang memicu klik di sini agar tidak dobel lompat!
     while (Date.now() - start < 4500) {
-      await new Promise(function(r) { setTimeout(r, 250); });
+      await new Promise(function (r) { setTimeout(r, 250); });
       var currentText = extractPageInfo().text;
       if (hasQuestionChanged(prevText, currentText) && currentText.length > 20) {
         // Beri waktu sejenak agar render soal baru stabil sebelum mulai dianalisis
-        await new Promise(function(r) { setTimeout(r, 450); });
+        await new Promise(function (r) { setTimeout(r, 450); });
         return true;
       }
     }
@@ -2302,14 +2306,14 @@
     if (chkClick) {
       autoClickEnabled = chkClick.checked;
     }
-    chrome.storage?.local?.set({ 
+    chrome.storage?.local?.set({
       isAgentRunning: true,
       lastActiveDomain: window.location.hostname || "local",
       lastActiveTime: Date.now()
     });
     updateHudRunningState(true);
 
-    setHudStatus("🚀 Agen Otomatis aktif (Groq & Gemini)! Memulai pengerjaan kuis/tugas...", true);
+    setHudStatus("🚀 Agen Otomatis aktif! Memulai pengerjaan kuis/tugas...", true);
 
     var lastAnsweredQuestion = "";
     var sameQuestionStall = 0;
@@ -2351,7 +2355,7 @@
             // JANGAN KLIK NEXT LAGI JIKA NOMOR INI SUDAH DIKLIK NEXT SEBELUMNYA (ANTI-LOMPAT / ANTI-DOUBLE-SKIP)
             if (lastNextClickedForQuestionNum === curSoalNum) {
               setHudStatus("⏳ Next untuk Soal " + curSoalNum + " sudah ditekan. Menunggu halaman memuat Soal " + nextSoalNum + "...", true);
-              await new Promise(function(r) { setTimeout(r, 1500); });
+              await new Promise(function (r) { setTimeout(r, 1500); });
               var transitionedWait2 = await waitForQuestionTransition(currentText);
               if (transitionedWait2) {
                 sameQuestionStall = 0;
@@ -2385,7 +2389,7 @@
               lastNextClickedForQuestionText = "";
               continue;
             } else {
-              await new Promise(function(r) { setTimeout(r, 2000); });
+              await new Promise(function (r) { setTimeout(r, 2000); });
               continue;
             }
           }
@@ -2395,7 +2399,7 @@
 
         var step = await executeSingleQuestionCycle();
 
-        chrome.storage?.local?.set({ 
+        chrome.storage?.local?.set({
           lastActiveTime: Date.now()
         });
 
@@ -2411,14 +2415,14 @@
         if (step.waitingUserAnswer) {
           var userWaitCount = 0;
           while (isAgentRunning && !isAnswerActuallySelectedOnPage() && userWaitCount < 60) {
-            await new Promise(function(r) { setTimeout(r, 500); });
+            await new Promise(function (r) { setTimeout(r, 500); });
             var pollTxt = extractPageInfo().text;
             if (hasQuestionChanged(currentText, pollTxt)) break;
             userWaitCount++;
           }
           if (isAgentRunning && isAnswerActuallySelectedOnPage() && autoNextEnabled) {
             setHudStatus("✅ Terdeteksi sudah Anda jawab! Menyiapkan lembar selanjutnya...", true);
-            await new Promise(function(r) { setTimeout(r, 1000); });
+            await new Promise(function (r) { setTimeout(r, 1000); });
             findAndClickNextButton(nextSoalNum);
             await waitForQuestionTransition(currentText);
             lastAnsweredQuestion = currentClean;
@@ -2432,7 +2436,7 @@
           setHudStatus("⚠️ Jawaban belum terisi di web! Menunggu jawaban dipilih sebelum lanjut ke lembar berikutnya...", false);
           var waitCount = 0;
           while (isAgentRunning && waitCount < 8) {
-            await new Promise(function(r) { setTimeout(r, 500); });
+            await new Promise(function (r) { setTimeout(r, 500); });
             if (isAnswerActuallySelectedOnPage()) {
               setHudStatus("✅ Terbaca sudah terjawab! Menyiapkan lembar selanjutnya...", true);
               break;
@@ -2440,7 +2444,7 @@
             waitCount++;
           }
           if (isAgentRunning && isAnswerActuallySelectedOnPage() && autoNextEnabled) {
-            await new Promise(function(r) { setTimeout(r, 1000); });
+            await new Promise(function (r) { setTimeout(r, 1000); });
             findAndClickNextButton(nextSoalNum);
             await waitForQuestionTransition(currentText);
             lastAnsweredQuestion = currentClean;
@@ -2454,8 +2458,8 @@
         // (Jawaban sudah terisi atau ditampilkan di HUD. AI WAJIB TETAP DI SOAL INI SAMPAI USER PINDAH KE SOAL BERIKUTNYA)
         if (!autoNextEnabled) {
           lastAnsweredQuestion = currentClean;
-          var msgManual = autoClickEnabled 
-            ? "✅ Jawaban terisi di web! Silakan periksa & klik 'Selanjutnya' secara manual di layar web." 
+          var msgManual = autoClickEnabled
+            ? "✅ Jawaban terisi di web! Silakan periksa & klik 'Selanjutnya' secara manual di layar web."
             : "💡 Jawaban siap di HUD. Silakan pilih/isi jawaban & klik 'Selanjutnya' secara manual di layar web.";
           setHudStatus(msgManual, false);
 
@@ -2464,13 +2468,13 @@
 
           // Tunggu secara pasif sampai pengguna sendiri yang berpindah soal di web (manual next)
           while (isAgentRunning && !autoNextEnabled) {
-            await new Promise(function(r) { setTimeout(r, 450); });
+            await new Promise(function (r) { setTimeout(r, 450); });
             if (!isAgentRunning || autoNextEnabled) break;
 
             // Heartbeat update storage agar auto-pilot tetap hidup saat navigasi antar-halaman (multi-page form)
             if (Date.now() - lastHeartbeat > 3000) {
               lastHeartbeat = Date.now();
-              chrome.storage?.local?.set({ 
+              chrome.storage?.local?.set({
                 isAgentRunning: true,
                 lastActiveDomain: window.location.hostname || "local",
                 lastActiveTime: Date.now()
@@ -2490,7 +2494,7 @@
             if ((isDifferentQuestion || isDifferentNum) && pollClean.length > 20 && !isLoadingState(pollTxt)) {
               // Terdeteksi soal berganti! Beri jeda 500ms untuk memastikan render DOM stabil
               setHudStatus("📖 Soal baru terdeteksi! Membaca soal...", true);
-              await new Promise(function(r) { setTimeout(r, 500); });
+              await new Promise(function (r) { setTimeout(r, 500); });
 
               var stableInfo = extractPageInfo();
               var stableClean = cleanQuestionForComparison(stableInfo.text);
@@ -2514,10 +2518,10 @@
           lastNextClickedForQuestionNum = 0;
           lastNextClickedForQuestionText = "";
         }
-        await new Promise(function(r) { setTimeout(r, 600); });
+        await new Promise(function (r) { setTimeout(r, 600); });
       } catch (err) {
         setHudStatus('⚠️ Terjadi kendala: ' + err.message + '. Mencoba lagi dalam 3 detik...', false);
-        await new Promise(function(r) { setTimeout(r, 3000); });
+        await new Promise(function (r) { setTimeout(r, 3000); });
         if (!isAgentRunning) break;
       }
     }
@@ -2525,7 +2529,7 @@
 
   function stopAutoPilot() {
     isAgentRunning = false;
-    chrome.storage?.local?.get(["autoNext"], function(res) {
+    chrome.storage?.local?.get(["autoNext"], function (res) {
       autoNextEnabled = res?.autoNext === true;
       var chkNext = hudElement?.querySelector("#hud-autonext-chk");
       if (chkNext) chkNext.checked = autoNextEnabled;
@@ -2549,7 +2553,7 @@
     var existingHuds = document.querySelectorAll("#ai-study-agent-hud");
     if (existingHuds.length > 0) {
       for (var h = 1; h < existingHuds.length; h++) {
-        try { existingHuds[h].remove(); } catch (_) {}
+        try { existingHuds[h].remove(); } catch (_) { }
       }
       hudElement = existingHuds[0];
       return hudElement;
@@ -2571,43 +2575,43 @@
     `;
 
     container.innerHTML = `
-      <div id="hud-bubble" style="display: ${hudMinimized ? "flex" : "none"}; align-items: center; gap: 8px; background: #312e81; color: #fff; padding: 10px 16px; border-radius: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); cursor: pointer; font-size: 13px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2);">
-        <span id="hud-bubble-text">🤖 Asisten Belajar AI</span>
+      <div id="hud-bubble" style="display: ${hudMinimized ? "flex" : "none"}; align-items: center; gap: 8px; background: #0f172a; color: #fff; padding: 9px 15px; border-radius: 30px; box-shadow: 0 8px 24px rgba(15,23,42,0.25); cursor: pointer; font-size: 12.5px; font-weight: 700; border: 1px solid rgba(255,255,255,0.15);">
+        <span id="hud-bubble-text">📚 Asisten Belajar AI</span>
         <span id="bubble-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${isAgentRunning ? "#22c55e" : "#cbd5e1"};"></span>
       </div>
 
-      <div id="hud-panel" style="display: ${hudMinimized ? "none" : "flex"}; flex-direction: column; width: 330px; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 32px rgba(15,23,42,0.22); border: 1px solid #e2e8f0; overflow: hidden; color: #0f172a; position: relative;">
-        <div id="hud-header" style="background: linear-gradient(135deg, #3730a3, #4f46e5); color: #fff; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; cursor: grab;">
+      <div id="hud-panel" style="display: ${hudMinimized ? "none" : "flex"}; flex-direction: column; width: 330px; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -5px rgba(15,23,42,0.18), 0 4px 6px -2px rgba(15,23,42,0.05); border: 1px solid #e2e8f0; overflow: hidden; color: #0f172a; position: relative;">
+        <div id="hud-header" style="background: #0f172a; color: #fff; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; cursor: grab;">
           <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12.5px;">
             <span>📚 Asisten Belajar AI</span>
-            <span id="hud-mode-badge" style="font-size: 9.5px; background: rgba(255,255,255,0.22); padding: 2px 6px; border-radius: 6px;">Layar Web</span>
+            <span id="hud-mode-badge" style="font-size: 9.5px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #e2e8f0; padding: 2px 7px; border-radius: 9999px;">Layar Web</span>
           </div>
           <div style="display: flex; gap: 4px; align-items: center;">
-            <button id="hud-ghost-btn" style="background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 13px; padding: 0 4px;" title="Mode Hantu / Transparan 32% (Alt+Z)">👻</button>
-            <button id="hud-min-btn" style="background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 14px; padding: 0 4px;" title="Perkecil">_</button>
-            <button id="hud-close-btn" style="background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 14px; padding: 0 4px;" title="Tutup (Alt+X / Esc)">×</button>
+            <button id="hud-ghost-btn" style="background: transparent; border: 0; color: #94a3b8; cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 4px; transition: color .15s;" title="Mode Hantu / Transparan 32% (Alt+Z)">👻</button>
+            <button id="hud-min-btn" style="background: transparent; border: 0; color: #94a3b8; cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px; line-height: 1; transition: color .15s;" title="Perkecil">_</button>
+            <button id="hud-close-btn" style="background: transparent; border: 0; color: #94a3b8; cursor: pointer; font-size: 15px; padding: 2px 4px; border-radius: 4px; line-height: 1; transition: color .15s;" title="Tutup (Alt+X / Esc)">×</button>
           </div>
         </div>
 
         <!-- Tab Bar Navigasi Mini di Panel Web -->
-        <div id="hud-nav-tabs" style="display: flex; gap: 3px; background: #e2e8f0; padding: 3px; border-radius: 8px; margin: 8px 10px 0;">
-          <button id="hud-tab-btn-screen" class="hud-nav-btn active" data-tab="screen" style="flex: 1; padding: 5px 2px; font-size: 10px; font-weight: 700; border: 0; border-radius: 6px; background: #4f46e5; color: #fff; cursor: pointer; transition: all .15s;">⚡ Layar</button>
-          <button id="hud-tab-btn-audio" class="hud-nav-btn" data-tab="audio" style="flex: 1; padding: 5px 2px; font-size: 10px; font-weight: 600; border: 0; border-radius: 6px; background: transparent; color: #475569; cursor: pointer; transition: all .15s;">🎙️ Suara</button>
-          <button id="hud-tab-btn-text" class="hud-nav-btn" data-tab="text" style="flex: 1; padding: 5px 2px; font-size: 10px; font-weight: 600; border: 0; border-radius: 6px; background: transparent; color: #475569; cursor: pointer; transition: all .15s;">✍️ Teks</button>
-          <button id="hud-tab-btn-file" class="hud-nav-btn" data-tab="file" style="flex: 1; padding: 5px 2px; font-size: 10px; font-weight: 600; border: 0; border-radius: 6px; background: transparent; color: #475569; cursor: pointer; transition: all .15s;">📁 File</button>
+        <div id="hud-nav-tabs" style="display: flex; gap: 2px; background: #e2e8f0; padding: 3px; border-radius: 8px; margin: 8px 10px 0;">
+          <button id="hud-tab-btn-screen" class="hud-nav-btn active" data-tab="screen" style="flex: 1; padding: 6px 2px; font-size: 10px; font-weight: 700; border: 0; border-radius: 6px; background: #ffffff; color: #0f172a; cursor: pointer; transition: all .15s; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">⚡ Layar</button>
+          <button id="hud-tab-btn-audio" class="hud-nav-btn" data-tab="audio" style="flex: 1; padding: 6px 2px; font-size: 10px; font-weight: 600; border: 0; border-radius: 6px; background: transparent; color: #334155; cursor: pointer; transition: all .15s;">🎙️ Suara</button>
+          <button id="hud-tab-btn-text" class="hud-nav-btn" data-tab="text" style="flex: 1; padding: 6px 2px; font-size: 10px; font-weight: 600; border: 0; border-radius: 6px; background: transparent; color: #334155; cursor: pointer; transition: all .15s;">✍️ Teks</button>
+          <button id="hud-tab-btn-file" class="hud-nav-btn" data-tab="file" style="flex: 1; padding: 6px 2px; font-size: 10px; font-weight: 600; border: 0; border-radius: 6px; background: transparent; color: #334155; cursor: pointer; transition: all .15s;">📁 File</button>
         </div>
 
         <div style="padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px;">
 
           <!-- PANE 1: LAYAR WEB & AUTO-PILOT -->
           <div id="hud-pane-screen" class="hud-tab-pane" style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="font-size: 10px; color: #4338ca; font-weight: 700; background: #e0e7ff; padding: 3px 8px; border-radius: 5px; text-align: center;">
-              ⚡ Ditenagai Groq & Gemini • Khusus Tugas & Kuis
+            <div style="font-size: 10px; color: #3730a3; font-weight: 700; background: #e0e7ff; padding: 4px 8px; border-radius: 6px; text-align: center; border: 1px solid #c7d2fe;">
+              ⚡ Khusus Tugas & Kuis Akademik
             </div>
-            <button id="hud-autopilot-btn" style="width: 100%; padding: 8.5px 12px; border: 0; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; color: #fff; background: ${isAgentRunning ? "#dc2626" : "linear-gradient(135deg, #16a34a, #059669)"}; transition: all .15s;">
+            <button id="hud-autopilot-btn" style="width: 100%; padding: 8.5px 12px; border: 0; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; color: #fff; background: ${isAgentRunning ? "#dc2626" : "#4f46e5"}; transition: all .15s; box-shadow: 0 1px 3px rgba(79,70,229,0.25);">
               ${isAgentRunning ? "⏹️ Hentikan Agen (Stop)" : "▶️ Jalankan Otomatis (Sampai Selesai)"}
             </button>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; color: #475569; background: #f8fafc; padding: 5px 8px; border-radius: 7px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; color: #334155; background: #f8fafc; padding: 6px 9px; border-radius: 7px; border: 1px solid #e2e8f0;">
               <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
                 <input type="checkbox" id="hud-autoclick-chk" ${autoClickEnabled ? "checked" : ""} style="accent-color: #4f46e5; cursor: pointer;">
                 <span>🎯 Auto-Fill</span>
@@ -2618,87 +2622,94 @@
               </label>
             </div>
             <div style="display: flex; gap: 6px;">
-              <button id="hud-oneshot-btn" style="flex: 1; padding: 7px 6px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10.5px; font-weight: 600; cursor: pointer;">
-                ⚡ Tugas Teks (Groq)
+              <button id="hud-oneshot-btn" style="flex: 1; padding: 7.5px 6px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10.5px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(79,70,229,0.2);">
+                ⚡ Tugas Teks
               </button>
-              <button id="hud-vision-btn" style="flex: 1; padding: 7px 6px; border: 0; border-radius: 7px; background: #0284c7; color: #fff; font-size: 10.5px; font-weight: 600; cursor: pointer;">
-                📸 Soal Gambar (Gemini)
+              <button id="hud-vision-btn" style="flex: 1; padding: 7.5px 6px; border: 0; border-radius: 7px; background: #0369a1; color: #fff; font-size: 10.5px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(3,105,161,0.2);">
+                📸 Soal Gambar
               </button>
             </div>
           </div>
 
           <!-- PANE 2: REKAM SUARA -->
           <div id="hud-pane-audio" class="hud-tab-pane" style="display: none; flex-direction: column; gap: 7px;">
-            <div style="display: flex; gap: 4px; background: #f1f5f9; padding: 2px; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <button id="hud-audio-src-mic" style="flex: 1; padding: 4.5px 4px; font-size: 10px; font-weight: 700; border: 0; border-radius: 5px; background: #4f46e5; color: #fff; cursor: pointer;">🎙️ Mikrofon</button>
-              <button id="hud-audio-src-tab" style="flex: 1; padding: 4.5px 4px; font-size: 10px; font-weight: 600; border: 0; border-radius: 5px; background: transparent; color: #475569; cursor: pointer;">🌐 Tab Web (Zoom/Video)</button>
+            <div style="display: flex; gap: 3px; background: #f1f5f9; padding: 2px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              <button id="hud-audio-src-mic" style="flex: 1; padding: 5px 4px; font-size: 10px; font-weight: 700; border: 0; border-radius: 5px; background: #4f46e5; color: #fff; cursor: pointer;">🎙️ Mikrofon</button>
+              <button id="hud-audio-src-tab" style="flex: 1; padding: 5px 4px; font-size: 10px; font-weight: 600; border: 0; border-radius: 5px; background: transparent; color: #334155; cursor: pointer;">🌐 Tab Web (Zoom/Video)</button>
             </div>
-            <div style="font-size: 9.5px; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 7px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 9.5px; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 5px 8px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
               <span>🛡️ Filter Jernih & Noise Reduction</span>
               <span style="font-weight: 700; color: #15803d;">AKTIF</span>
             </div>
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 11px; display: flex; align-items: center; justify-content: space-between;">
               <div style="display: flex; align-items: center; gap: 6px;">
                 <span id="hud-record-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
                 <span id="hud-record-status" style="font-size: 10.5px; font-weight: 600; color: #334155;">Siap Merekam</span>
               </div>
-              <div id="hud-record-timer" style="font-family: monospace; font-size: 12px; font-weight: 700; color: #1e1b4b;">00:00</div>
+              <div id="hud-record-timer" style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 700; color: #0f172a; font-variant-numeric: tabular-nums;">00:00</div>
             </div>
-            <button id="hud-record-btn" style="width: 100%; padding: 8px 10px; border: 0; border-radius: 7px; background: #dc2626; color: #fff; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+            <button id="hud-record-btn" style="width: 100%; padding: 8.5px 10px; border: 0; border-radius: 7px; background: #dc2626; color: #fff; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 1px 3px rgba(220,38,38,0.25);">
               🎙️ Mulai Rekam Audio
             </button>
             <audio id="hud-audio-playback" controls style="display: none; width: 100%; height: 30px; margin-top: 2px;"></audio>
             <div id="hud-audio-actions" style="display: none; gap: 6px;">
               <button id="hud-audio-answer-btn" style="flex: 1; padding: 7px 5px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">🎯 Jawab Soal</button>
-              <button id="hud-audio-summary-btn" style="flex: 1; padding: 7px 5px; border: 0; border-radius: 7px; background: #0284c7; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">📝 Rangkum Audio</button>
+              <button id="hud-audio-summary-btn" style="flex: 1; padding: 7px 5px; border: 0; border-radius: 7px; background: #0369a1; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">📝 Rangkum Audio</button>
             </div>
           </div>
 
-          <!-- PANE 3: KETIK TEKS MANUAL -->
+          <!-- PANE 3: KETIK TEKS MANUAL (MODE SILUMAN AKTIF) -->
           <div id="hud-pane-text" class="hud-tab-pane" style="display: none; flex-direction: column; gap: 7px;">
-            <textarea id="hud-text-input" placeholder="Ketik atau tempel soal / esai / pertanyaan di sini..." style="width: 100%; height: 70px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 7px; font-size: 11px; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #64748b;">
+            <textarea id="hud-text-input" placeholder="Ketik atau tempel soal / esai / pertanyaan di sini..." style="width: 100%; height: 75px; padding: 8px 9px; border: 1px solid #cbd5e1; border-radius: 7px; font-size: 11px; font-family: inherit; resize: vertical; box-sizing: border-box; line-height: 1.45; background: #ffffff !important; color: #0f172a !important;"></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #334155;">
               <span id="hud-text-count">0 karakter</span>
               <div style="display: flex; gap: 4px;">
-                <button id="hud-btn-paste" style="padding: 2.5px 6px; font-size: 9.5px; border: 1px solid #cbd5e1; border-radius: 5px; background: #f8fafc; cursor: pointer;">📋 Tempel</button>
-                <button id="hud-btn-clear-text" style="padding: 2.5px 6px; font-size: 9.5px; border: 1px solid #fecaca; border-radius: 5px; background: #fef2f2; color: #b91c1c; cursor: pointer;">🗑️ Hapus</button>
+                <button id="hud-btn-paste" style="padding: 3px 7px; font-size: 9.5px; border: 1px solid #cbd5e1; border-radius: 5px; background: #ffffff !important; color: #0f172a !important; cursor: pointer;">📋 Tempel</button>
+                <button id="hud-btn-clear-text" style="padding: 3px 7px; font-size: 9.5px; border: 1px solid #fecaca; border-radius: 5px; background: #fef2f2 !important; color: #b91c1c !important; cursor: pointer;">🗑️ Hapus</button>
               </div>
             </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #334155; background: #f8fafc; padding: 5px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none;">
+                <input type="checkbox" id="hud-text-autofill-chk" ${autoClickEnabled ? "checked" : ""} style="accent-color: #16a34a; cursor: pointer;">
+                <span>🎯 <b>Auto-Fill</b> ke Web</span>
+              </label>
+              <span id="hud-text-stealth-badge" style="font-size: 9px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 1.5px 6px; border-radius: 9999px; font-weight: 700;">🛡️ Mode Siluman</span>
+            </div>
             <div style="display: flex; gap: 5px;">
-              <button id="hud-text-groq-btn" style="flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;">⚡ Groq</button>
-              <button id="hud-text-qwen-btn" style="flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: #d97706; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;">🎓 Qwen 72B</button>
-              <button id="hud-text-deepseek-btn" style="flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: #059669; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;">🔍 DeepSeek</button>
+              <button id="hud-text-groq-btn" style="flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;">⚡ Jawab Cepat</button>
+              <button id="hud-text-qwen-btn" style="flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: #b45309; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;">🎓 Bedah Materi</button>
+              <button id="hud-text-deepseek-btn" style="flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: #047857; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer;">🔍 Analisis Logika</button>
             </div>
           </div>
 
           <!-- PANE 4: KIRIM FILE -->
           <div id="hud-pane-file" class="hud-tab-pane" style="display: none; flex-direction: column; gap: 7px;">
             <input type="file" id="hud-file-input" style="display: none;">
-            <div id="hud-file-dropzone" style="border: 1.5px dashed #cbd5e1; border-radius: 8px; padding: 9px; text-align: center; cursor: pointer; background: #f8fafc; font-size: 10.5px; color: #475569; line-height: 1.3;">
+            <div id="hud-file-dropzone" style="border: 1.5px dashed #cbd5e1; border-radius: 8px; padding: 11px; text-align: center; cursor: pointer; background: #f8fafc; font-size: 10.5px; color: #334155; line-height: 1.35;">
               📁 Klik untuk pilih file (Gambar/PDF/Audio/Teks)
             </div>
-            <div id="hud-file-preview" style="display: none; align-items: center; justify-content: space-between; background: #e0e7ff; padding: 5px 8px; border-radius: 6px; font-size: 10.5px; color: #3730a3;">
+            <div id="hud-file-preview" style="display: none; align-items: center; justify-content: space-between; background: #eef2ff; border: 1px solid #c7d2fe; padding: 6px 9px; border-radius: 6px; font-size: 10.5px; color: #3730a3;">
               <span id="hud-file-name" style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;"></span>
               <button id="hud-btn-remove-file" style="border: 0; background: #fee2e2; color: #b91c1c; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px;">✕</button>
             </div>
-            <input id="hud-file-prompt" placeholder="Instruksi tambahan (opsional)..." style="width: 100%; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 10.5px; box-sizing: border-box;">
+            <input id="hud-file-prompt" placeholder="Instruksi tambahan (opsional)..." style="width: 100%; padding: 6px 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 10.5px; box-sizing: border-box; background: #ffffff !important; color: #0f172a !important;">
             <div style="display: flex; gap: 6px;">
               <button id="hud-file-solve-btn" style="flex: 1; padding: 7px 6px; border: 0; border-radius: 7px; background: #4f46e5; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">🎯 Pecahkan File</button>
-              <button id="hud-file-summary-btn" style="flex: 1; padding: 7px 6px; border: 0; border-radius: 7px; background: #0284c7; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">📝 Rangkum File</button>
+              <button id="hud-file-summary-btn" style="flex: 1; padding: 7px 6px; border: 0; border-radius: 7px; background: #0369a1; color: #fff; font-size: 10.5px; font-weight: 700; cursor: pointer;">📝 Rangkum File</button>
             </div>
           </div>
 
           <!-- AREA STATUS & HASIL -->
-          <div id="hud-status" style="font-size: 11px; color: #475569; display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 6px 9px; border-radius: 7px; border: 1px solid #e2e8f0;">
+          <div id="hud-status" style="font-size: 11px; color: #334155; display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 7px 10px; border-radius: 7px; border: 1px solid #e2e8f0;">
             <div id="hud-spinner" style="width: 11px; height: 11px; border: 2px solid #cbd5e1; border-top-color: #4f46e5; border-radius: 50%; animation: hudspin .8s linear infinite; display: none;"></div>
             <span id="hud-status-text">Siap membantu belajar</span>
           </div>
 
-          <div id="hud-answer-box" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 600; color: #166534; line-height: 1.45; white-space: pre-wrap; max-height: 140px; overflow-y: auto;">
+          <div id="hud-answer-box" style="display: none; background: #ffffff !important; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; font-size: 12px; font-weight: 500; color: #0f172a !important; line-height: 1.6; white-space: pre-wrap; max-height: 150px; overflow-y: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
           </div>
           <div id="hud-result-actions" style="display: none; gap: 6px; margin-top: 4px;">
-            <button id="hud-copy-btn" style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; color: #334155; font-size: 10.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background .15s;">📋 Salin Jawaban</button>
-            <button id="hud-clear-btn" style="flex: 1; padding: 6px 8px; border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2; color: #991b1b; font-size: 10.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background .15s;" title="Bersihkan dan sembunyikan jawaban">🗑️ Bersihkan</button>
+            <button id="hud-copy-btn" style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff !important; color: #0f172a !important; font-size: 10.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: background .15s;">📋 Salin Jawaban</button>
+            <button id="hud-clear-btn" style="flex: 1; padding: 6px 8px; border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2 !important; color: #991b1b !important; font-size: 10.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: background .15s;" title="Bersihkan dan sembunyikan jawaban">🗑️ Bersihkan</button>
           </div>
         </div>
       </div>
@@ -2709,19 +2720,43 @@
       styleEl.id = "ai-agent-hud-styles";
       styleEl.textContent = `
         @keyframes hudspin { to { transform: rotate(360deg); } }
-        #hud-autopilot-btn:hover, #hud-record-btn:hover { opacity: 0.93; }
+        #ai-study-agent-hud, #ai-study-agent-hud * {
+          box-sizing: border-box !important;
+        }
+        #ai-study-agent-hud textarea, #ai-study-agent-hud input:not([type="checkbox"]):not([type="file"]) {
+          background-color: #ffffff !important;
+          color: #0f172a !important;
+          -webkit-text-fill-color: #0f172a !important;
+        }
+        #ai-study-agent-hud textarea::placeholder, #ai-study-agent-hud input::placeholder {
+          color: #94a3b8 !important;
+          -webkit-text-fill-color: #94a3b8 !important;
+          opacity: 1 !important;
+        }
+        #ai-study-agent-hud #hud-panel {
+          background-color: #ffffff !important;
+          color: #0f172a !important;
+        }
+        #ai-study-agent-hud #hud-nav-tabs .hud-nav-btn {
+          color: #334155 !important;
+        }
+        #ai-study-agent-hud #hud-nav-tabs .hud-nav-btn.active {
+          background-color: #ffffff !important;
+          color: #0f172a !important;
+        }
+        #hud-autopilot-btn:hover, #hud-record-btn:hover { opacity: 0.93; transform: translateY(-0.5px); }
         #hud-autopilot-btn:active, #hud-record-btn:active { transform: scale(0.99); }
-        .hud-nav-btn:hover { opacity: 0.85; }
-        #hud-ghost-btn:hover { transform: scale(1.15); }
+        .hud-nav-btn:hover { opacity: 0.9; }
+        #hud-ghost-btn:hover, #hud-min-btn:hover, #hud-close-btn:hover { color: #ffffff !important; }
         #ai-study-agent-hud.hud-ghost-mode {
           opacity: 0.32 !important;
           transition: opacity 0.2s ease, filter 0.2s ease;
         }
         #ai-study-agent-hud.hud-ghost-mode:hover {
-          opacity: 0.94 !important;
+          opacity: 0.96 !important;
           box-shadow: 0 10px 32px rgba(15,23,42,0.3) !important;
         }
-        #hud-copy-btn:hover { background: #f1f5f9 !important; }
+        #hud-copy-btn:hover { background: #f8fafc !important; border-color: #94a3b8 !important; }
         #hud-clear-btn:hover { background: #fee2e2 !important; }
       `;
       document.head.appendChild(styleEl);
@@ -2737,14 +2772,14 @@
     var minBtn = container.querySelector("#hud-min-btn");
     var closeBtn = container.querySelector("#hud-close-btn");
 
-    ghostBtn?.addEventListener("click", function() {
+    ghostBtn?.addEventListener("click", function () {
       toggleGhostMode();
     });
 
     // Navigasi Tab
     var navBtns = container.querySelectorAll(".hud-nav-btn");
-    navBtns.forEach(function(btn) {
-      btn.addEventListener("click", function() {
+    navBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
         var tabKey = btn.getAttribute("data-tab");
         switchHudTab(tabKey);
       });
@@ -2757,12 +2792,12 @@
     var hudClickChk = container.querySelector("#hud-autoclick-chk");
     var hudNextChk = container.querySelector("#hud-autonext-chk");
 
-    hudClickChk?.addEventListener("change", function() {
+    hudClickChk?.addEventListener("change", function () {
       autoClickEnabled = hudClickChk.checked;
       chrome.storage?.local?.set({ autoClick: autoClickEnabled });
     });
 
-    hudNextChk?.addEventListener("change", function() {
+    hudNextChk?.addEventListener("change", function () {
       autoNextEnabled = hudNextChk.checked;
       chrome.storage?.local?.set({ autoNext: autoNextEnabled });
       if (!autoNextEnabled) {
@@ -2770,7 +2805,7 @@
       }
     });
 
-    autoPilotBtn?.addEventListener("click", function() {
+    autoPilotBtn?.addEventListener("click", function () {
       if (isAgentRunning) {
         stopAutoPilot();
       } else {
@@ -2778,7 +2813,7 @@
       }
     });
 
-    oneShotBtn?.addEventListener("click", async function() {
+    oneShotBtn?.addEventListener("click", async function () {
       if (isAgentRunning) return;
       try {
         await executeSingleQuestionCycle(false);
@@ -2787,7 +2822,7 @@
       }
     });
 
-    visionBtn?.addEventListener("click", async function() {
+    visionBtn?.addEventListener("click", async function () {
       if (isAgentRunning) return;
       try {
         await executeSingleQuestionCycle(true);
@@ -2814,7 +2849,7 @@
     var hudAudioSeconds = 0;
     var hudLastAudioUrl = null;
 
-    hudAudioSrcMic?.addEventListener("click", function() {
+    hudAudioSrcMic?.addEventListener("click", function () {
       if (hudIsAudioRecording) return;
       hudActiveAudioSource = "mic";
       hudAudioSrcMic.style.background = "#4f46e5";
@@ -2824,7 +2859,7 @@
       if (hudRecordStatus) hudRecordStatus.textContent = "Siap Rekam Mikrofon";
     });
 
-    hudAudioSrcTab?.addEventListener("click", function() {
+    hudAudioSrcTab?.addEventListener("click", function () {
       if (hudIsAudioRecording) return;
       hudActiveAudioSource = "tab";
       hudAudioSrcTab.style.background = "#4f46e5";
@@ -2834,7 +2869,7 @@
       if (hudRecordStatus) hudRecordStatus.textContent = "Siap Rekam Tab Web";
     });
 
-    hudRecordBtn?.addEventListener("click", async function() {
+    hudRecordBtn?.addEventListener("click", async function () {
       if (!hudIsAudioRecording) {
         // Mulai Merekam
         setHudStatus("Menyiapkan perekam audio...", true);
@@ -2842,7 +2877,7 @@
           type: "START_HUD_RECORDING",
           source: hudActiveAudioSource,
           enableFilter: true
-        }, function(res) {
+        }, function (res) {
           if (chrome.runtime?.lastError || !res || !res.success) {
             setHudStatus("⚠️ Gagal mulai rekam: " + (chrome.runtime?.lastError?.message || res?.error || "Error"), false);
             return;
@@ -2859,7 +2894,7 @@
           hudAudioSeconds = 0;
           if (hudRecordTimerEl) hudRecordTimerEl.textContent = "00:00";
           clearInterval(hudAudioTimerInterval);
-          hudAudioTimerInterval = setInterval(function() {
+          hudAudioTimerInterval = setInterval(function () {
             hudAudioSeconds++;
             var m = Math.floor(hudAudioSeconds / 60).toString().padStart(2, "0");
             var s = (hudAudioSeconds % 60).toString().padStart(2, "0");
@@ -2875,7 +2910,7 @@
         if (hudRecordDot) hudRecordDot.style.background = "#94a3b8";
         if (hudRecordStatus) hudRecordStatus.textContent = "⏳ Memproses rekaman...";
 
-        chrome.runtime.sendMessage({ type: "STOP_HUD_RECORDING" }, function(res) {
+        chrome.runtime.sendMessage({ type: "STOP_HUD_RECORDING" }, function (res) {
           hudIsAudioRecording = false;
           setHudStatus("", false);
           if (chrome.runtime?.lastError || !res || !res.success || !res.audioDataUrl) {
@@ -2905,7 +2940,7 @@
         type: "PROCESS_AUDIO_AI",
         audioDataUrl: hudLastAudioUrl,
         taskMode: taskMode
-      }, function(res) {
+      }, function (res) {
         setHudStatus("", false);
         if (chrome.runtime?.lastError || !res || !res.success) {
           setHudStatus("⚠️ " + (chrome.runtime?.lastError?.message || res?.error || "Gagal memproses audio."), false);
@@ -2915,8 +2950,8 @@
       });
     }
 
-    hudAudioAnswerBtn?.addEventListener("click", function() { processHudAudio("answer"); });
-    hudAudioSummaryBtn?.addEventListener("click", function() { processHudAudio("summary"); });
+    hudAudioAnswerBtn?.addEventListener("click", function () { processHudAudio("answer"); });
+    hudAudioSummaryBtn?.addEventListener("click", function () { processHudAudio("summary"); });
 
     // Kontrol Ketik Teks Manual
     var hudTextInput = container.querySelector("#hud-text-input");
@@ -2927,25 +2962,33 @@
     var hudTextQwenBtn = container.querySelector("#hud-text-qwen-btn");
     var hudTextDeepSeekBtn = container.querySelector("#hud-text-deepseek-btn");
 
-    hudTextInput?.addEventListener("input", function() {
+    hudTextInput?.addEventListener("input", function () {
       if (hudTextCount) hudTextCount.textContent = hudTextInput.value.length + " karakter";
     });
 
-    hudBtnPaste?.addEventListener("click", async function() {
+    hudBtnPaste?.addEventListener("click", async function () {
       try {
         var text = await navigator.clipboard.readText();
         if (text && hudTextInput) {
           hudTextInput.value = text;
           if (hudTextCount) hudTextCount.textContent = text.length + " karakter";
         }
-      } catch (_) {}
+      } catch (_) { }
     });
 
-    hudBtnClearText?.addEventListener("click", function() {
+    hudBtnClearText?.addEventListener("click", function () {
       if (hudTextInput) {
         hudTextInput.value = "";
         if (hudTextCount) hudTextCount.textContent = "0 karakter";
       }
+    });
+
+    var hudTextAutofillChk = container.querySelector("#hud-text-autofill-chk");
+    hudTextAutofillChk?.addEventListener("change", function () {
+      autoClickEnabled = hudTextAutofillChk.checked;
+      var hudClickChk = container.querySelector("#hud-autoclick-chk");
+      if (hudClickChk) hudClickChk.checked = autoClickEnabled;
+      chrome.storage?.local?.set({ autoClick: autoClickEnabled });
     });
 
     function executeHudManualText(modelChoice) {
@@ -2954,24 +2997,48 @@
         setHudStatus("⚠️ Ketik atau tempel soal terlebih dahulu.", false);
         return;
       }
-      setHudStatus("⏳ Memproses teks dengan AI (" + modelChoice + ")...", true);
+      setHudStatus("⏳ Memproses teks...", true);
       chrome.runtime.sendMessage({
         type: "EXECUTE_MANUAL_TEXT",
         text: text,
         modelChoice: modelChoice
-      }, function(res) {
+      }, function (res) {
         setHudStatus("", false);
         if (chrome.runtime?.lastError || !res || !res.success) {
           setHudStatus("⚠️ " + (chrome.runtime?.lastError?.message || res?.error || "Gagal memproses teks."), false);
           return;
         }
         setHudAnswer(res.answer);
+
+        // Auto-Click & Auto-Fill ke Web (Fitur Mode Siluman & Anti-Deteksi Ujian di Menu Teks)
+        var shouldAutoFill = hudTextAutofillChk ? hudTextAutofillChk.checked : autoClickEnabled;
+        if (shouldAutoFill && res.answer) {
+          try {
+            var ansInfo = extractAnswerInfo(res.answer);
+            var actionSuccess = false;
+            var choiceName = ansInfo.targetText || ansInfo.letter || "Jawaban";
+            if (ansInfo.letter || ansInfo.isMultipleChoice) {
+              var clicked = findAndClickOption(ansInfo.letter, ansInfo.targetText);
+              if (clicked) {
+                actionSuccess = true;
+                setHudStatus('✅ Opsi "' + choiceName + '" berhasil diklik di layar web!', false);
+              }
+            }
+            if (!actionSuccess) {
+              var textToFill = ansInfo.isMultipleChoice ? (ansInfo.firstLine || res.answer) : res.answer;
+              var filled = findAndFillEssay(textToFill);
+              if (filled) {
+                setHudStatus('✍️ Jawaban berhasil diketik & tersimpan di web!', false);
+              }
+            }
+          } catch (_) { }
+        }
       });
     }
 
-    hudTextGroqBtn?.addEventListener("click", function() { executeHudManualText("groq"); });
-    hudTextQwenBtn?.addEventListener("click", function() { executeHudManualText("qwen"); });
-    hudTextDeepSeekBtn?.addEventListener("click", function() { executeHudManualText("deepseek"); });
+    hudTextGroqBtn?.addEventListener("click", function () { executeHudManualText("groq"); });
+    hudTextQwenBtn?.addEventListener("click", function () { executeHudManualText("qwen"); });
+    hudTextDeepSeekBtn?.addEventListener("click", function () { executeHudManualText("deepseek"); });
 
     // Kontrol Kirim File
     var hudFileInput = container.querySelector("#hud-file-input");
@@ -2986,16 +3053,16 @@
     var hudCurrentFile = null;
     var hudCurrentFileDataUrl = null;
 
-    hudFileDropzone?.addEventListener("click", function() {
+    hudFileDropzone?.addEventListener("click", function () {
       hudFileInput?.click();
     });
 
-    hudFileInput?.addEventListener("change", function(e) {
+    hudFileInput?.addEventListener("change", function (e) {
       if (e.target?.files?.length > 0) {
         var file = e.target.files[0];
         hudCurrentFile = file;
         var reader = new FileReader();
-        reader.onload = function(evt) {
+        reader.onload = function (evt) {
           hudCurrentFileDataUrl = evt.target.result;
           if (hudFilePreview) hudFilePreview.style.display = "flex";
           if (hudFileDropzone) hudFileDropzone.style.display = "none";
@@ -3005,7 +3072,7 @@
       }
     });
 
-    hudBtnRemoveFile?.addEventListener("click", function() {
+    hudBtnRemoveFile?.addEventListener("click", function () {
       hudCurrentFile = null;
       hudCurrentFileDataUrl = null;
       if (hudFileInput) hudFileInput.value = "";
@@ -3018,7 +3085,7 @@
         setHudStatus("⚠️ Silakan pilih file terlebih dahulu.", false);
         return;
       }
-      setHudStatus("⏳ Menganalisis file dengan multimodal AI...", true);
+      setHudStatus("⏳ Menganalisis file...", true);
       chrome.runtime.sendMessage({
         type: "PROCESS_FILE_AI",
         fileName: hudCurrentFile?.name || "file",
@@ -3026,7 +3093,7 @@
         fileDataUrl: hudCurrentFileDataUrl,
         isSummary: isSummary,
         customPrompt: hudFilePrompt ? hudFilePrompt.value.trim() : ""
-      }, function(res) {
+      }, function (res) {
         setHudStatus("", false);
         if (chrome.runtime?.lastError || !res || !res.success) {
           setHudStatus("⚠️ " + (chrome.runtime?.lastError?.message || res?.error || "Gagal memproses file."), false);
@@ -3036,44 +3103,44 @@
       });
     }
 
-    hudFileSolveBtn?.addEventListener("click", function() { executeHudFileAction(false); });
-    hudFileSummaryBtn?.addEventListener("click", function() { executeHudFileAction(true); });
+    hudFileSolveBtn?.addEventListener("click", function () { executeHudFileAction(false); });
+    hudFileSummaryBtn?.addEventListener("click", function () { executeHudFileAction(true); });
 
     // Tombol Salin Jawaban
     var copyBtn = container.querySelector("#hud-copy-btn");
-    copyBtn?.addEventListener("click", async function() {
+    copyBtn?.addEventListener("click", async function () {
       var box = container.querySelector("#hud-answer-box");
       if (box && box.textContent) {
         try {
           await navigator.clipboard.writeText(box.textContent);
           copyBtn.textContent = "✅ Berhasil Disalin!";
-          setTimeout(function() { copyBtn.textContent = "📋 Salin Jawaban"; }, 2000);
-        } catch (_) {}
+          setTimeout(function () { copyBtn.textContent = "📋 Salin Jawaban"; }, 2000);
+        } catch (_) { }
       }
     });
 
     // Tombol Bersihkan Jawaban
     var clearBtn = container.querySelector("#hud-clear-btn");
-    clearBtn?.addEventListener("click", function() {
+    clearBtn?.addEventListener("click", function () {
       clearHudAnswer();
     });
 
     // Minimize & Close
-    bubble?.addEventListener("click", function() {
+    bubble?.addEventListener("click", function () {
       hudMinimized = false;
       bubble.style.display = "none";
       panel.style.display = "flex";
       chrome.storage?.local?.set({ hudMinimized: false });
     });
 
-    minBtn?.addEventListener("click", function() {
+    minBtn?.addEventListener("click", function () {
       hudMinimized = true;
       panel.style.display = "none";
       bubble.style.display = "flex";
       chrome.storage?.local?.set({ hudMinimized: true });
     });
 
-    closeBtn?.addEventListener("click", function() {
+    closeBtn?.addEventListener("click", function () {
       container.style.display = "none";
       chrome.storage?.local?.set({ showHud: false });
     });
@@ -3081,7 +3148,7 @@
     makeHudDraggable(container, container.querySelector("#hud-header"));
 
     // Pulihkan tab aktif terakhir, Mode Hantu, & Jawaban Terakhir
-    chrome.storage?.local?.get(["activeHudTab", "lastActivePopupTab", "stealthGhost", "savedHudAnswer"], function(res) {
+    chrome.storage?.local?.get(["activeHudTab", "lastActivePopupTab", "stealthGhost", "savedHudAnswer"], function (res) {
       var tabToRestore = res?.activeHudTab || res?.lastActivePopupTab || "screen";
       switchHudTab(tabToRestore);
       if (res?.stealthGhost === true) {
@@ -3102,11 +3169,12 @@
     if (!hudElement) return;
 
     var navBtns = hudElement.querySelectorAll(".hud-nav-btn");
-    navBtns.forEach(function(btn) {
+    navBtns.forEach(function (btn) {
       var isTarget = btn.getAttribute("data-tab") === tabKey;
-      btn.style.background = isTarget ? "#4f46e5" : "transparent";
-      btn.style.color = isTarget ? "#ffffff" : "#475569";
+      btn.style.background = isTarget ? "#ffffff" : "transparent";
+      btn.style.color = isTarget ? "#0f172a" : "#64748b";
       btn.style.fontWeight = isTarget ? "700" : "600";
+      btn.style.boxShadow = isTarget ? "0 1px 3px rgba(0,0,0,0.08)" : "none";
     });
 
     var panes = {
@@ -3116,7 +3184,7 @@
       file: hudElement.querySelector("#hud-pane-file")
     };
 
-    Object.keys(panes).forEach(function(k) {
+    Object.keys(panes).forEach(function (k) {
       if (panes[k]) {
         panes[k].style.display = k === tabKey ? "flex" : "none";
       }
@@ -3142,7 +3210,7 @@
     var isDragging = false;
     var startX, startY, initialLeft, initialTop;
 
-    handle.addEventListener("mousedown", function(e) {
+    handle.addEventListener("mousedown", function (e) {
       if (e.target.tagName === "BUTTON") return;
       isDragging = true;
       startX = e.clientX;
@@ -3156,7 +3224,7 @@
       container.style.top = initialTop + "px";
     });
 
-    window.addEventListener("mousemove", function(e) {
+    window.addEventListener("mousemove", function (e) {
       if (!isDragging) return;
       var dx = e.clientX - startX;
       var dy = e.clientY - startY;
@@ -3164,7 +3232,7 @@
       container.style.top = Math.max(10, Math.min(window.innerHeight - 150, initialTop + dy)) + "px";
     });
 
-    window.addEventListener("mouseup", function() {
+    window.addEventListener("mouseup", function () {
       isDragging = false;
     });
   }
@@ -3177,12 +3245,12 @@
       toast.id = "ai-study-toast-banner";
       toast.style.cssText = "position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:700;z-index:2147483647;box-shadow:0 12px 36px rgba(0,0,0,0.35);border:1px solid #4f46e5;display:flex;align-items:center;gap:10px;font-family:system-ui,-apple-system,sans-serif;";
       toast.innerHTML = "<span>" + message + "</span><button style='background:transparent;border:0;color:#cbd5e1;cursor:pointer;font-weight:bold;margin-left:12px;font-size:16px;'>✕</button>";
-      toast.querySelector("button").onclick = function() { toast.remove(); };
+      toast.querySelector("button").onclick = function () { toast.remove(); };
       document.body.appendChild(toast);
-      setTimeout(function() {
+      setTimeout(function () {
         if (toast && toast.parentElement) toast.remove();
       }, 7000);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function setHudStatus(text, showSpinner) {
@@ -3207,7 +3275,7 @@
     setHudStatus("Siap membantu belajar", false);
     try {
       chrome.storage?.local?.remove(["savedHudAnswer", "savedGlobalResult"]);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function setHudAnswer(answerText) {
@@ -3228,7 +3296,7 @@
     }
     try {
       chrome.storage?.local?.set({ savedHudAnswer: cleaned });
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function updateHudRunningState(running) {
@@ -3297,15 +3365,50 @@
         var st = document.createElement("style");
         st.id = styleId;
         st.textContent = `
-          *, *:before, *:after {
+          *, *::before, *::after, html, body, div, p, span, h1, h2, h3, h4, h5, h6,
+          table, tr, td, th, tbody, thead, tfoot, ul, ol, li, dl, dt, dd,
+          blockquote, pre, code, form, label, input, textarea, button, select,
+          article, section, header, footer, aside, main, nav {
             -webkit-user-select: text !important;
             -moz-user-select: text !important;
             -ms-user-select: text !important;
             user-select: text !important;
+            -webkit-touch-callout: default !important;
+            -webkit-user-drag: auto !important;
+          }
+          ::selection {
+            background-color: #38bdf8 !important;
+            color: #0f172a !important;
+          }
+          ::-moz-selection {
+            background-color: #38bdf8 !important;
+            color: #0f172a !important;
           }
         `;
         (document.head || document.documentElement).appendChild(st);
+      } else {
+        var parent = existing.parentNode;
+        if (parent && parent.lastElementChild !== existing) {
+          parent.appendChild(existing);
+        }
       }
+
+      // Bersihkan atribut penghalang seleksi teks dan klik kanan
+      try {
+        var blockedEls = document.querySelectorAll("[unselectable], [oncopy], [oncut], [onpaste], [oncontextmenu], [onselectstart]");
+        blockedEls.forEach(function (el) {
+          el.removeAttribute("unselectable");
+          el.removeAttribute("oncopy");
+          el.removeAttribute("oncut");
+          el.removeAttribute("onpaste");
+          el.removeAttribute("oncontextmenu");
+          el.removeAttribute("onselectstart");
+          if (el.style && (el.style.userSelect === "none" || el.style.webkitUserSelect === "none")) {
+            el.style.userSelect = "text";
+            el.style.webkitUserSelect = "text";
+          }
+        });
+      } catch (_) { }
     } else {
       if (existing) existing.remove();
     }
@@ -3327,7 +3430,7 @@
   }
 
   // Keyboard Shortcuts Global: Alt+X / Esc (Boss Key), Alt+Z (Ghost Mode)
-  window.addEventListener("keydown", function(e) {
+  window.addEventListener("keydown", function (e) {
     var isAltX = e.altKey && (e.key === "x" || e.key === "X");
     var isEsc = e.key === "Escape";
     var isInputFocused = document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA" || document.activeElement.isContentEditable);

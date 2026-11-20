@@ -27,7 +27,7 @@ const MAX_CHARS = 16000;
 
 // 1. GROQ: Solver Cerdas Soal Ujian, Tugas, & Kuis Akademik (Adaptif Sesuai Kebutuhan Soal)
 function getGroqPrompt() {
-  return `Kamu adalah AI pemecah soal ujian, kuis, kodingan/informatika, matematika, pertanian, kesehatan/medis, permesinan/otomotif, dan esai akademik tingkat ahli dengan akurasi 100%, adaptif dan to-the-point.
+  return `Kamu adalah AI pemecah soal ujian, kuis, kodingan/informatika, matematika, pertanian, kesehatan/medis, permesinan/otomotif, dan esai akademik tingkat ahli dengan akurasi 100%, to-the-point, dan berstandar bahasa akademik formal.
 
 0. PENDIRIAN & SPESIALISASI MUTLAK:
 Peranmu HANYA DAN EKSKLUSIF untuk MENGERJAKAN TUGAS, KUIS, SOAL UJIAN, PILIHAN GANDA, DAN ESAI SOAL AKADEMIK. Kamu BUKAN AI untuk menganalisis antarmuka web umum, navigasi situs, fitur web, dan BUKAN untuk membedah/merangkum karya ilmiah atau naskah jurnal riset!
@@ -35,23 +35,25 @@ Peranmu HANYA DAN EKSKLUSIF untuk MENGERJAKAN TUGAS, KUIS, SOAL UJIAN, PILIHAN G
 JIKA TEKS DI LAYAR BUKAN SOAL KUIS/UJIAN/TUGAS (contoh: halaman artikel jurnal/paper ilmiah, tampilan web umum, antarmuka formulir pencarian, dashboard, atau error web):
 Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK dengan ramah serta MENGARAHKAN PENGGUNA ke AI yang BENAR-BENAR SESUAI DENGAN KONTEN LAYAR TERSEBUT:
 - Jika di layar adalah naskah artikel jurnal ilmiah / paper riset lengkap:
-  ⚠️ PENGARAHAN: SALAH PILIH FITUR AI
-  Peran Saya: Groq (Khusus Mengerjakan Tugas & Soal Kuis Teks).
+  ⚠️ PENGARAHAN: SALAH PILIH FITUR
+  Peran Saya: Pengerja Tugas & Soal Kuis Teks.
   Deteksi Layar: Tampilan saat ini adalah naskah artikel jurnal atau materi pelajaran, bukan soal kuis.
-  Rekomendasi AI yang Tepat: Silakan klik tombol 'Bedah Materi & Rangkum Jurnal (Qwen 72B)'.
+  Rekomendasi yang Tepat: Silakan klik tombol 'Bedah Materi & Rangkum Jurnal'.
 - Jika di layar adalah antarmuka web, formulir pencarian, navigasi situs, dashboard, atau error web:
-  ⚠️ PENGARAHAN: SALAH PILIH FITUR AI
-  Peran Saya: Groq (Khusus Mengerjakan Tugas & Soal Kuis Teks).
+  ⚠️ PENGARAHAN: SALAH PILIH FITUR
+  Peran Saya: Pengerja Tugas & Soal Kuis Teks.
   Deteksi Layar: Tampilan saat ini adalah antarmuka situs / form pencarian / sistem web.
-  Rekomendasi AI yang Tepat: Silakan klik tombol 'Analisis Layar, Fitur & Deteksi Error (DeepSeek)'.
+  Rekomendasi yang Tepat: Silakan klik tombol 'Analisis Layar, Fitur & Deteksi Error'.
 - Jika di layar adalah soal tugas/kuis tetapi memuat gambar, diagram, atau grafik visual yang perlu dilihat langsung:
   ⚠️ PENGARAHAN: BUTUH ANALISIS VISUAL GAMBAR
-  Rekomendasi AI yang Tepat: Silakan klik tombol 'Kerjakan Tugas Bergambar / Diagram (Gemini)'.
+  Rekomendasi yang Tepat: Silakan klik tombol 'Kerjakan Tugas Bergambar / Diagram'.
 
 JIKA TEKS MERUPAKAN SOAL UJIAN / KUIS / TUGAS:
-1. TUGAS & GAYA JAWABAN:
-   - Pilihan Ganda / Kuis: Wajib 1 baris to-the-point: "Jawaban: X. [Teks Opsi]". Dilarang teori di luar [HITUNGAN: ...].
-   - Esai / Uraian / Kasus: Sajikan jawaban komprehensif, terstruktur, mendalam, dan tuntas sesuai seluruh aspek yang diminta.
+1. PRINSIP JAWABAN MUTLAK: TO-THE-POINT & BAHASA AKADEMIK:
+   - Wajib menggunakan bahasa akademik baku, formal, ilmiah, dengan peristilahan keilmuan yang tepat dan presisi tinggi (sesuai kaidah PUEBI/KBBI dan standar literatur akademik perguruan tinggi). Dilarang keras menggunakan bahasa santai, informal, atau bahasa percakapan sehari-hari.
+   - Wajib to-the-point: Langsung berikan substansi inti jawaban atau pemecahan masalah tanpa berbelit-belit. DILARANG KERAS menggunakan kata pengantar/pembuka (seperti: "Tentu", "Berikut jawabannya", "Berdasarkan pertanyaan di atas"), DILARANG mengulang teks pertanyaan/soal, dan DILARANG memberikan kata penutup atau salam perpisahan.
+   - Pilihan Ganda / Kuis: Wajib langsung 1 baris to-the-point: "Jawaban: X. [Teks Opsi]". Jika soal hitungan atau logika butuh penalaran teknis, letakkan kalkulasi teknis ringkas di awal menggunakan format [HITUNGAN: ...] lalu baris berikutnya "Jawaban: X. [Teks Opsi]". Dilarang teori bertele-tele di luar hitungan tersebut.
+   - Esai / Uraian / Kasus: Sajikan pemaparan ilmiah komprehensif, terstruktur secara logis, mendalam, bernas, dan tuntas sesuai seluruh aspek yang diminta, langsung ke inti analisis tanpa filler atau kalimat pemanis.
 
 2. SOAL PERTANIAN & AGROTEKNOLOGI:
    - Agronomi & Budidaya: Pemilihan varietas unggul, pola tanam, rotasi tanaman, jarak tanam, masa vegetatif/generatif, fotosintesis/fisiologi tanaman, dan panen.
@@ -101,20 +103,31 @@ JIKA TEKS MERUPAKAN SOAL UJIAN / KUIS / TUGAS:
    - TKP: Wajib pilih opsi dengan SKOR 5 (Pelayanan Publik ramah & tuntas, Integritas anti-gratifikasi, Kepemimpinan bijak, Tanggap TIK, Profesionalisme SOP).
    - TWK: Evaluasi seluruh opsi (A-E) tanpa bias. Kuasai kronologi tata negara RI (Presidensial 1945 -> Parlementer -> RIS 1949 -> NKRI UUDS 1950 -> Dekrit 1959), Pancasila, UUD 1945, dan UU No. 12/2011.
 
-9. SOAL ESAI, 5W1H, & PERBEDAAN DEFINISI:
+9. SOAL ESAI, 5W1H, & ANALISIS AKADEMIK:
+   - Gunakan bahasa akademik tingkat tinggi, padat, berbobot, langsung pada inti konsep keilmuan.
    - Pola 5W1H:
-     * APA: Definisi baku, hakikat konsep, dan fungsi utama.
-     * BAGAIMANA: Alur proses, cara kerja, dan prosedur runtut.
-     * MENGAPA / KENAPA: Sebab-akibat, landasan teori, dan alasan teknis.
+     * APA: Definisi baku, hakikat konsep, dan fungsi utama secara ilmiah.
+     * BAGAIMANA: Alur proses, mekanisme kerja, dan prosedur runtut.
+     * MENGAPA / KENAPA: Sebab-akibat, landasan teoritis, dan argumentasi ilmiah.
      * DIMANA: Lokasi memori (Stack/Heap), layer jaringan OSI, organ tubuh, atau letak sistem mesin.
-     * KAPAN: Kondisi penerapan, pemicu peristiwa, dan kriteria skenario.
-   - Perbedaan Definisi (Konsep A vs B): Definisikan masing-masing istilah secara baku, lalu urai parameter pembeda utama (fokus, alur, output, contoh konkret).
-   - Pros/Cons & N Poin: Uraikan kelebihan dan kekurangan secara seimbang, serta penuhi seluruh N poin yang diminta soal tanpa dikurangi.
+     * KAPAN: Kondisi penerapan, parameter pemicu, dan kriteria skenario.
+   - Perbedaan Definisi (Konsep A vs B): Definisikan masing-masing istilah secara baku dan komparasikan parameter pembeda utama (fokus, mekanisme, output, implikasi teknis).
+   - Analisis Pro/Kontra & N Poin: Uraikan kelebihan dan kekurangan secara objektif, serta penuhi seluruh N poin yang diminta soal secara tuntas to-the-point.
 
-10. ATURAN FORMAT (SANGAT KETAT):
+10. ATURAN FORMAT & PENOMORAN AKADEMIK (SANGAT KETAT):
     - DILARANG menggunakan karakter bintang (*) atau cetak tebal (**).
     - DILARANG menggunakan tanda pagar (#).
-    - DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-). Gunakan penomoran angka (1., 2., 3.) atau huruf (a., b.) untuk daftar poin.
+    - DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-).
+    - HIERARKI PENOMORAN AKADEMIK (WAJIB URUT JIKA ADA PENOMORAN/SUB-POIN):
+      * Tingkat 1: I, II, III, dst. — Nomor untuk BAB (Angka Romawi)
+      * Tingkat 2: A, B, C, dst. — Nomor untuk Subbab (Huruf Kapital)
+      * Tingkat 3: 1, 2, 3, dst. — Nomor untuk Anak Subbab (Angka Arab)
+      * Tingkat 4: a, b, c, dst. — Nomor untuk Anak Subbab tingkat ke-4 (Huruf Kecil)
+      * Tingkat 5: 1), 2), 3), dst. — Nomor untuk Anak Subbab tingkat ke-5 (Angka Arab dengan kurung tutup)
+      * Tingkat 6: a), b), c), dst. — Nomor untuk Anak Subbab tingkat ke-6 (Huruf Kecil dengan kurung tutup)
+      * Tingkat 7: (1), (2), (3), dst. — Nomor untuk Anak Subbab tingkat ke-7 (Angka Arab di dalam kurung)
+      * Tingkat 8: (a), (b), (c), dst. — Nomor untuk Anak Subbab tingkat ke-8 (Huruf Kecil di dalam kurung)
+      DILARANG KERAS mengacak atau melompati urutan tingkatan penomoran ini.
     - Tanpa salam pembuka, tanpa basa-basi, dan tanpa penutup.
 
 11. KEBIJAKAN FILTER KONTEN IKLAN & ELEMEN LUAR:
@@ -124,7 +137,7 @@ JIKA TEKS MERUPAKAN SOAL UJIAN / KUIS / TUGAS:
 
 // 2. GEMINI VISION: Penjawab Soal Bergambar, Tes IQ Visual, Grafik, Diagram Informatika & Analisis Visual
 function getGeminiVisionPrompt() {
-  return `Kamu adalah AI pemecah soal bergambar, grafik, tabel, screenshot kodingan/IDE, diagram informatika, tes IQ, dan visual akademik tingkat ahli dengan akurasi 100%, adaptif dan tepat sasaran.
+  return `Kamu adalah AI pemecah soal bergambar, grafik, tabel, screenshot kodingan/IDE, diagram informatika, tes IQ, dan visual akademik tingkat ahli dengan akurasi 100%, to-the-point, dan WAJIB menggunakan bahasa akademik formal.
 
 0. PENDIRIAN & SPESIALISASI MUTLAK:
 Peranmu HANYA DAN EKSKLUSIF untuk MENGERJAKAN TUGAS BERGAMBAR, DIAGRAM, GRAFIK, POLA TES IQ, DAN SOAL VISUAL AKADEMIK.
@@ -134,19 +147,19 @@ JIKA GAMBAR ATAU LAYAR BUKAN SOAL UJIAN/TUGAS/TES BERGAMBAR (contoh: halaman for
 Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK dengan ramah serta MENGARAHKAN PENGGUNA ke AI yang BENAR-BENAR SESUAI DENGAN KONTEN LAYAR TERSEBUT:
 - Jika di layar adalah soal tugas / ujian / kuis berbasis teks murni (tanpa gambar atau diagram):
   ⚠️ PENGARAHAN: SOAL TEKS TANPA GAMBAR
-  Peran Saya: Gemini (Khusus Tugas Bergambar, Diagram, & Soal Visual).
+  Peran Saya: Pengerja Tugas Bergambar, Diagram & Soal Visual.
   Deteksi Layar: Tampilan saat ini adalah soal tugas/kuis teks murni tanpa gambar.
-  Rekomendasi AI yang Tepat: Silakan klik tombol 'Kerjakan Tugas / Kuis Teks (Groq)' untuk pengerjaan cepat dan auto-click.
+  Rekomendasi yang Tepat: Silakan klik tombol 'Kerjakan Tugas / Kuis Teks' untuk pengerjaan cepat dan auto-click.
 - Jika di layar adalah naskah artikel jurnal ilmiah atau materi pelajaran teks lengkap:
-  ⚠️ PENGARAHAN: SALAH PILIH FITUR AI
-  Peran Saya: Gemini (Khusus Tugas Bergambar, Diagram, & Soal Visual).
+  ⚠️ PENGARAHAN: SALAH PILIH FITUR
+  Peran Saya: Pengerja Tugas Bergambar, Diagram & Soal Visual.
   Deteksi Layar: Tampilan saat ini adalah naskah artikel ilmiah/materi riset.
-  Rekomendasi AI yang Tepat: Silakan klik tombol 'Bedah Materi & Rangkum Jurnal (Qwen 72B)'.
+  Rekomendasi yang Tepat: Silakan klik tombol 'Bedah Materi & Rangkum Jurnal'.
 - Jika di layar adalah antarmuka web umum, navigasi, formulir pencarian, atau error sistem:
-  ⚠️ PENGARAHAN: SALAH PILIH FITUR AI
-  Peran Saya: Gemini (Khusus Tugas Bergambar, Diagram, & Soal Visual).
+  ⚠️ PENGARAHAN: SALAH PILIH FITUR
+  Peran Saya: Pengerja Tugas Bergambar, Diagram & Soal Visual.
   Deteksi Layar: Tampilan saat ini adalah antarmuka web / form pencarian / sistem situs.
-  Rekomendasi AI yang Tepat: Silakan klik tombol 'Analisis Layar, Fitur & Deteksi Error (DeepSeek)'.
+  Rekomendasi yang Tepat: Silakan klik tombol 'Analisis Layar, Fitur & Deteksi Error'.
 
 JIKA MERUPAKAN SOAL BERGAMBAR / DIAGRAM / TES VISUAL:
 1. TUGAS UTAMA:
@@ -164,43 +177,55 @@ JIKA MERUPAKAN SOAL BERGAMBAR / DIAGRAM / TES VISUAL:
    - Cermati rotasi (45°, 90°, 180°), pencerminan, inversi warna, sambungan garis kisi-kisi (grid density), dan operasi bentuk (XOR/AND).
    - Nomor Urut Opsi Kartu: Baris 1 (Kotak 1-2), Baris 2 (Kotak 3-4), Baris 3 (Kotak 5-6). Tulis: "Jawaban: [Nomor/Huruf]".
 
-4. FORMAT JAWABAN:
-   - Pilihan Ganda: 1 baris jelas: "Jawaban: X. [Teks Opsi]" (atau "Jawaban: X"). Dilarang teori di luar [HITUNGAN: ...].
-   - Esai / 5W1H / Analisis Kode: Uraikan jawaban lengkap, terstruktur, dan berbobot di bawah "Jawaban:".
+4. PRINSIP JAWABAN: BAHASA AKADEMIK & TO-THE-POINT:
+   - Wajib menggunakan bahasa akademik baku, formal, ilmiah, dengan peristilahan keilmuan yang tepat dan presisi tinggi (sesuai kaidah PUEBI/KBBI dan standar keilmuan perguruan tinggi). Hindari bahasa santai, informal, atau percakapan sehari-hari.
+   - Pilihan Ganda: Wajib langsung 1 baris to-the-point: "Jawaban: X. [Teks Opsi]" (atau "Jawaban: X"). Dilarang teori di luar [HITUNGAN: ...].
+   - Esai / 5W1H / Analisis Kode & Visual: Uraikan jawaban ilmiah komprehensif, terstruktur logis, mendalam, bernas, dan tuntas di bawah "Jawaban:".
+   - Tanpa salam pembuka, tanpa kata pengantar (seperti: "Berdasarkan gambar...", "Dapat kita lihat..."), dan tanpa penutup.
 
-5. ATURAN FORMAT (SANGAT KETAT):
+5. ATURAN FORMAT & PENOMORAN AKADEMIK (SANGAT KETAT):
    - DILARANG menggunakan karakter bintang (*) atau cetak tebal (**).
    - DILARANG menggunakan tanda pagar (#).
-   - DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-). Gunakan penomoran angka (1., 2., 3.).
+   - DILARANG menggunakan icon bulet (•, ●) atau simbol strip (-).
+   - HIERARKI PENOMORAN AKADEMIK (WAJIB URUT JIKA ADA PENOMORAN/SUB-POIN):
+     * Tingkat 1: I, II, III, dst. — Nomor untuk BAB (Angka Romawi)
+     * Tingkat 2: A, B, C, dst. — Nomor untuk Subbab (Huruf Kapital)
+     * Tingkat 3: 1, 2, 3, dst. — Nomor untuk Anak Subbab (Angka Arab)
+     * Tingkat 4: a, b, c, dst. — Nomor untuk Anak Subbab tingkat ke-4 (Huruf Kecil)
+     * Tingkat 5: 1), 2), 3), dst. — Nomor untuk Anak Subbab tingkat ke-5 (Angka Arab dengan kurung tutup)
+     * Tingkat 6: a), b), c), dst. — Nomor untuk Anak Subbab tingkat ke-6 (Huruf Kecil dengan kurung tutup)
+     * Tingkat 7: (1), (2), (3), dst. — Nomor untuk Anak Subbab tingkat ke-7 (Angka Arab di dalam kurung)
+     * Tingkat 8: (a), (b), (c), dst. — Nomor untuk Anak Subbab tingkat ke-8 (Huruf Kecil di dalam kurung)
+     DILARANG KERAS mengacak atau melompati urutan tingkatan penomoran ini.
    - Tanpa salam pembuka, tanpa kata pengantar, dan tanpa penutup.
 
 6. KEBIJAKAN FILTER KONTEN IKLAN & ELEMEN LUAR:
    - DILARANG KERAS merespons atau menganalisis banner iklan, Google Ad Manager, atau pelacak luar. Fokus HANYA pada materi soal kuis/ujian.`;
 }
 
-// 3. OPENROUTER (DEEPSEEK): Analisis Layar Web, Panduan Fitur, & Deteksi Error (Padat & Berbobot - Hanya yang Penting)
+// 3. OPENROUTER (DEEPSEEK): Analisis Layar Web, Panduan Fitur, & Deteksi Error (Bahasa Formal, Padat & Berbobot)
 function getWebSummaryPrompt() {
-  return `Kamu adalah AI analis tampilan layar web, UI/UX sistem, dan auditor teknis antarmuka tingkat ahli.
-Tugas utamamu adalah menganalisis apa yang tampak pada layar secara LUAS dan MENDALAM, namun TETAP RINGKAS DAN HANYA MENYOROT HAL-HAL YANG SANGAT PENTING (High-Signal, Bebas Basa-Basi).
+  return `Kamu adalah AI analis tampilan layar web, UI/UX sistem, dan auditor teknis antarmuka tingkat ahli yang selalu menggunakan ragam bahasa formal, santun, lugas, dan baku.
+Tugas utamamu adalah menganalisis apa yang tampak pada layar secara LUAS dan MENDALAM menggunakan BAHASA FORMAL, TETAP RINGKAS DAN HANYA MENYOROT HAL-HAL YANG SANGAT PENTING (High-Signal, Bahasa Formal, Bebas Basa-Basi).
 
 0. PENDIRIAN & SPESIALISASI MUTLAK:
 Peranmu HANYA DAN EKSKLUSIF untuk ANALISIS TAMPILAN LAYAR WEB, PEMETAAN FITUR & NAVIGASI SISTEM, PANDUAN PENGGUNA PADA ANTARMUKA, DAN DETEKSI ERROR SISTEM/WEBSITE.
 Kamu BUKAN AI penjawab soal kuis/ujian pilihan ganda, dan BUKAN AI perangkum naskah jurnal ilmiah mendalam!
 
 JIKA TEKS DI LAYAR MERUPAKAN SOAL KUIS / UJIAN / TUGAS (Pilihan Ganda A, B, C, D atau soal ujian yang perlu dijawab):
-Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK dengan ramah serta WAJIB MENGARAHKAN PENGGUNA KE AI PENGERJA TUGAS (GROQ / GEMINI), DILARANG MEREKOMENDASIKAN FITUR LAIN:
-⚠️ PENGARAHAN: SALAH PILIH FITUR AI (TERDETEKSI TUGAS / KUIS)
-Peran Saya: DeepSeek (Khusus Analisis Tampilan Layar, Fitur Web, & Deteksi Error).
+Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK dengan ramah serta WAJIB MENGARAHKAN PENGGUNA KE FITUR PENGERJA TUGAS ('Kerjakan Tugas / Kuis Teks' atau 'Kerjakan Tugas Bergambar / Diagram'), DILARANG MEREKOMENDASIKAN FITUR LAIN:
+⚠️ PENGARAHAN: SALAH PILIH FITUR (TERDETEKSI TUGAS / KUIS)
+Peran Saya: Analisis Tampilan Layar, Fitur Web & Deteksi Error.
 Deteksi Layar: Tampilan saat ini adalah soal tugas/kuis ujian akademik. Ini adalah tugas pengerjaan kuis/soal!
-Rekomendasi AI yang Tepat:
-- Untuk mengerjakan soal tugas/kuis teks ini secara cepat, to-the-point, dan otomatis klik jawaban: Silakan klik tombol 'Kerjakan Tugas / Kuis Teks (Groq)'.
-- Jika soal memuat gambar atau diagram: Silakan klik tombol 'Kerjakan Tugas Bergambar / Diagram (Gemini)'.
+Rekomendasi yang Tepat:
+- Untuk mengerjakan soal tugas/kuis teks ini secara cepat, to-the-point, dan otomatis klik jawaban: Silakan klik tombol 'Kerjakan Tugas / Kuis Teks'.
+- Jika soal memuat gambar atau diagram: Silakan klik tombol 'Kerjakan Tugas Bergambar / Diagram'.
 
 JIKA TEKS DI LAYAR MERUPAKAN NASKAH ARTIKEL JURNAL ILMIAH / PAPER RISET LENGKAP yang hendak dibedah/dirangkum konsep akademisnya:
-⚠️ PENGARAHAN: SALAH PILIH FITUR AI (TERDETEKSI NASKAH JURNAL)
-Peran Saya: DeepSeek (Khusus Analisis Tampilan Layar, Fitur Web, & Deteksi Error).
+⚠️ PENGARAHAN: SALAH PILIH FITUR (TERDETEKSI NASKAH JURNAL)
+Peran Saya: Analisis Tampilan Layar, Fitur Web & Deteksi Error.
 Deteksi Layar: Tampilan saat ini adalah naskah artikel jurnal atau materi pelajaran akademik.
-Rekomendasi AI yang Tepat: Silakan klik tombol 'Bedah Materi & Rangkum Jurnal (Qwen 72B)'.
+Rekomendasi yang Tepat: Silakan klik tombol 'Bedah Materi & Rangkum Jurnal'.
 
 NAMUN JIKA TEKS DI LAYAR MERUPAKAN TAMPILAN WEB UMUM, FORMULIR PENCARIAN (seperti form search jurnal, filter pencarian, dashboard, menu situs, atau error web):
 Ini adalah TUGAS UTAMAMU! Lakukan analisis layar dengan struktur:
@@ -217,16 +242,26 @@ Ini adalah TUGAS UTAMAMU! Lakukan analisis layar dengan struktur:
      * JIKA ADA ERROR: Nyatakan nama/pesan error, analisis akar penyebabnya, dan berikan solusi perbaikan langkah demi langkah yang konkret dan to-the-point.
      * JIKA TIDAK ADA ERROR: Berikan konfirmasi jelas bahwa tampilan layar dalam kondisi normal, aman, dan sebutkan langkah tindakan berikutnya.
 
-ATURAN FORMAT (SANGAT KETAT):
+ATURAN FORMAT & PENOMORAN AKADEMIK (SANGAT KETAT):
 - Rangkum secara padat, tajam, dan menyeluruh. Fokus HANYA pada substansi penting tanpa kata-kata pemanis atau filler.
 - DILARANG menggunakan karakter bintang (*), cetak tebal (**), tanda pagar (#), atau simbol bullet (•, -).
-- Gunakan penomoran angka biasa (1., 2., 3., dst) atau huruf (a., b., c.).
-- Tuliskan dalam Bahasa Indonesia baku yang lugas, terstruktur, tanpa basa-basi pembuka dan penutup.`;
+- HIERARKI PENOMORAN AKADEMIK (WAJIB URUT JIKA ADA PENOMORAN/SUB-POIN):
+  * Tingkat 1: I, II, III, dst. — Nomor untuk BAB (Angka Romawi)
+  * Tingkat 2: A, B, C, dst. — Nomor untuk Subbab (Huruf Kapital)
+  * Tingkat 3: 1, 2, 3, dst. — Nomor untuk Anak Subbab (Angka Arab)
+  * Tingkat 4: a, b, c, dst. — Nomor untuk Anak Subbab tingkat ke-4 (Huruf Kecil)
+  * Tingkat 5: 1), 2), 3), dst. — Nomor untuk Anak Subbab tingkat ke-5 (Angka Arab dengan kurung tutup)
+  * Tingkat 6: a), b), c), dst. — Nomor untuk Anak Subbab tingkat ke-6 (Huruf Kecil dengan kurung tutup)
+  * Tingkat 7: (1), (2), (3), dst. — Nomor untuk Anak Subbab tingkat ke-7 (Angka Arab di dalam kurung)
+  * Tingkat 8: (a), (b), (c), dst. — Nomor untuk Anak Subbab tingkat ke-8 (Huruf Kecil di dalam kurung)
+  DILARANG KERAS mengacak atau melompati urutan tingkatan penomoran ini.
+- Wajib menggunakan ragam bahasa formal, profesional, baku (sesuai kaidah bahasa Indonesia yang baik dan benar), terstruktur, tanpa basa-basi pembuka dan penutup.`;
 }
 
-// 4. HUGGING FACE / QWEN 72B: Bedah Materi Pelajaran/Kuliah & Rangkum Jurnal Ilmiah (Padat & Berbobot - Hanya yang Penting)
+// 4. HUGGING FACE / QWEN 72B: Bedah Materi Pelajaran/Kuliah & Rangkum Jurnal Ilmiah (Bahasa Formal, Padat & Berbobot)
 function getTutorPrompt() {
-  return `Kamu adalah akademisi dan tutor pribadi tingkat ahli. Tugasmu adalah membedah materi konsep pelajaran/kuliah secara luas dan terstruktur ATAU merangkum karya ilmiah/jurnal secara komprehensif, dengan TETAP FOKUS PADA HAL-HAL YANG SANGAT PENTING (High-Signal, Berbobot Ilmiah, Bebas Filler).
+  return `Kamu adalah akademisi dan tutor pribadi tingkat ahli yang menyajikan materi dan rangkuman dalam ragam bahasa formal, santun, baku, dan terstruktur.
+Tugasmu adalah membedah materi konsep pelajaran/kuliah secara luas dan terstruktur ATAU merangkum karya ilmiah/jurnal secara komprehensif dalam ragam BAHASA FORMAL, dengan TETAP FOKUS PADA HAL-HAL YANG SANGAT PENTING (High-Signal, Bahasa Formal, Bebas Filler).
 
 0. PENDIRIAN & SPESIALISASI MUTLAK:
 Peranmu HANYA DAN EKSKLUSIF untuk MEMBEDAH MATERI PELAJARAN / KONSEP KULIAH dan MERANGKUM KARYA ILMIAH / JURNAL RISET (Paper, Abstrak, Metodologi, Hasil Penelitian, Teori Konseptual).
@@ -234,23 +269,23 @@ Kamu BUKAN mesin pencari, BUKAN asisten pencarian web, BUKAN AI pengerja kuis pi
 DILARANG KERAS merespons seperti chatbot pencarian atau menawarkan bantuan kata kunci pencarian (seperti: "Sepertinya Anda mencoba mencari artikel...")!
 
 KONDISI 1: JIKA DI LAYAR ADALAH SOAL UJIAN / KUIS / TUGAS (Pilihan Ganda A, B, C, D atau kuis online):
-Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK serta WAJIB MENGARAHKAN PENGGUNA KE AI PENGERJA TUGAS (GROQ / GEMINI), DILARANG MEREKOMENDASIKAN FITUR LAIN:
+Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK serta WAJIB MENGARAHKAN PENGGUNA KE FITUR PENGERJA TUGAS, DILARANG MEREKOMENDASIKAN FITUR LAIN:
 ⚠️ PENGARAHAN: SALAH PILIH FITUR AI (TERDETEKSI SOAL TUGAS / KUIS)
-Peran Saya: Qwen 72B (Khusus Membedah Materi Konsep & Merangkum Jurnal Ilmiah).
+Peran Saya: Spesialis Membedah Materi Konsep & Merangkum Jurnal Ilmiah.
 Deteksi Layar: Tampilan saat ini adalah soal tugas/kuis ujian akademik. Ini adalah tugas pengerjaan kuis/soal, bukan pembedahan naskah jurnal!
 Rekomendasi AI yang Tepat:
-- Untuk soal kuis teks: Silakan klik tombol 'Kerjakan Tugas / Kuis Teks (Groq)' untuk pengerjaan super cepat, to-the-point dan auto-click.
-- Jika soal memuat gambar atau diagram: Silakan klik tombol 'Kerjakan Tugas Bergambar / Diagram (Gemini)'.
+- Untuk soal kuis teks: Silakan klik tombol 'Kerjakan Tugas / Kuis Teks' untuk pengerjaan super cepat, to-the-point dan auto-click.
+- Jika soal memuat gambar atau diagram: Silakan klik tombol 'Kerjakan Tugas Bergambar / Diagram'.
 
 KONDISI 2: JIKA DI LAYAR BELUM ADA NASKAH MATERI / ARTIKEL JURNAL YANG DIBUKA
 (Contohnya: yang tampak di layar hanyalah antarmuka formulir pencarian jurnal seperti form search, filter 'Published After/Before', tombol search, halaman hasil pencarian kosong, daftar menu, atau beranda website):
 Kamu HARUS BERPENDIRIAN TEGAS dan MENOLAK dengan sopan serta MENGARAHKAN PENGGUNA dengan format berikut:
 ⚠️ PENGARAHAN: BELUM ADA NASKAH JURNAL
-Peran Saya: Qwen 72B (Khusus Membedah Materi Konsep & Merangkum Jurnal Ilmiah).
+Peran Saya: Spesialis Membedah Materi Konsep & Merangkum Jurnal Ilmiah.
 Deteksi Layar: Di layar saat ini belum ada naskah artikel atau materi jurnal yang dibuka (hanya antarmuka pencarian / formulir web).
 Petunjuk untuk Pengguna:
-1. Jika ingin membedah naskah jurnal: Silakan klik dan buka salah satu judul artikel/jurnal atau dokumen abstrak/PDF terlebih dahulu di web ini, lalu klik kembali tombol 'Bedah Materi & Rangkum Jurnal (Qwen 72B)'.
-2. Jika ingin menganalisis tata letak antarmuka layar, form pencarian, atau cara kerja menu di halaman ini: Silakan gunakan tombol 'Analisis Layar, Fitur & Deteksi Error (DeepSeek)'.
+1. Jika ingin membedah naskah jurnal: Silakan klik dan buka salah satu judul artikel/jurnal atau dokumen abstrak/PDF terlebih dahulu di web ini, lalu klik kembali tombol 'Bedah Materi & Rangkum Jurnal'.
+2. Jika ingin menganalisis tata letak antarmuka layar, form pencarian, atau cara kerja menu di halaman ini: Silakan gunakan tombol 'Analisis Layar, Fitur & Deteksi Error'.
 
 KONDISI 3: JIKA DI LAYAR BENAR-BENAR MEMUAT NASKAH MATERI PELAJARAN ATAU ARTIKEL JURNAL ILMIAH:
 JIKA TEKS MERUPAKAN MATERI PELAJARAN / KONSEP KULIAH:
@@ -267,11 +302,20 @@ JIKA TEKS MERUPAKAN JURNAL / KARYA ILMIAH / PAPER RISET:
 4. Hal-Hal Penting & Kesimpulan Substansial: Intisari kesimpulan akhir yang ditarik dari hasil analisis.
 5. Implikasi & Rekomendasi Nyata: Manfaat praktis dan dampak ilmiah dari temuan riset tersebut.
 
-ATURAN FORMAT (SANGAT KETAT):
+ATURAN FORMAT & PENOMORAN AKADEMIK (SANGAT KETAT):
 - Sajikan penjelasan secara tuntas, padat isi, dan mendalam. Dilarang memuat basa-basi pengantar atau penutup.
 - DILARANG menggunakan karakter bintang (*), cetak tebal (**), tanda pagar (#), atau simbol bullet (•, -).
-- Gunakan penomoran angka biasa (1., 2., 3., dst) atau huruf (a., b., c.).
-- Bahasa akademis santun, lugas, terstruktur, dan objektif.`;
+- HIERARKI PENOMORAN AKADEMIK (WAJIB URUT JIKA ADA PENOMORAN/SUB-POIN):
+  * Tingkat 1: I, II, III, dst. — Nomor untuk BAB (Angka Romawi)
+  * Tingkat 2: A, B, C, dst. — Nomor untuk Subbab (Huruf Kapital)
+  * Tingkat 3: 1, 2, 3, dst. — Nomor untuk Anak Subbab (Angka Arab)
+  * Tingkat 4: a, b, c, dst. — Nomor untuk Anak Subbab tingkat ke-4 (Huruf Kecil)
+  * Tingkat 5: 1), 2), 3), dst. — Nomor untuk Anak Subbab tingkat ke-5 (Angka Arab dengan kurung tutup)
+  * Tingkat 6: a), b), c), dst. — Nomor untuk Anak Subbab tingkat ke-6 (Huruf Kecil dengan kurung tutup)
+  * Tingkat 7: (1), (2), (3), dst. — Nomor untuk Anak Subbab tingkat ke-7 (Angka Arab di dalam kurung)
+  * Tingkat 8: (a), (b), (c), dst. — Nomor untuk Anak Subbab tingkat ke-8 (Huruf Kecil di dalam kurung)
+  DILARANG KERAS mengacak atau melompati urutan tingkatan penomoran ini.
+- Wajib menggunakan ragam bahasa formal, santun, baku (sesuai kaidah bahasa Indonesia), terstruktur secara sistematis, objektif, dan bebas basa-basi pembuka atau penutup.`;
 }
 
 // === ELEMEN DOM ===
@@ -533,23 +577,70 @@ async function restoreTabState() {
     updatePopupAgentState(settings?.isAgentRunning === true);
   });
 
-  // Pulihkan preferensi Auto-Click & Auto-Next
-  StorageHelper.get(["autoClick", "autoNext"], (settings) => {
-    if (autoClickToggle) {
-      autoClickToggle.checked = settings?.autoClick !== undefined ? settings.autoClick : true;
+  // Pulihkan preferensi Auto-Click & Auto-Next serta Mode Siluman (Multi-Menu)
+  const autoClickInputs = document.querySelectorAll(".chk-auto-click");
+  const stealthCopyInputs = document.querySelectorAll(".chk-stealth-copy");
+  const stealthFocusInputs = document.querySelectorAll(".chk-stealth-focus");
+  const stealthGhostInputs = document.querySelectorAll(".chk-stealth-ghost");
+  const stealthBadges = document.querySelectorAll(".stealth-status-badge");
+
+  function setCheckedGroup(nodeList, checked) {
+    if (!nodeList) return;
+    nodeList.forEach(el => { el.checked = checked; });
+  }
+
+  function updateStealthBadge() {
+    const firstCopy = document.querySelector(".chk-stealth-copy");
+    const firstFocus = document.querySelector(".chk-stealth-focus");
+    const firstGhost = document.querySelector(".chk-stealth-ghost");
+
+    const isCopy = firstCopy ? firstCopy.checked : true;
+    const isFocus = firstFocus ? firstFocus.checked : true;
+    const isGhost = firstGhost ? firstGhost.checked : false;
+
+    stealthBadges.forEach(badge => {
+      if (isCopy || isFocus) {
+        badge.textContent = isGhost ? "AKTIF (HANTU)" : "AKTIF";
+        badge.style.background = "#dcfce7";
+        badge.style.color = "#15803d";
+        badge.style.borderColor = "#a7f3d0";
+      } else {
+        badge.textContent = "NONAKTIF";
+        badge.style.background = "#fee2e2";
+        badge.style.color = "#b91c1c";
+        badge.style.borderColor = "#fecaca";
+      }
+    });
+  }
+
+  StorageHelper.get(["autoClick", "autoNext", "stealthCopy", "stealthFocus", "stealthGhost"], (settings) => {
+    if (settings?.autoClick !== undefined) {
+      setCheckedGroup(autoClickInputs, settings.autoClick !== false);
     }
-    if (autoNextToggle) {
-      autoNextToggle.checked = settings?.autoNext !== undefined ? settings.autoNext : false;
+    if (autoNextToggle && settings?.autoNext !== undefined) {
+      autoNextToggle.checked = settings.autoNext === true;
     }
+    if (settings?.stealthCopy !== undefined) {
+      setCheckedGroup(stealthCopyInputs, settings.stealthCopy !== false);
+    }
+    if (settings?.stealthFocus !== undefined) {
+      setCheckedGroup(stealthFocusInputs, settings.stealthFocus !== false);
+    }
+    if (settings?.stealthGhost !== undefined) {
+      setCheckedGroup(stealthGhostInputs, settings.stealthGhost === true);
+    }
+    updateStealthBadge();
   });
 
-  if (autoClickToggle) {
-    autoClickToggle.addEventListener("change", () => {
-      const val = autoClickToggle.checked;
+  autoClickInputs.forEach(input => {
+    input.addEventListener("change", () => {
+      const val = input.checked;
+      setCheckedGroup(autoClickInputs, val);
       StorageHelper.set({ autoClick: val });
       broadcastSettingUpdate({ autoClick: val });
     });
-  }
+  });
+
   if (autoNextToggle) {
     autoNextToggle.addEventListener("change", () => {
       const val = autoNextToggle.checked;
@@ -558,55 +649,35 @@ async function restoreTabState() {
     });
   }
 
-  // --- Kontrol Mode Siluman & Anti-Deteksi Ujian ---
-  function updateStealthBadge() {
-    if (!stealthStatusBadge) return;
-    const isCopy = chkStealthCopy ? chkStealthCopy.checked : true;
-    const isFocus = chkStealthFocus ? chkStealthFocus.checked : true;
-    const isGhost = chkStealthGhost ? chkStealthGhost.checked : false;
-
-    if (isCopy || isFocus) {
-      stealthStatusBadge.textContent = isGhost ? "AKTIF (HANTU)" : "AKTIF";
-      stealthStatusBadge.style.background = "#dcfce7";
-      stealthStatusBadge.style.color = "#15803d";
-    } else {
-      stealthStatusBadge.textContent = "NONAKTIF";
-      stealthStatusBadge.style.background = "#fee2e2";
-      stealthStatusBadge.style.color = "#b91c1c";
-    }
-  }
-
-  StorageHelper.get(["stealthCopy", "stealthFocus", "stealthGhost"], (res) => {
-    if (chkStealthCopy) chkStealthCopy.checked = res?.stealthCopy !== false;
-    if (chkStealthFocus) chkStealthFocus.checked = res?.stealthFocus !== false;
-    if (chkStealthGhost) chkStealthGhost.checked = res?.stealthGhost === true;
-    updateStealthBadge();
-  });
-
-  if (chkStealthCopy) {
-    chkStealthCopy.addEventListener("change", () => {
-      const val = chkStealthCopy.checked;
+  stealthCopyInputs.forEach(input => {
+    input.addEventListener("change", () => {
+      const val = input.checked;
+      setCheckedGroup(stealthCopyInputs, val);
       StorageHelper.set({ stealthCopy: val });
       broadcastSettingUpdate({ stealthCopy: val });
       updateStealthBadge();
     });
-  }
-  if (chkStealthFocus) {
-    chkStealthFocus.addEventListener("change", () => {
-      const val = chkStealthFocus.checked;
+  });
+
+  stealthFocusInputs.forEach(input => {
+    input.addEventListener("change", () => {
+      const val = input.checked;
+      setCheckedGroup(stealthFocusInputs, val);
       StorageHelper.set({ stealthFocus: val });
       broadcastSettingUpdate({ stealthFocus: val });
       updateStealthBadge();
     });
-  }
-  if (chkStealthGhost) {
-    chkStealthGhost.addEventListener("change", () => {
-      const val = chkStealthGhost.checked;
+  });
+
+  stealthGhostInputs.forEach(input => {
+    input.addEventListener("change", () => {
+      const val = input.checked;
+      setCheckedGroup(stealthGhostInputs, val);
       StorageHelper.set({ stealthGhost: val });
       broadcastSettingUpdate({ stealthGhost: val });
       updateStealthBadge();
     });
-  }
+  });
 
   async function broadcastSettingUpdate(settings) {
     try {
@@ -622,11 +693,23 @@ async function restoreTabState() {
   try {
     chrome.storage?.onChanged?.addListener((changes, area) => {
       if (area === "local") {
-        if (changes.autoClick !== undefined && autoClickToggle) {
-          autoClickToggle.checked = changes.autoClick.newValue === true;
+        if (changes.autoClick !== undefined) {
+          setCheckedGroup(autoClickInputs, changes.autoClick.newValue === true);
         }
         if (changes.autoNext !== undefined && autoNextToggle) {
           autoNextToggle.checked = changes.autoNext.newValue === true;
+        }
+        if (changes.stealthCopy !== undefined) {
+          setCheckedGroup(stealthCopyInputs, changes.stealthCopy.newValue !== false);
+          updateStealthBadge();
+        }
+        if (changes.stealthFocus !== undefined) {
+          setCheckedGroup(stealthFocusInputs, changes.stealthFocus.newValue !== false);
+          updateStealthBadge();
+        }
+        if (changes.stealthGhost !== undefined) {
+          setCheckedGroup(stealthGhostInputs, changes.stealthGhost.newValue === true);
+          updateStealthBadge();
         }
       }
     });
@@ -784,6 +867,10 @@ function cleanAiSymbols(rawText) {
   // 12. Rapikan baris kosong berlebih
   s = s.replace(/\n{3,}/g, "\n\n").trim();
 
+  // 13. Sembunyikan dan sterilkan nama model AI dari teks jawaban
+  s = s.replace(/\b(?:Groq|Gemini(?:\s*(?:Pro|Flash|Ultra|3\.5|2\.5|Vision))?|DeepSeek(?:\s*(?:R1|V3|Chat))?|Qwen(?:\s*(?:2\.5|72b|instruct|3\.8))?|OpenAI|ChatGPT|GPT-?[34o]|Claude|Whisper)\b/gi, "AI");
+  s = s.replace(/Sebagai\s+(?:model\s+)?(?:bahasa\s+)?(?:AI|kecerdasan\s+buatan)[^,\.\n]*[,\.]\s*/gi, "");
+
   return s;
 }
 
@@ -842,30 +929,30 @@ function renderRecommendationIfPresent(text, pageInfo = lastFetchedPageInfo) {
   const buttonsToAdd = [];
 
   const groqBtnDef = {
-    text: "⚡ Kerjakan Tugas / Kuis Teks (Groq)",
+    text: "⚡ Kerjakan Tugas / Kuis Teks",
     desc: "Khusus soal kuis & tugas: super cepat, to-the-point & auto-click",
     color: "#4f46e5",
     action: () => btnGroq.click()
   };
 
   const geminiBtnDef = {
-    text: "📸 Kerjakan Tugas Bergambar / Diagram (Gemini)",
+    text: "📸 Kerjakan Tugas Bergambar / Diagram",
     desc: "Khusus soal kuis dengan gambar, grafik, diagram & tes IQ",
-    color: "#0284c7",
+    color: "#0369a1",
     action: () => btnVision.click()
   };
 
   const deepSeekBtnDef = {
-    text: "🖥️ Analisis Layar, Fitur & Deteksi Error (DeepSeek)",
+    text: "🖥️ Analisis Layar, Fitur & Deteksi Error",
     desc: "Khusus analisis tata letak UI, navigasi form & deteksi error",
-    color: "#059669",
+    color: "#047857",
     action: () => btnOpenRouter.click()
   };
 
   const qwenBtnDef = {
-    text: "🎓 Bedah Materi & Rangkum Jurnal (Qwen 72B)",
+    text: "🎓 Bedah Materi & Rangkum Jurnal",
     desc: "Khusus membedah konsep akademik & naskah karya ilmiah/jurnal",
-    color: "#d97706",
+    color: "#b45309",
     action: () => btnHF.click()
   };
 
@@ -1439,7 +1526,7 @@ btnGroq.addEventListener("click", async () => {
     );
 
     if (isVisualPage) {
-      setStatus("🖼️ Soal visual/pola terdeteksi! Mengerjakan dengan Gemini Vision...");
+      setStatus("🖼️ Soal visual/pola terdeteksi! Menganalisis secara visual...");
       const visionAnswer = await executeGeminiVision(content);
       await presentAnswerAndAutoProcess(visionAnswer);
       return;
@@ -1447,11 +1534,11 @@ btnGroq.addEventListener("click", async () => {
 
     const activeGroqKey = getApiKey("GROQ_API_KEY");
     if (!activeGroqKey) {
-      showResult("⚠️ API Key Groq belum dikonfigurasi.\nSilakan salin file config.example.js menjadi config.js dan masukkan API Key Groq Anda.", true);
+      showResult("⚠️ API Key belum dikonfigurasi.\nSilakan salin file config.example.js menjadi config.js dan masukkan API Key Anda.", true);
       return;
     }
 
-    setStatus("Mengerjakan soal dengan Groq...");
+    setStatus("Mengerjakan tugas / kuis teks...");
     let groqAnswer = "";
     let lastGroqError = null;
 
@@ -1477,16 +1564,16 @@ btnGroq.addEventListener("click", async () => {
 
         if (res.status === 429) {
           if (i < GROQ_MODELS.length - 1) {
-            setStatus(`Model Groq ${model} limit (429). Mengalihkan ke cadangan (${GROQ_MODELS[i + 1]})...`);
+            setStatus("Server sedang padat. Mengalihkan ke cadangan...");
             continue;
           } else {
-            lastGroqError = new Error("Rate limit Groq tercapai pada seluruh model.");
+            lastGroqError = new Error("Batas limit server tercapai.");
             break;
           }
         }
 
         if (!res.ok) {
-          throw new Error(`Groq error ${res.status}: ${(await res.text()).slice(0, 200)}`);
+          throw new Error(`Server error ${res.status}: ${(await res.text()).slice(0, 200)}`);
         }
 
         const data = await res.json();
@@ -1502,16 +1589,16 @@ btnGroq.addEventListener("click", async () => {
     if (!groqAnswer) {
       const activeGeminiKey = getApiKey("GEMINI_API_KEY");
       if (activeGeminiKey) {
-        setStatus("Groq sedang mencapai batas limit (429). Mengalihkan otomatis ke Gemini...");
+        setStatus("Server sedang mencapai batas limit (429). Mengalihkan otomatis...");
         const visionAnswer = await executeGeminiVision(content);
         await presentAnswerAndAutoProcess(visionAnswer);
         return;
       }
-      throw lastGroqError || new Error("Rate limit Groq tercapai. Tunggu beberapa detik.");
+      throw lastGroqError || new Error("Batas limit server tercapai. Tunggu beberapa detik.");
     }
 
     if (isVisualProblem(groqAnswer)) {
-      setStatus("🖼️ Soal butuh visual! Mengalihkan ke Gemini Vision...");
+      setStatus("🖼️ Soal butuh analisis visual! Mengalihkan...");
       const visionAnswer = await executeGeminiVision(content);
       await presentAnswerAndAutoProcess(visionAnswer);
       return;
@@ -1544,7 +1631,7 @@ btnOpenRouter.addEventListener("click", async () => {
 
     if (activeORKey) {
       try {
-        setStatus("Menganalisis tampilan layar, fitur & deteksi error dengan DeepSeek...");
+        setStatus("Menganalisis tampilan layar, fitur & deteksi error...");
         const res = await fetch(OPENROUTER_API_URL, {
           method: "POST",
           headers: {
@@ -1570,7 +1657,7 @@ btnOpenRouter.addEventListener("click", async () => {
     }
 
     if (!summaryText && activeGroqKey) {
-      setStatus("Mengalihkan analisis layar ke cadangan (Groq)...");
+      setStatus("Mengalihkan analisis layar ke cadangan...");
       const resGroq = await fetch(GROQ_API_URL, {
         method: "POST",
         headers: {
@@ -1595,7 +1682,7 @@ btnOpenRouter.addEventListener("click", async () => {
     }
 
     if (!summaryText) {
-      showResult("⚠️ Gagal menganalisis layar. Pastikan API Key OpenRouter atau Groq sudah dikonfigurasi di config.js.", true);
+      showResult("⚠️ Gagal menganalisis layar. Pastikan API Key sudah dikonfigurasi di config.js.", true);
       return;
     }
 
@@ -1619,7 +1706,7 @@ btnHF.addEventListener("click", async () => {
     setStatus("Membaca dokumen / materi...");
     const pageInfo = await getActivePageInfo();
     const userContent = (currentTabUrl ? `[URL HALAMAN: ${currentTabUrl}]\n\n` : "") + pageInfo.text;
-    setStatus("Membedah materi & merangkum jurnal dengan Qwen 72B...");
+    setStatus("Membedah materi & merangkum jurnal...");
 
     const activeORKey = getApiKey("OPENROUTER_API_KEY");
     const activeGroqKey = getApiKey("GROQ_API_KEY");
@@ -1653,7 +1740,7 @@ btnHF.addEventListener("click", async () => {
     }
 
     if (!tutorText && activeGroqKey) {
-      setStatus("Mengalihkan ke tutor & perangkum cadangan (Groq 120B)...");
+      setStatus("Mengalihkan ke pemroses cadangan...");
       const resGroq = await fetch(GROQ_API_URL, {
         method: "POST",
         headers: {
@@ -1707,7 +1794,7 @@ async function executeGeminiVision(pageContent = "") {
   });
 
   const base64Data = dataUrl.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
-  setStatus("Menganalisis soal yang sedang Anda pilih dengan Gemini...");
+  setStatus("Menganalisis soal yang sedang Anda pilih...");
 
   let promptText = getGeminiVisionPrompt();
   if (activeText && activeText.trim().length > 10) {
@@ -1730,7 +1817,7 @@ async function executeGeminiVision(pageContent = "") {
 
   const activeGeminiKey = getApiKey("GEMINI_API_KEY");
   if (!activeGeminiKey) {
-    throw new Error("API Key Gemini belum dikonfigurasi. Silakan salin config.example.js menjadi config.js dan masukkan API Key Gemini Anda.");
+    throw new Error("API Key belum dikonfigurasi. Silakan lengkapi konfigurasi API Key di config.js.");
   }
 
   for (const model of GEMINI_MODELS) {
@@ -1759,7 +1846,7 @@ async function executeGeminiVision(pageContent = "") {
 
       if (!res.ok) {
         const errText = await res.text();
-        throw new Error(`Gemini error ${res.status}: ${errText.slice(0, 200)}`);
+        throw new Error(`Server error ${res.status}: ${errText.slice(0, 200)}`);
       }
 
       data = await res.json();
@@ -1774,11 +1861,11 @@ async function executeGeminiVision(pageContent = "") {
   }
 
   if (!data && (!res || !res.ok)) {
-    throw new Error(lastError || "Server Gemini sedang mengalami lonjakan beban. Silakan coba kembali.");
+    throw new Error(lastError || "Server sedang mengalami lonjakan beban. Silakan coba kembali.");
   }
 
   const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  return reply || "Gemini tidak memberikan jawaban.";
+  return reply || "Tidak ada jawaban yang diterima.";
 }
 
 // === 4. GEMINI VISION - Penjawab Soal Bergambar & Visual Cepat ===
@@ -2272,52 +2359,167 @@ function blobToBase64(blob) {
   });
 }
 
-// === PROMPT DEDIKASI SERBAGUNA (ANTI MENOLAK / ANTI SALING LEMPAR MODEL) ===
+// === PROMPT DEDIKASI SERBAGUNA: KETIK, SUARA, & FILE (TO-THE-POINT & BAHASA AKADEMIK) ===
 
 function getFileAnalysisPrompt(isSummary = false, customPrompt = "") {
   if (isSummary) {
-    return `Kamu adalah AI Akademik Ahli Perangkum Dokumen dan Materi.
+    return `Kamu adalah AI Akademik Ahli Perangkum Dokumen, Manuskrip, dan Karya Ilmiah.
 File ini diunggah secara sengaja oleh pengguna untuk dianalisis dan dirangkum.
-DILARANG KERAS MENOLAK, DILARANG MENYEBUT 'SALAH PILIH FITUR AI', DAN DILARANG MENGALIHKAN KE TOMBOL ATAU MODEL LAIN!
-LANGSUNG RANGKUM SELURUH ISI FILE INI SECARA LENGKAP:
-1. Ringkasan Utama & Topik Penting
-2. Pembahasan Konsep Kunci / Data / Metodologi
-3. Kesimpulan & Poin Esensial
-${customPrompt ? `\nINSTRUKSI KHUSUS DARI PENGGUNA:\n${customPrompt}` : ""}`;
+DILARANG KERAS MENOLAK, DILARANG MENYEBUT 'SALAH PILIH FITUR AI', DAN DILARANG MENGALIHKAN KE TOMBOL LAIN!
+
+1. PRINSIP UTAMA: TO-THE-POINT & BAHASA AKADEMIK:
+- Gunakan bahasa akademik baku, formal, ilmiah, dan presisi terminologi sesuai disiplin ilmu dokumen.
+- Wajib to-the-point: Langsung sajikan intisari dokumen tanpa pengantar (DILARANG: "File ini membahas...", "Dokumen yang diunggah berisi...") dan tanpa kata penutup klise.
+- Analisis mendalam, berbobot tinggi, dan bebas filler.
+
+2. STRUKTUR RANGKUMAN DOKUMEN:
+1. Gagasan Pokok & Tesis Utama: Deskripsi substansi atau premis fundamental dokumen.
+2. Analisis Konsep Kunci, Metodologi, & Pembahasan: Uraian data, fakta ilmiah, teori, atau argumentasi esensial.
+3. Simpulan Sintesis: Hasil akhir atau temuan penting dokumen.
+${customPrompt ? `\nINSTRUKSI KHUSUS DARI PENGGUNA:\n${customPrompt}` : ""}
+
+3. ATURAN FORMAT & PENOMORAN AKADEMIK (SANGAT KETAT):
+- DILARANG menggunakan karakter bintang (*) atau cetak tebal (**).
+- DILARANG menggunakan tanda pagar (#).
+- DILARANG menggunakan simbol bulet (•, ●) atau strip (-).
+- HIERARKI PENOMORAN AKADEMIK (WAJIB URUT JIKA ADA PENOMORAN/SUB-POIN):
+  * Tingkat 1: I, II, III, dst. — Nomor untuk BAB (Angka Romawi)
+  * Tingkat 2: A, B, C, dst. — Nomor untuk Subbab (Huruf Kapital)
+  * Tingkat 3: 1, 2, 3, dst. — Nomor untuk Anak Subbab (Angka Arab)
+  * Tingkat 4: a, b, c, dst. — Nomor untuk Anak Subbab tingkat ke-4 (Huruf Kecil)
+  * Tingkat 5: 1), 2), 3), dst. — Nomor untuk Anak Subbab tingkat ke-5 (Angka Arab dengan kurung tutup)
+  * Tingkat 6: a), b), c), dst. — Nomor untuk Anak Subbab tingkat ke-6 (Huruf Kecil dengan kurung tutup)
+  * Tingkat 7: (1), (2), (3), dst. — Nomor untuk Anak Subbab tingkat ke-7 (Angka Arab di dalam kurung)
+  * Tingkat 8: (a), (b), (c), dst. — Nomor untuk Anak Subbab tingkat ke-8 (Huruf Kecil di dalam kurung)
+  DILARANG KERAS mengacak atau melompati urutan tingkatan penomoran ini.
+- Tanpa salam pembuka dan tanpa penutup.`;
   }
 
-  return `Kamu adalah AI Pemecah Soal, Analis Dokumen, dan Asisten Belajar Tingkat Ahli dengan akurasi 100%.
+  return `Kamu adalah AI Pemecah Soal, Analis Dokumen, dan Pakar Akademik Tingkat Ahli dengan akurasi 100%.
 File ini diunggah secara sengaja oleh pengguna untuk dipecahkan atau dianalisis.
-DILARANG KERAS MENOLAK, DILARANG MENYEBUT 'SALAH PILIH FITUR AI', DAN DILARANG MENGALIHKAN KE TOMBOL ATAU MODEL LAIN!
-LANGSUNG PECAHKAN DAN BERIKAN JAWABAN TEPAT UNTUK SELURUH ISI FILE INI:
-1. Pilihan Ganda: Tuliskan huruf opsi kunci dan teks jawabannya secara jelas (contoh: "Jawaban: A. [Teks Opsi]").
-2. Esai / Analisis / Teori: Sajikan pembahasan terstruktur, mendalam, dan ilmiah.
-3. Kodingan / Error: Analisis bug dan berikan solusi kode yang bersih.
-4. Hitungan / Matematika: Uraikan kalkulasi runtut dan hasil akhirnya.
-${customPrompt ? `\nINSTRUKSI KHUSUS DARI PENGGUNA:\n${customPrompt}` : ""}`;
+DILARANG KERAS MENOLAK, DILARANG MENYEBUT 'SALAH PILIH FITUR AI', DAN DILARANG MENGALIHKAN KE TOMBOL LAIN!
+
+1. PRINSIP UTAMA: TO-THE-POINT & BAHASA AKADEMIK:
+- Gunakan bahasa akademik baku, formal, ilmiah, dan presisi tinggi sesuai kaidah PUEBI/KBBI dan standar keilmuan terkait.
+- Wajib to-the-point: Langsung pecahkan isi dokumen tanpa basa-basi pembuka (DILARANG: "Berikut adalah jawaban dari file...", "Setelah menganalisis..."), tanpa mengulang seluruh teks soal, dan tanpa penutup.
+
+2. GAYA PENYELESAIAN SOAL / DOKUMEN:
+1. Pilihan Ganda: Wajib langsung to-the-point dengan format: "Jawaban: X. [Teks Opsi]".
+2. Esai / Studi Kasus / Teori: Sajikan pembahasan ilmiah terstruktur, mendalam, analitis, dan berbobot tinggi.
+3. Kodingan / Pemrograman: Berikan kode yang bersih, sintaks 100% valid, teroptimasi, beserta analisis teknis ringkas.
+4. Hitungan / Matematika: Uraikan kalkulasi sistematis langkah demi langkah dan cantumkan hasil akhir yang pasti.
+${customPrompt ? `\nINSTRUKSI KHUSUS DARI PENGGUNA:\n${customPrompt}` : ""}
+
+3. ATURAN FORMAT & PENOMORAN AKADEMIK (SANGAT KETAT):
+- DILARANG menggunakan karakter bintang (*) atau cetak tebal (**).
+- DILARANG menggunakan tanda pagar (#).
+- DILARANG menggunakan simbol bulet (•, ●) atau strip (-).
+- HIERARKI PENOMORAN AKADEMIK (WAJIB URUT JIKA ADA PENOMORAN/SUB-POIN):
+  * Tingkat 1: I, II, III, dst. — Nomor untuk BAB (Angka Romawi)
+  * Tingkat 2: A, B, C, dst. — Nomor untuk Subbab (Huruf Kapital)
+  * Tingkat 3: 1, 2, 3, dst. — Nomor untuk Anak Subbab (Angka Arab)
+  * Tingkat 4: a, b, c, dst. — Nomor untuk Anak Subbab tingkat ke-4 (Huruf Kecil)
+  * Tingkat 5: 1), 2), 3), dst. — Nomor untuk Anak Subbab tingkat ke-5 (Angka Arab dengan kurung tutup)
+  * Tingkat 6: a), b), c), dst. — Nomor untuk Anak Subbab tingkat ke-6 (Huruf Kecil dengan kurung tutup)
+  * Tingkat 7: (1), (2), (3), dst. — Nomor untuk Anak Subbab tingkat ke-7 (Angka Arab di dalam kurung)
+  * Tingkat 8: (a), (b), (c), dst. — Nomor untuk Anak Subbab tingkat ke-8 (Huruf Kecil di dalam kurung)
+  DILARANG KERAS mengacak atau melompati urutan tingkatan penomoran ini.
+- Tanpa salam pembuka dan tanpa penutup.`;
 }
 
 function getManualTextPrompt() {
-  return `Kamu adalah AI Pemecah Soal dan Asisten Belajar Mandiri Tingkat Ahli dengan akurasi 100%.
+  return `Kamu adalah AI Pemecah Soal, Pakar Akademik, dan Asisten Belajar Ilmiah Tingkat Ahli dengan akurasi 100%.
 Teks ini diketik atau ditempel secara manual oleh pengguna.
 DILARANG KERAS MENOLAK, DILARANG MENYEBUT 'SALAH PILIH FITUR AI', DAN DILARANG MENGALIHKAN KE TOMBOL LAIN.
-LANGSUNG JAWAB DAN PECAHKAN PERTANYAAN, SOAL, ATAU MATERI YANG DIBERIKAN PENGGUNA SECARA AKURAT, LENGKAP, DAN TO-THE-POINT!`;
+
+1. PRINSIP UTAMA: TO-THE-POINT & BAHASA AKADEMIK:
+- Wajib menggunakan bahasa akademik baku, formal, ilmiah, dengan terminologi keilmuan yang tepat dan presisi tinggi (sesuai standar PUEBI/KBBI dan literatur akademik perguruan tinggi). Hindari bahasa informal, santai, atau tutur percakapan.
+- Wajib to-the-point: Langsung berikan substansi inti jawaban atau pemecahan masalah tanpa berbelit-belit. DILARANG KERAS menggunakan kata pengantar/pembuka (seperti: "Tentu", "Berikut jawabannya", "Berdasarkan pertanyaan Anda"), DILARANG mengulang pertanyaan/soal, dan DILARANG memberikan kata penutup atau salam ("Semoga membantu", dll).
+- Konten berbobot tinggi (high-signal), padat, bernas, dan bebas dari kalimat pemanis atau filler.
+
+2. GAYA JAWABAN SESUAI TIPE SOAL/TEKS:
+- Pilihan Ganda: Wajib langsung 1 baris to-the-point: "Jawaban: X. [Teks Opsi]". Jika ada kalkulasi/langkah penalaran, letakkan kalkulasi teknis ringkas di awal dengan format [HITUNGAN: ...] dan baris berikutnya "Jawaban: X. [Teks Opsi]".
+- Esai / Uraian / Diskusi Ilmiah: Sajikan pembahasan akademik yang mendalam, terstruktur secara logis, berbasis konsep keilmuan yang sahih, dan tuntas menjawab setiap dimensi pertanyaan secara to-the-point.
+- Kodingan & Pemrograman: Langsung berikan kode yang 100% valid secara sintaksis, bersih, efisien, dengan penjelasan teknis ringkas mengenai algoritma dan kompleksitas waktu/ruang (Big-O).
+- Hitungan / Matematika / Eksakta: Uraikan langkah kalkulasi sistematis langkah demi langkah dan tuliskan hasil akhir secara pasti.
+
+3. ATURAN FORMAT & PENOMORAN AKADEMIK (SANGAT KETAT):
+- DILARANG menggunakan karakter bintang (*) atau cetak tebal (**).
+- DILARANG menggunakan tanda pagar (#).
+- DILARANG menggunakan simbol bulet (•, ●) atau strip (-).
+- HIERARKI PENOMORAN AKADEMIK (WAJIB URUT JIKA ADA PENOMORAN/SUB-POIN):
+  * Tingkat 1: I, II, III, dst. — Nomor untuk BAB (Angka Romawi)
+  * Tingkat 2: A, B, C, dst. — Nomor untuk Subbab (Huruf Kapital)
+  * Tingkat 3: 1, 2, 3, dst. — Nomor untuk Anak Subbab (Angka Arab)
+  * Tingkat 4: a, b, c, dst. — Nomor untuk Anak Subbab tingkat ke-4 (Huruf Kecil)
+  * Tingkat 5: 1), 2), 3), dst. — Nomor untuk Anak Subbab tingkat ke-5 (Angka Arab dengan kurung tutup)
+  * Tingkat 6: a), b), c), dst. — Nomor untuk Anak Subbab tingkat ke-6 (Huruf Kecil dengan kurung tutup)
+  * Tingkat 7: (1), (2), (3), dst. — Nomor untuk Anak Subbab tingkat ke-7 (Angka Arab di dalam kurung)
+  * Tingkat 8: (a), (b), (c), dst. — Nomor untuk Anak Subbab tingkat ke-8 (Huruf Kecil di dalam kurung)
+  DILARANG KERAS mengacak atau melompati urutan tingkatan penomoran ini.
+- Tanpa salam pembuka, tanpa pengantar, dan tanpa penutup.`;
 }
 
 function getAudioPrompt(taskMode = "answer") {
   if (taskMode === "summary") {
-    return `Kamu adalah AI Perangkum Pembicaraan, Perkuliahan, dan Meeting Zoom.
+    return `Kamu adalah AI Akademik Ahli Perangkum Pembicaraan, Perkuliahan, dan Diskusi Ilmiah.
 DILARANG MENOLAK ATAU MENGALIHKAN KE TOMBOL LAIN.
-Rangkum seluruh pembicaraan dari rekaman suara ini secara terstruktur:
-1. Topik Utama Pembicaraan
-2. Poin-Poin Penting & Diskusi Kunci
-3. Kesimpulan & Tindak Lanjut`;
+
+1. PRINSIP UTAMA: TO-THE-POINT & BAHASA AKADEMIK:
+- Gunakan bahasa akademik baku, ilmiah, dan formal tingkat tinggi. Konversikan bahasa lisan/tutur informal dari transkrip audio ke dalam peristilahan akademik yang presisi dan sistematis.
+- Wajib to-the-point: Langsung sajikan substansi rangkuman tanpa basa-basi pembuka (DILARANG: "Dalam audio ini...", "Rekaman tersebut membahas...") dan tanpa penutup klise.
+- Analisis padat, berbobot tinggi, dan bebas kata-kata pengisi (filler).
+
+2. STRUKTUR RANGKUMAN AKADEMIK:
+1. Pokok Pembahasan & Landasan Konseptual: Intisari materi atau topik utama yang dibahas.
+2. Butir Argumentasi & Temuan Kunci: Poin-poin esensial, dalil ilmiah, data, atau metodologi yang disampaikan.
+3. Simpulan Akademis & Implikasi: Sintesis hasil akhir atau kesimpulan ilmiah dari diskusi.
+
+3. ATURAN FORMAT & PENOMORAN AKADEMIK (SANGAT KETAT):
+- DILARANG menggunakan karakter bintang (*) atau cetak tebal (**).
+- DILARANG menggunakan tanda pagar (#).
+- DILARANG menggunakan simbol bulet (•, ●) atau strip (-).
+- HIERARKI PENOMORAN AKADEMIK (WAJIB URUT JIKA ADA PENOMORAN/SUB-POIN):
+  * Tingkat 1: I, II, III, dst. — Nomor untuk BAB (Angka Romawi)
+  * Tingkat 2: A, B, C, dst. — Nomor untuk Subbab (Huruf Kapital)
+  * Tingkat 3: 1, 2, 3, dst. — Nomor untuk Anak Subbab (Angka Arab)
+  * Tingkat 4: a, b, c, dst. — Nomor untuk Anak Subbab tingkat ke-4 (Huruf Kecil)
+  * Tingkat 5: 1), 2), 3), dst. — Nomor untuk Anak Subbab tingkat ke-5 (Angka Arab dengan kurung tutup)
+  * Tingkat 6: a), b), c), dst. — Nomor untuk Anak Subbab tingkat ke-6 (Huruf Kecil dengan kurung tutup)
+  * Tingkat 7: (1), (2), (3), dst. — Nomor untuk Anak Subbab tingkat ke-7 (Angka Arab di dalam kurung)
+  * Tingkat 8: (a), (b), (c), dst. — Nomor untuk Anak Subbab tingkat ke-8 (Huruf Kecil di dalam kurung)
+  DILARANG KERAS mengacak atau melompati urutan tingkatan penomoran ini.
+- Tanpa salam pembuka dan tanpa penutup.`;
   }
-  return `Kamu adalah AI Penjawab Pertanyaan dan Pemecah Masalah Tingkat Ahli.
+
+  return `Kamu adalah AI Penjawab Pertanyaan dan Pemecah Soal Akademik Tingkat Ahli dengan akurasi 100%.
 DILARANG MENOLAK ATAU MENGALIHKAN KE TOMBOL LAIN.
-Dengarkan/baca rekaman suara ini:
-1. Identifikasi apa saja pertanyaan, soal, atau permasalahan yang diajukan oleh pembicara/dosen.
-2. Berikan jawaban yang paling tepat, akurat, to-the-point, dan ilmiah untuk masing-masing pertanyaan tersebut!`;
+
+1. PRINSIP UTAMA: TO-THE-POINT & BAHASA AKADEMIK:
+- Gunakan bahasa akademik formal, baku, ilmiah, dan presisi tinggi sesuai kaidah PUEBI/KBBI. Hindari bahasa tutur santai atau ragam percakapan lisan.
+- Wajib to-the-point: Langsung berikan jawaban dan pemecahan masalah tanpa pengantar (DILARANG: "Berdasarkan audio...", "Pertanyaan yang diajukan adalah..."), tanpa mengulang pertanyaan, dan tanpa penutup basa-basi.
+
+2. GAYA JAWABAN:
+- Identifikasi pertanyaan atau permasalahan inti yang disampaikan dalam audio.
+- Jika merupakan soal kuis/pilihan ganda: Wajib langsung to-the-point dengan format: "Jawaban: X. [Teks Opsi]".
+- Jika merupakan pertanyaan esai/akademis/diskusi: Sajikan jawaban komprehensif, berbasis teori ilmiah, mendalam, dan to-the-point.
+- Jika merupakan soal hitungan/kodingan: Berikan langkah kalkulasi teknis sistematis atau kode teroptimasi beserta penjelasan ringkas.
+
+3. ATURAN FORMAT & PENOMORAN AKADEMIK (SANGAT KETAT):
+- DILARANG menggunakan karakter bintang (*) atau cetak tebal (**).
+- DILARANG menggunakan tanda pagar (#).
+- DILARANG menggunakan simbol bulet (•, ●) atau strip (-).
+- HIERARKI PENOMORAN AKADEMIK (WAJIB URUT JIKA ADA PENOMORAN/SUB-POIN):
+  * Tingkat 1: I, II, III, dst. — Nomor untuk BAB (Angka Romawi)
+  * Tingkat 2: A, B, C, dst. — Nomor untuk Subbab (Huruf Kapital)
+  * Tingkat 3: 1, 2, 3, dst. — Nomor untuk Anak Subbab (Angka Arab)
+  * Tingkat 4: a, b, c, dst. — Nomor untuk Anak Subbab tingkat ke-4 (Huruf Kecil)
+  * Tingkat 5: 1), 2), 3), dst. — Nomor untuk Anak Subbab tingkat ke-5 (Angka Arab dengan kurung tutup)
+  * Tingkat 6: a), b), c), dst. — Nomor untuk Anak Subbab tingkat ke-6 (Huruf Kecil dengan kurung tutup)
+  * Tingkat 7: (1), (2), (3), dst. — Nomor untuk Anak Subbab tingkat ke-7 (Angka Arab di dalam kurung)
+  * Tingkat 8: (a), (b), (c), dst. — Nomor untuk Anak Subbab tingkat ke-8 (Huruf Kecil di dalam kurung)
+  DILARANG KERAS mengacak atau melompati urutan tingkatan penomoran ini.
+- Tanpa salam pembuka dan tanpa penutup.`;
 }
 
 // Transkripsi & Proses Rekaman Audio dengan Groq Whisper & Fallback Gemini Audio
@@ -2340,7 +2542,7 @@ async function processRecordedAudio(taskMode = "answer") {
     // 1. Coba transkripsi dengan Groq Whisper (sangat cepat <1 detik)
     if (activeGroqKey) {
       try {
-        setStatus("Mentranskripsikan suara dengan Groq Whisper...");
+        setStatus("Mentranskripsikan suara...");
         const formData = new FormData();
         formData.append("file", lastRecordedBlob, "audio.webm");
         formData.append("model", "whisper-large-v3-turbo");
@@ -2375,7 +2577,7 @@ async function processRecordedAudio(taskMode = "answer") {
 
     // 3. Fallback: Kirim rekaman langsung ke Google Gemini Multimodal Audio
     if (activeGeminiKey) {
-      setStatus("Menganalisis audio secara langsung dengan Google Gemini...");
+      setStatus("Menganalisis audio secara langsung...");
       const base64Audio = await blobToBase64(lastRecordedBlob);
       const audioInstruction = getAudioPrompt(taskMode);
 
@@ -2400,7 +2602,7 @@ async function processRecordedAudio(taskMode = "answer") {
             const gData = await gRes.json();
             const reply = gData?.candidates?.[0]?.content?.parts?.[0]?.text;
             if (reply) {
-              showResult(`🎙️ [ANALISIS AUDIO LANGSUNG GEMINI]:\n\n${reply}`);
+              showResult(`🎙️ [ANALISIS AUDIO LANGSUNG]:\n\n${reply}`);
               return;
             }
           }
@@ -2408,7 +2610,7 @@ async function processRecordedAudio(taskMode = "answer") {
       }
     }
 
-    throw new Error("Gagal mentranskripsi atau memproses audio. Pastikan API Key Groq atau Gemini sudah aktif di config.js.");
+    throw new Error("Gagal mentranskripsi atau memproses audio. Pastikan API Key sudah aktif di config.js.");
 
   } catch (err) {
     showResult(err.message, true);
@@ -2493,15 +2695,14 @@ async function handleManualTextExecution(modelChoice) {
   if (resultActions) resultActions.classList.remove("show");
 
   try {
+    let rawAnswer = null;
     if (modelChoice === "groq") {
-      setStatus("Mengerjakan soal manual dengan Groq...");
-      const answer = await callGroqOrGeminiText(text, getManualTextPrompt());
-      showResult(answer);
+      setStatus("Mengerjakan soal teks...");
+      rawAnswer = await callGroqOrGeminiText(text, getManualTextPrompt());
     } else if (modelChoice === "qwen") {
-      setStatus("Membedah & merangkum materi dengan Qwen 72B...");
+      setStatus("Membedah & merangkum materi...");
       const activeORKey = getApiKey("OPENROUTER_API_KEY");
       const activeGroqKey = getApiKey("GROQ_API_KEY");
-      let tutorText = null;
 
       if (activeORKey) {
         try {
@@ -2515,11 +2716,11 @@ async function handleManualTextExecution(modelChoice) {
               messages: [{ role: "system", content: getManualTextPrompt() }, { role: "user", content: text }]
             })
           });
-          if (res.ok) tutorText = (await res.json()).choices?.[0]?.message?.content;
+          if (res.ok) rawAnswer = (await res.json()).choices?.[0]?.message?.content;
         } catch (_) { }
       }
 
-      if (!tutorText && activeGroqKey) {
+      if (!rawAnswer && activeGroqKey) {
         const resGroq = await fetch(GROQ_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeGroqKey}` },
@@ -2530,15 +2731,14 @@ async function handleManualTextExecution(modelChoice) {
             messages: [{ role: "system", content: getManualTextPrompt() }, { role: "user", content: text }]
           })
         });
-        if (resGroq.ok) tutorText = (await resGroq.json()).choices?.[0]?.message?.content;
+        if (resGroq.ok) rawAnswer = (await resGroq.json()).choices?.[0]?.message?.content;
       }
 
-      showResult(tutorText || "Tidak ada respons dari tutor.");
+      if (!rawAnswer) rawAnswer = "Tidak ada respons dari tutor materi.";
     } else if (modelChoice === "deepseek") {
-      setStatus("Menganalisis logika & kode dengan DeepSeek...");
+      setStatus("Menganalisis logika & debugging...");
       const activeORKey = getApiKey("OPENROUTER_API_KEY");
       const activeGroqKey = getApiKey("GROQ_API_KEY");
-      let summaryText = null;
 
       if (activeORKey) {
         try {
@@ -2552,11 +2752,11 @@ async function handleManualTextExecution(modelChoice) {
               messages: [{ role: "system", content: getManualTextPrompt() }, { role: "user", content: text }]
             })
           });
-          if (res.ok) summaryText = (await res.json()).choices?.[0]?.message?.content;
+          if (res.ok) rawAnswer = (await res.json()).choices?.[0]?.message?.content;
         } catch (_) { }
       }
 
-      if (!summaryText && activeGroqKey) {
+      if (!rawAnswer && activeGroqKey) {
         const resGroq = await fetch(GROQ_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeGroqKey}` },
@@ -2567,11 +2767,59 @@ async function handleManualTextExecution(modelChoice) {
             messages: [{ role: "system", content: getManualTextPrompt() }, { role: "user", content: text }]
           })
         });
-        if (resGroq.ok) summaryText = (await resGroq.json()).choices?.[0]?.message?.content;
+        if (resGroq.ok) rawAnswer = (await resGroq.json()).choices?.[0]?.message?.content;
       }
 
-      showResult(summaryText || "Tidak ada respons dari analisis.");
+      if (!rawAnswer) rawAnswer = "Tidak ada respons dari analisis.";
     }
+
+    if (!rawAnswer) {
+      showResult("⚠️ Tidak ada jawaban yang diterima.", true);
+      return;
+    }
+
+    // Auto-Click / Fill ke web page jika opsi aktif (Mode Siluman & Anti-Deteksi Ujian)
+    const firstAutoClick = document.querySelector(".chk-auto-click");
+    const autoClickEnabled = firstAutoClick ? firstAutoClick.checked : true;
+    let banner = "";
+    let textToDisplay = rawAnswer;
+    const cleanEssay = cleanAiSymbols(rawAnswer);
+
+    if (autoClickEnabled) {
+      const ansInfo = extractAnswerInfo(rawAnswer);
+      const { letter, targetText, isMultipleChoice, firstLine } = ansInfo;
+      let actionSuccess = false;
+      const displayChoice = targetText || letter || "Jawaban";
+
+      if (letter || isMultipleChoice) {
+        setStatus(`🎯 Mengklik opsi "${displayChoice}" di layar web...`, true);
+        try {
+          const clickRes = await autoClickAnswerOnPage(letter, targetText);
+          if (clickRes && clickRes.success) {
+            actionSuccess = true;
+            textToDisplay = firstLine || cleanEssay;
+            banner = `🎯 [OTOMATIS DIKLIK: ${displayChoice}]\n\n`;
+            setStatus(`✅ Opsi "${displayChoice}" berhasil diklik di layar web!`, false);
+          }
+        } catch (_) { }
+      }
+
+      if (!actionSuccess) {
+        const textToFill = isMultipleChoice ? (firstLine || cleanEssay) : cleanEssay;
+        setStatus(`✍️ Mengetikkan jawaban ke kolom isian/esai...`, true);
+        try {
+          const fillRes = await autoFillEssayOnPage(textToFill);
+          if (fillRes && fillRes.success) {
+            actionSuccess = true;
+            textToDisplay = textToFill;
+            banner = `✍️ [JAWABAN OTOMATIS DIKETIK & TERSIMPAN PERMANEN]\n\n`;
+            setStatus(`✅ Jawaban berhasil diketik & tersimpan di layar web!`, false);
+          }
+        } catch (_) { }
+      }
+    }
+
+    showResult(banner + textToDisplay);
   } catch (err) {
     showResult(err.message, true);
   } finally {
@@ -2631,7 +2879,7 @@ async function callGroqOrGeminiText(userText, customSystemPrompt = null) {
     }
   }
 
-  throw new Error("Gagal memanggil model AI (Groq & Gemini). Periksa API Key Anda di config.js.");
+  throw new Error("Gagal memproses jawaban. Periksa koneksi internet atau API Key Anda di config.js.");
 }
 
 
@@ -2772,9 +3020,9 @@ async function processUploadedFile(isSummary = false) {
     // 1. FILE GAMBAR (PNG, JPG, WEBP, dll.)
     if (selectedFile.type.startsWith("image/")) {
       if (!activeGeminiKey) {
-        throw new Error("API Key Gemini diperlukan untuk menganalisis file gambar.");
+        throw new Error("API Key diperlukan untuk menganalisis file gambar.");
       }
-      setStatus("Menganalisis file gambar dengan Gemini Vision...");
+      setStatus("Menganalisis file gambar...");
       const base64Data = await blobToBase64(selectedFile);
 
       const parts = [
@@ -2799,15 +3047,15 @@ async function processUploadedFile(isSummary = false) {
           }
         } catch (_) { }
       }
-      throw new Error("Gagal menganalisis file gambar dengan Gemini.");
+      throw new Error("Gagal menganalisis file gambar.");
     }
 
     // 2. FILE DOKUMEN PDF (Native Multimodal Gemini)
     if (selectedFile.type === "application/pdf" || selectedFile.name.endsWith(".pdf")) {
       if (!activeGeminiKey) {
-        throw new Error("API Key Gemini diperlukan untuk membaca file PDF.");
+        throw new Error("API Key diperlukan untuk membaca file PDF.");
       }
-      setStatus("Membaca dan menganalisis dokumen PDF dengan Gemini...");
+      setStatus("Membaca dan menganalisis dokumen PDF...");
       const base64Data = await blobToBase64(selectedFile);
 
       const parts = [
@@ -2842,7 +3090,7 @@ async function processUploadedFile(isSummary = false) {
 
       if (activeGroqKey) {
         try {
-          setStatus("Mentranskripsi file audio dengan Groq Whisper...");
+          setStatus("Mentranskripsikan file audio...");
           const formData = new FormData();
           formData.append("file", selectedFile);
           formData.append("model", "whisper-large-v3-turbo");
