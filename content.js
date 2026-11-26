@@ -2575,10 +2575,32 @@
     `;
 
     container.innerHTML = `
-      <div id="hud-bubble" style="display: ${hudMinimized ? "flex" : "none"}; align-items: center; gap: 8px; background: #0f172a; color: #fff; padding: 9px 15px; border-radius: 30px; box-shadow: 0 8px 24px rgba(15,23,42,0.25); cursor: pointer; font-size: 12.5px; font-weight: 700; border: 1px solid rgba(255,255,255,0.15);">
-        <span id="hud-bubble-text">📚 Asisten Belajar AI</span>
-        <span id="bubble-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${isAgentRunning ? "#22c55e" : "#cbd5e1"};"></span>
-      </div>
+      <button type="button" id="hud-bubble" class="${isAgentRunning ? "hud-bot-running" : ""}" aria-label="Buka panel Asisten Belajar AI" style="display: ${hudMinimized ? "flex" : "none"}; align-items: center; gap: 8px; background: #0f172a; color: #ffffff; padding: 8px 14px 8px 11px; border-radius: 30px; box-shadow: 0 8px 24px rgba(15,23,42,0.25); cursor: pointer; font-size: 12.5px; font-weight: 700; font-family: inherit; line-height: 1.2; border: 1px solid rgba(255,255,255,0.16); transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;">
+        <span class="hud-bot-avatar" aria-hidden="true">
+          <svg class="hud-bot-svg" viewBox="0 0 32 32" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g class="hud-bot-body">
+              <g class="hud-bot-antenna">
+                <line x1="16" y1="7.5" x2="16" y2="3.8" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round"/>
+                <circle class="hud-bot-antenna-tip" cx="16" cy="3" r="1.9" fill="#38bdf8"/>
+              </g>
+              <rect x="6.5" y="7.5" width="19" height="13.5" rx="5.5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+              <rect x="4.5" y="12" width="2.2" height="5" rx="1.1" fill="#64748b"/>
+              <rect x="25.3" y="12" width="2.2" height="5" rx="1.1" fill="#64748b"/>
+              <rect x="9.2" y="10.4" width="13.6" height="7.6" rx="3.2" fill="#0f172a"/>
+              <g class="hud-bot-eyes">
+                <rect class="hud-bot-eye" x="11.8" y="12.6" width="2.8" height="3.4" rx="1.4" fill="#38bdf8"/>
+                <rect class="hud-bot-eye" x="17.4" y="12.6" width="2.8" height="3.4" rx="1.4" fill="#38bdf8"/>
+              </g>
+              <path class="hud-bot-torso" d="M10.5 22.4C10.5 21.6 11.2 21 12 21H20C20.8 21 21.5 21.6 21.5 22.4V26.2C21.5 27.6 20.4 28.8 19 28.8H13C11.6 28.8 10.5 27.6 10.5 26.2V22.4Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="0.9"/>
+              <rect x="13.6" y="23.6" width="4.8" height="2" rx="1" fill="#475569"/>
+              <path class="hud-bot-arm-left" d="M9.4 22.4C7.9 22.6 7 23.7 7 25.1" stroke="#cbd5e1" stroke-width="2.1" stroke-linecap="round"/>
+              <path class="hud-bot-arm-right" d="M22.6 22.4C24.1 22.6 25 23.7 25 25.1" stroke="#cbd5e1" stroke-width="2.1" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </span>
+        <span id="hud-bubble-text">Asisten Belajar AI</span>
+        <span id="bubble-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${isAgentRunning ? "#22c55e" : "#cbd5e1"}; flex-shrink: 0;"></span>
+      </button>
 
       <div id="hud-panel" style="display: ${hudMinimized ? "none" : "flex"}; flex-direction: column; width: 330px; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -5px rgba(15,23,42,0.18), 0 4px 6px -2px rgba(15,23,42,0.05); border: 1px solid #e2e8f0; overflow: hidden; color: #0f172a; position: relative;">
         <div id="hud-header" style="background: #0f172a; color: #fff; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; cursor: grab;">
@@ -2720,6 +2742,99 @@
       styleEl.id = "ai-agent-hud-styles";
       styleEl.textContent = `
         @keyframes hudspin { to { transform: rotate(360deg); } }
+        @keyframes hudBotFloat {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-1.4px) rotate(-2.2deg); }
+          50% { transform: translateY(0.5px) rotate(0deg); }
+          75% { transform: translateY(-1.1px) rotate(2.2deg); }
+        }
+        @keyframes hudBotBlink {
+          0%, 44%, 49%, 92%, 100% { transform: scaleY(1); }
+          46.5%, 95% { transform: scaleY(0.08); }
+        }
+        @keyframes hudBotAntenna {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(6deg); }
+          75% { transform: rotate(-6deg); }
+        }
+        @keyframes hudBotArmLeft {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(9deg); }
+        }
+        @keyframes hudBotArmRight {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(-9deg); }
+        }
+        #ai-study-agent-hud #hud-bubble {
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          margin: 0 !important;
+        }
+        #ai-study-agent-hud #hud-bubble:hover {
+          background-color: #1e293b !important;
+          border-color: rgba(255,255,255,0.28) !important;
+          transform: translateY(-1px);
+        }
+        #ai-study-agent-hud #hud-bubble:active {
+          transform: scale(0.98);
+        }
+        #ai-study-agent-hud #hud-bubble:focus-visible {
+          outline: 2px solid #38bdf8 !important;
+          outline-offset: 2px !important;
+        }
+        #ai-study-agent-hud .hud-bot-avatar {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          flex-shrink: 0;
+        }
+        #ai-study-agent-hud .hud-bot-svg {
+          display: block;
+          overflow: visible;
+        }
+        #ai-study-agent-hud .hud-bot-body {
+          transform-box: fill-box;
+          transform-origin: center bottom;
+          animation: hudBotFloat 2.8s ease-in-out infinite;
+        }
+        #ai-study-agent-hud .hud-bot-eyes {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: hudBotBlink 4.2s ease-in-out infinite;
+        }
+        #ai-study-agent-hud .hud-bot-antenna {
+          transform-box: fill-box;
+          transform-origin: center bottom;
+          animation: hudBotAntenna 2.8s ease-in-out infinite;
+        }
+        #ai-study-agent-hud .hud-bot-arm-left {
+          transform-box: fill-box;
+          transform-origin: right top;
+          animation: hudBotArmLeft 2.8s ease-in-out infinite;
+        }
+        #ai-study-agent-hud .hud-bot-arm-right {
+          transform-box: fill-box;
+          transform-origin: left top;
+          animation: hudBotArmRight 2.8s ease-in-out infinite;
+        }
+        #ai-study-agent-hud #hud-bubble.hud-bot-running .hud-bot-eye,
+        #ai-study-agent-hud #hud-bubble.hud-bot-running .hud-bot-antenna-tip {
+          fill: #22c55e;
+        }
+        #ai-study-agent-hud #hud-bubble.hud-bot-running .hud-bot-body {
+          animation-duration: 1.9s;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          #ai-study-agent-hud .hud-bot-body,
+          #ai-study-agent-hud .hud-bot-eyes,
+          #ai-study-agent-hud .hud-bot-antenna,
+          #ai-study-agent-hud .hud-bot-arm-left,
+          #ai-study-agent-hud .hud-bot-arm-right {
+            animation: none !important;
+          }
+        }
         #ai-study-agent-hud, #ai-study-agent-hud * {
           box-sizing: border-box !important;
         }
@@ -3200,7 +3315,7 @@
     if (badge) badge.textContent = titles[tabKey] || "Asisten AI";
 
     var bubbleText = hudElement.querySelector("#hud-bubble-text");
-    if (bubbleText) bubbleText.textContent = "🤖 " + (titles[tabKey] || "Asisten AI");
+    if (bubbleText) bubbleText.textContent = titles[tabKey] || "Asisten AI";
 
     chrome.storage?.local?.set({ activeHudTab: tabKey, lastActivePopupTab: tabKey });
   }
@@ -3304,6 +3419,8 @@
     var btn = hudElement?.querySelector("#hud-autopilot-btn");
     var badge = hudElement?.querySelector("#hud-mode-badge");
     var dot = hudElement?.querySelector("#bubble-status-dot");
+    var bubble = hudElement?.querySelector("#hud-bubble");
+    var bubbleText = hudElement?.querySelector("#hud-bubble-text");
 
     if (btn) {
       btn.textContent = running ? "⏹️ Hentikan Agen (Stop)" : "▶️ Jalankan Otomatis (Sampai Selesai)";
@@ -3311,6 +3428,12 @@
     }
     if (badge && currentHudTab === "screen") {
       badge.textContent = running ? "Auto-Pilot" : "Layar Web";
+    }
+    if (bubbleText && currentHudTab === "screen") {
+      bubbleText.textContent = running ? "Auto-Pilot" : "Layar Web";
+    }
+    if (bubble) {
+      bubble.classList.toggle("hud-bot-running", !!running);
     }
     if (dot) {
       dot.style.background = running ? "#22c55e" : "#cbd5e1";
