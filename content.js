@@ -2622,7 +2622,7 @@
             <span id="hud-mode-badge" style="font-size: 9.5px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #e2e8f0; padding: 2px 7px; border-radius: 9999px;">Layar Web</span>
           </div>
           <div style="display: flex; gap: 3px; align-items: center;">
-            <button type="button" id="hud-ghost-btn" class="hud-header-btn" aria-label="Mode Hantu / Transparan" title="Mode Hantu / Transparan 32% (Alt+Z)">👻</button>
+            <button type="button" id="hud-ghost-btn" class="hud-header-btn" aria-label="Mode Hantu / Transparan" title="Mode Hantu / Transparan 14% (Alt+Z)">👻</button>
             <button type="button" id="hud-min-btn" class="hud-header-btn" aria-label="Perkecil panel" title="Perkecil"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7.5H11.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
             <button type="button" id="hud-close-btn" class="hud-header-btn" aria-label="Tutup panel" title="Tutup (Alt+X / Esc)"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3.2 3.2L10.8 10.8M10.8 3.2L3.2 10.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
           </div>
@@ -2931,11 +2931,13 @@
         .hud-nav-btn:hover { opacity: 0.9; }
         #hud-ghost-btn:hover, #hud-min-btn:hover, #hud-close-btn:hover { color: #ffffff !important; }
         #ai-study-agent-hud.hud-ghost-mode {
-          opacity: 0.32 !important;
+          opacity: 0.14 !important;
+          filter: brightness(0.92);
           transition: opacity 0.2s ease, filter 0.2s ease;
         }
         #ai-study-agent-hud.hud-ghost-mode:hover {
-          opacity: 0.96 !important;
+          opacity: 0.88 !important;
+          filter: none;
           box-shadow: 0 10px 32px rgba(15,23,42,0.3) !important;
         }
         #hud-copy-btn:hover { background: #f8fafc !important; border-color: #94a3b8 !important; }
@@ -3696,7 +3698,7 @@
     stealthGhostEnabled = nextVal;
     if (nextVal) {
       hudElement.classList.add("hud-ghost-mode");
-      showInPageToast("👻 Mode Hantu AKTIF (Transparan 32%, Dekati kursor untuk membaca)");
+      showInPageToast("👻 Mode Hantu AKTIF (Transparan 14%, Dekati kursor untuk membaca)");
     } else {
       hudElement.classList.remove("hud-ghost-mode");
       showInPageToast("👁️ Mode Normal AKTIF (Solid 100%)");
