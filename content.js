@@ -2575,31 +2575,44 @@
     `;
 
     container.innerHTML = `
-      <button type="button" id="hud-bubble" class="${isAgentRunning ? "hud-bot-running" : ""}" aria-label="Buka panel Asisten Belajar AI" style="display: ${hudMinimized ? "flex" : "none"}; align-items: center; gap: 8px; background: #0f172a; color: #ffffff; padding: 8px 14px 8px 11px; border-radius: 30px; box-shadow: 0 8px 24px rgba(15,23,42,0.25); cursor: pointer; font-size: 12.5px; font-weight: 700; font-family: inherit; line-height: 1.2; border: 1px solid rgba(255,255,255,0.16); transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;">
+      <button type="button" id="hud-bubble" class="${isAgentRunning ? "hud-bot-running" : ""}" aria-label="Buka panel Asisten Belajar AI" title="Buka panel Asisten Belajar AI" style="display: ${hudMinimized ? "flex" : "none"}; position: relative; align-items: center; justify-content: center; width: 52px; height: 52px; padding: 0; background: #0f172a; color: #ffffff; border-radius: 50%; box-shadow: 0 8px 24px rgba(15,23,42,0.28); cursor: grab; border: 1.5px solid rgba(255,255,255,0.18); transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;">
         <span class="hud-bot-avatar" aria-hidden="true">
-          <svg class="hud-bot-svg" viewBox="0 0 32 32" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="hud-bot-svg" viewBox="0 0 64 64" width="36" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g class="hud-bot-sparks">
+              <circle class="hud-bot-spark-a" cx="15" cy="18" r="1.4" fill="#cbd5e1"/>
+              <circle class="hud-bot-spark-b" cx="24" cy="10.5" r="1.3" fill="#94a3b8"/>
+              <circle class="hud-bot-spark-a" cx="7.5" cy="31" r="1.7" fill="#e2e8f0"/>
+              <circle class="hud-bot-spark-b" cx="17.5" cy="51.5" r="1.4" fill="#94a3b8"/>
+              <circle class="hud-bot-spark-b" cx="55.5" cy="27" r="1.4" fill="#cbd5e1"/>
+              <circle class="hud-bot-spark-a" cx="56.5" cy="34.5" r="1.6" fill="#e2e8f0"/>
+              <circle class="hud-bot-spark-a" cx="47.5" cy="50.5" r="1.5" fill="#cbd5e1"/>
+            </g>
+            <path class="hud-bot-shoulder" d="M20.5 57.5C25.8 51.6 38.2 51.6 43.5 57.5C37.8 54.4 26.2 54.4 20.5 57.5Z" fill="#e2e8f0"/>
             <g class="hud-bot-body">
               <g class="hud-bot-antenna">
-                <line x1="16" y1="7.5" x2="16" y2="3.8" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round"/>
-                <circle class="hud-bot-antenna-tip" cx="16" cy="3" r="1.9" fill="#38bdf8"/>
+                <line x1="38.2" y1="16.8" x2="41.4" y2="11.2" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>
+                <circle class="hud-bot-antenna-tip" cx="42.2" cy="10" r="2.5" fill="#38bdf8"/>
+                <path class="hud-bot-signal" d="M38 9.2A4.8 4.8 0 0 1 46.6 11" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round"/>
               </g>
-              <rect x="6.5" y="7.5" width="19" height="13.5" rx="5.5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
-              <rect x="4.5" y="12" width="2.2" height="5" rx="1.1" fill="#64748b"/>
-              <rect x="25.3" y="12" width="2.2" height="5" rx="1.1" fill="#64748b"/>
-              <rect x="9.2" y="10.4" width="13.6" height="7.6" rx="3.2" fill="#0f172a"/>
+              <path d="M14.2 33.5C14.2 18.8 22 14.2 32 14.2C42 14.2 49.8 18.8 49.8 33.5" stroke="#e2e8f0" stroke-width="2.8" stroke-linecap="round"/>
+              <path d="M18.8 22.8C21.8 17.4 42.2 17.4 45.2 22.8H18.8Z" fill="#cbd5e1"/>
+              <path d="M14.2 27.6C9.4 27.6 9.4 39.6 14.2 39.6V27.6Z" fill="#f8fafc"/>
+              <path d="M49.8 27.6C54.6 27.6 54.6 39.6 49.8 39.6V27.6Z" fill="#f8fafc"/>
+              <rect x="16" y="23" width="32" height="26" rx="9.5" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+              <path d="M41.5 26.5C43.2 27.2 44.3 28.5 44.7 30.2" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round"/>
               <g class="hud-bot-eyes">
-                <rect class="hud-bot-eye" x="11.8" y="12.6" width="2.8" height="3.4" rx="1.4" fill="#38bdf8"/>
-                <rect class="hud-bot-eye" x="17.4" y="12.6" width="2.8" height="3.4" rx="1.4" fill="#38bdf8"/>
+                <circle cx="25.2" cy="35" r="4.6" fill="#0f172a"/>
+                <circle cx="23.7" cy="33.4" r="1.55" fill="#ffffff"/>
+                <path d="M24.4 37.3A2.6 2.6 0 0 0 27.6 35.4" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round"/>
+                <circle cx="38.8" cy="35" r="4.6" fill="#0f172a"/>
+                <circle cx="37.3" cy="33.4" r="1.55" fill="#ffffff"/>
+                <path d="M38 37.3A2.6 2.6 0 0 0 41.2 35.4" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round"/>
               </g>
-              <path class="hud-bot-torso" d="M10.5 22.4C10.5 21.6 11.2 21 12 21H20C20.8 21 21.5 21.6 21.5 22.4V26.2C21.5 27.6 20.4 28.8 19 28.8H13C11.6 28.8 10.5 27.6 10.5 26.2V22.4Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="0.9"/>
-              <rect x="13.6" y="23.6" width="4.8" height="2" rx="1" fill="#475569"/>
-              <path class="hud-bot-arm-left" d="M9.4 22.4C7.9 22.6 7 23.7 7 25.1" stroke="#cbd5e1" stroke-width="2.1" stroke-linecap="round"/>
-              <path class="hud-bot-arm-right" d="M22.6 22.4C24.1 22.6 25 23.7 25 25.1" stroke="#cbd5e1" stroke-width="2.1" stroke-linecap="round"/>
+              <path class="hud-bot-mouth" d="M28.2 41.2H35.8C35.8 44.4 34 45.7 32 45.7C30 45.7 28.2 44.4 28.2 41.2Z" fill="#0f172a"/>
             </g>
           </svg>
         </span>
-        <span id="hud-bubble-text">Asisten Belajar AI</span>
-        <span id="bubble-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${isAgentRunning ? "#22c55e" : "#cbd5e1"}; flex-shrink: 0;"></span>
+        <span id="bubble-status-dot" style="position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; background: ${isAgentRunning ? "#22c55e" : "#cbd5e1"}; border: 2px solid #0f172a;"></span>
       </button>
 
       <div id="hud-panel" style="display: ${hudMinimized ? "none" : "flex"}; flex-direction: column; width: 330px; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -5px rgba(15,23,42,0.18), 0 4px 6px -2px rgba(15,23,42,0.05); border: 1px solid #e2e8f0; overflow: hidden; color: #0f172a; position: relative;">
@@ -2608,10 +2621,10 @@
             <span>📚 Asisten Belajar AI</span>
             <span id="hud-mode-badge" style="font-size: 9.5px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #e2e8f0; padding: 2px 7px; border-radius: 9999px;">Layar Web</span>
           </div>
-          <div style="display: flex; gap: 4px; align-items: center;">
-            <button id="hud-ghost-btn" style="background: transparent; border: 0; color: #94a3b8; cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 4px; transition: color .15s;" title="Mode Hantu / Transparan 32% (Alt+Z)">👻</button>
-            <button id="hud-min-btn" style="background: transparent; border: 0; color: #94a3b8; cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px; line-height: 1; transition: color .15s;" title="Perkecil">_</button>
-            <button id="hud-close-btn" style="background: transparent; border: 0; color: #94a3b8; cursor: pointer; font-size: 15px; padding: 2px 4px; border-radius: 4px; line-height: 1; transition: color .15s;" title="Tutup (Alt+X / Esc)">×</button>
+          <div style="display: flex; gap: 3px; align-items: center;">
+            <button type="button" id="hud-ghost-btn" class="hud-header-btn" aria-label="Mode Hantu / Transparan" title="Mode Hantu / Transparan 32% (Alt+Z)">👻</button>
+            <button type="button" id="hud-min-btn" class="hud-header-btn" aria-label="Perkecil panel" title="Perkecil"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7.5H11.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            <button type="button" id="hud-close-btn" class="hud-header-btn" aria-label="Tutup panel" title="Tutup (Alt+X / Esc)"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3.2 3.2L10.8 10.8M10.8 3.2L3.2 10.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
           </div>
         </div>
 
@@ -2744,9 +2757,9 @@
         @keyframes hudspin { to { transform: rotate(360deg); } }
         @keyframes hudBotFloat {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          25% { transform: translateY(-1.4px) rotate(-2.2deg); }
-          50% { transform: translateY(0.5px) rotate(0deg); }
-          75% { transform: translateY(-1.1px) rotate(2.2deg); }
+          25% { transform: translateY(-2px) rotate(-2.8deg); }
+          50% { transform: translateY(0.8px) rotate(0deg); }
+          75% { transform: translateY(-1.5px) rotate(2.8deg); }
         }
         @keyframes hudBotBlink {
           0%, 44%, 49%, 92%, 100% { transform: scaleY(1); }
@@ -2754,21 +2767,67 @@
         }
         @keyframes hudBotAntenna {
           0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(6deg); }
-          75% { transform: rotate(-6deg); }
+          25% { transform: rotate(7deg); }
+          75% { transform: rotate(-7deg); }
         }
-        @keyframes hudBotArmLeft {
-          0%, 100% { transform: rotate(0deg); }
-          50% { transform: rotate(9deg); }
+        @keyframes hudBotShoulder {
+          0%, 100% { transform: translateY(0px) scaleX(1); }
+          50% { transform: translateY(0.8px) scaleX(1.04); }
         }
-        @keyframes hudBotArmRight {
-          0%, 100% { transform: rotate(0deg); }
-          50% { transform: rotate(-9deg); }
+        @keyframes hudBotSpark {
+          0%, 100% { opacity: 0.45; transform: scale(0.85); }
+          50% { opacity: 1; transform: scale(1.15); }
         }
         #ai-study-agent-hud #hud-bubble {
           appearance: none !important;
           -webkit-appearance: none !important;
           margin: 0 !important;
+          touch-action: none;
+        }
+        #ai-study-agent-hud #hud-header {
+          touch-action: none;
+        }
+        #ai-study-agent-hud.hud-dragging,
+        #ai-study-agent-hud.hud-dragging #hud-header,
+        #ai-study-agent-hud.hud-dragging #hud-bubble {
+          cursor: grabbing !important;
+        }
+        #ai-study-agent-hud .hud-header-btn {
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          background: transparent !important;
+          border: 0 !important;
+          color: #cbd5e1 !important;
+          cursor: pointer !important;
+          width: 28px !important;
+          height: 28px !important;
+          min-width: 28px !important;
+          min-height: 28px !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          border-radius: 6px !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-size: 13px !important;
+          line-height: 1 !important;
+          transition: background-color 0.14s ease, color 0.14s ease, transform 0.12s ease !important;
+        }
+        #ai-study-agent-hud .hud-header-btn:hover {
+          background-color: rgba(255,255,255,0.16) !important;
+          color: #ffffff !important;
+        }
+        #ai-study-agent-hud .hud-header-btn:active {
+          background-color: rgba(255,255,255,0.24) !important;
+          transform: scale(0.92) !important;
+        }
+        #ai-study-agent-hud .hud-header-btn:focus-visible {
+          outline: 2px solid #38bdf8 !important;
+          outline-offset: 1px !important;
+        }
+        #ai-study-agent-hud #hud-close-btn:hover {
+          background-color: rgba(239,68,68,0.28) !important;
+          color: #fecaca !important;
         }
         #ai-study-agent-hud #hud-bubble:hover {
           background-color: #1e293b !important;
@@ -2786,8 +2845,8 @@
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 24px;
-          height: 24px;
+          width: 36px;
+          height: 36px;
           flex-shrink: 0;
         }
         #ai-study-agent-hud .hud-bot-svg {
@@ -2806,22 +2865,29 @@
         }
         #ai-study-agent-hud .hud-bot-antenna {
           transform-box: fill-box;
-          transform-origin: center bottom;
+          transform-origin: left bottom;
           animation: hudBotAntenna 2.8s ease-in-out infinite;
         }
-        #ai-study-agent-hud .hud-bot-arm-left {
+        #ai-study-agent-hud .hud-bot-shoulder {
           transform-box: fill-box;
-          transform-origin: right top;
-          animation: hudBotArmLeft 2.8s ease-in-out infinite;
+          transform-origin: center;
+          animation: hudBotShoulder 2.8s ease-in-out infinite;
         }
-        #ai-study-agent-hud .hud-bot-arm-right {
+        #ai-study-agent-hud .hud-bot-spark-a {
           transform-box: fill-box;
-          transform-origin: left top;
-          animation: hudBotArmRight 2.8s ease-in-out infinite;
+          transform-origin: center;
+          animation: hudBotSpark 2.4s ease-in-out infinite;
         }
-        #ai-study-agent-hud #hud-bubble.hud-bot-running .hud-bot-eye,
+        #ai-study-agent-hud .hud-bot-spark-b {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: hudBotSpark 2.4s ease-in-out 1.2s infinite;
+        }
         #ai-study-agent-hud #hud-bubble.hud-bot-running .hud-bot-antenna-tip {
           fill: #22c55e;
+        }
+        #ai-study-agent-hud #hud-bubble.hud-bot-running .hud-bot-signal {
+          stroke: #22c55e;
         }
         #ai-study-agent-hud #hud-bubble.hud-bot-running .hud-bot-body {
           animation-duration: 1.9s;
@@ -2830,8 +2896,9 @@
           #ai-study-agent-hud .hud-bot-body,
           #ai-study-agent-hud .hud-bot-eyes,
           #ai-study-agent-hud .hud-bot-antenna,
-          #ai-study-agent-hud .hud-bot-arm-left,
-          #ai-study-agent-hud .hud-bot-arm-right {
+          #ai-study-agent-hud .hud-bot-shoulder,
+          #ai-study-agent-hud .hud-bot-spark-a,
+          #ai-study-agent-hud .hud-bot-spark-b {
             animation: none !important;
           }
         }
@@ -3241,26 +3308,43 @@
     });
 
     // Minimize & Close
-    bubble?.addEventListener("click", function () {
+    [ghostBtn, minBtn, closeBtn].forEach(function (btn) {
+      btn?.addEventListener("pointerdown", function (e) {
+        e.stopPropagation();
+      });
+    });
+
+    bubble?.addEventListener("click", function (e) {
+      if (container.dataset.hudJustDragged === "1") {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       hudMinimized = false;
       bubble.style.display = "none";
       panel.style.display = "flex";
+      clampHudToViewport(container);
       chrome.storage?.local?.set({ hudMinimized: false });
     });
 
-    minBtn?.addEventListener("click", function () {
+    minBtn?.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
       hudMinimized = true;
       panel.style.display = "none";
       bubble.style.display = "flex";
+      clampHudToViewport(container);
       chrome.storage?.local?.set({ hudMinimized: true });
     });
 
-    closeBtn?.addEventListener("click", function () {
+    closeBtn?.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
       container.style.display = "none";
       chrome.storage?.local?.set({ showHud: false });
     });
 
-    makeHudDraggable(container, container.querySelector("#hud-header"));
+    makeHudDraggable(container);
 
     // Pulihkan tab aktif terakhir, Mode Hantu, & Jawaban Terakhir
     chrome.storage?.local?.get(["activeHudTab", "lastActivePopupTab", "stealthGhost", "savedHudAnswer"], function (res) {
@@ -3314,41 +3398,106 @@
     };
     if (badge) badge.textContent = titles[tabKey] || "Asisten AI";
 
-    var bubbleText = hudElement.querySelector("#hud-bubble-text");
-    if (bubbleText) bubbleText.textContent = titles[tabKey] || "Asisten AI";
+    var bubble = hudElement.querySelector("#hud-bubble");
+    if (bubble) {
+      var modeTitle = titles[tabKey] || "Asisten AI";
+      bubble.title = "Buka panel AI (" + modeTitle + ")";
+      bubble.setAttribute("aria-label", "Buka panel AI (" + modeTitle + ")");
+    }
 
     chrome.storage?.local?.set({ activeHudTab: tabKey, lastActivePopupTab: tabKey });
   }
 
-  function makeHudDraggable(container, handle) {
-    if (!handle) return;
-    var isDragging = false;
-    var startX, startY, initialLeft, initialTop;
+  function clampHudToViewport(container) {
+    if (!container || container.style.left === "" || container.style.top === "") return;
+    var rect = container.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    var margin = 8;
+    var maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+    var maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+    var curLeft = parseFloat(container.style.left);
+    var curTop = parseFloat(container.style.top);
+    if (!isNaN(curLeft)) {
+      container.style.left = Math.max(margin, Math.min(maxLeft, curLeft)) + "px";
+    }
+    if (!isNaN(curTop)) {
+      container.style.top = Math.max(margin, Math.min(maxTop, curTop)) + "px";
+    }
+  }
 
-    handle.addEventListener("mousedown", function (e) {
-      if (e.target.tagName === "BUTTON") return;
-      isDragging = true;
+  function makeHudDraggable(container) {
+    if (!container) return;
+    var isPointerDown = false;
+    var hasMoved = false;
+    var activePointerId = null;
+    var startX = 0;
+    var startY = 0;
+    var initialLeft = 0;
+    var initialTop = 0;
+    var DRAG_THRESHOLD = 5;
+
+    function isInteractiveControl(target) {
+      if (!target || !target.closest) return false;
+      // Bubble boleh digeser sekaligus diklik; semua kontrol di dalam panel tetap interaktif
+      if (target.closest("#hud-bubble")) return false;
+      return !!target.closest("button, input, textarea, select, label, a, #hud-answer-box");
+    }
+
+    container.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0 && e.pointerType === "mouse") return;
+      if (isInteractiveControl(e.target)) return;
+
+      isPointerDown = true;
+      hasMoved = false;
+      activePointerId = e.pointerId;
       startX = e.clientX;
       startY = e.clientY;
       var rect = container.getBoundingClientRect();
       initialLeft = rect.left;
       initialTop = rect.top;
-      container.style.bottom = "auto";
-      container.style.right = "auto";
-      container.style.left = initialLeft + "px";
-      container.style.top = initialTop + "px";
     });
 
-    window.addEventListener("mousemove", function (e) {
-      if (!isDragging) return;
+    window.addEventListener("pointermove", function (e) {
+      if (!isPointerDown || (activePointerId !== null && e.pointerId !== activePointerId)) return;
       var dx = e.clientX - startX;
       var dy = e.clientY - startY;
-      container.style.left = Math.max(10, Math.min(window.innerWidth - 340, initialLeft + dx)) + "px";
-      container.style.top = Math.max(10, Math.min(window.innerHeight - 150, initialTop + dy)) + "px";
+
+      if (!hasMoved) {
+        if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+        hasMoved = true;
+        container.classList.add("hud-dragging");
+        container.style.bottom = "auto";
+        container.style.right = "auto";
+        container.style.left = initialLeft + "px";
+        container.style.top = initialTop + "px";
+      }
+
+      var rect = container.getBoundingClientRect();
+      var margin = 8;
+      var maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+      var maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+      container.style.left = Math.max(margin, Math.min(maxLeft, initialLeft + dx)) + "px";
+      container.style.top = Math.max(margin, Math.min(maxTop, initialTop + dy)) + "px";
     });
 
-    window.addEventListener("mouseup", function () {
-      isDragging = false;
+    function finishDrag(e) {
+      if (!isPointerDown || (activePointerId !== null && e.pointerId !== activePointerId)) return;
+      isPointerDown = false;
+      activePointerId = null;
+      container.classList.remove("hud-dragging");
+      if (hasMoved) {
+        container.dataset.hudJustDragged = "1";
+        setTimeout(function () {
+          delete container.dataset.hudJustDragged;
+        }, 120);
+      }
+      hasMoved = false;
+    }
+
+    window.addEventListener("pointerup", finishDrag);
+    window.addEventListener("pointercancel", finishDrag);
+    window.addEventListener("resize", function () {
+      clampHudToViewport(container);
     });
   }
 
@@ -3420,7 +3569,6 @@
     var badge = hudElement?.querySelector("#hud-mode-badge");
     var dot = hudElement?.querySelector("#bubble-status-dot");
     var bubble = hudElement?.querySelector("#hud-bubble");
-    var bubbleText = hudElement?.querySelector("#hud-bubble-text");
 
     if (btn) {
       btn.textContent = running ? "⏹️ Hentikan Agen (Stop)" : "▶️ Jalankan Otomatis (Sampai Selesai)";
@@ -3429,11 +3577,13 @@
     if (badge && currentHudTab === "screen") {
       badge.textContent = running ? "Auto-Pilot" : "Layar Web";
     }
-    if (bubbleText && currentHudTab === "screen") {
-      bubbleText.textContent = running ? "Auto-Pilot" : "Layar Web";
-    }
     if (bubble) {
       bubble.classList.toggle("hud-bot-running", !!running);
+      if (currentHudTab === "screen") {
+        var modeTitle = running ? "Auto-Pilot" : "Layar Web";
+        bubble.title = "Buka panel AI (" + modeTitle + ")";
+        bubble.setAttribute("aria-label", "Buka panel AI (" + modeTitle + ")");
+      }
     }
     if (dot) {
       dot.style.background = running ? "#22c55e" : "#cbd5e1";
@@ -3459,6 +3609,7 @@
         if (panel) panel.style.display = "flex";
         if (bubble) bubble.style.display = "none";
         hudMinimized = false;
+        clampHudToViewport(hudElement);
         chrome.storage?.local?.set({ showHud: true, hudMinimized: false });
         if (targetTab) switchHudTab(targetTab);
       } else {
@@ -3467,6 +3618,7 @@
           if (panel) panel.style.display = "flex";
           if (bubble) bubble.style.display = "none";
           hudMinimized = false;
+          clampHudToViewport(hudElement);
           chrome.storage?.local?.set({ hudMinimized: false });
           if (targetTab) switchHudTab(targetTab);
         } else if (targetTab && targetTab !== currentHudTab) {
